@@ -17,10 +17,9 @@ vault:
     standalone:
       enabled: false  # Disabled when dev mode is enabled
 
-    # NodePort service for easy access
+    # ClusterIP service (will use ingress later)
     service:
-      type: NodePort
-      nodePort: 30082
+      type: ClusterIP
       port: 8200
 
     # Data storage (not needed in dev mode)
@@ -48,8 +47,7 @@ vault:
   # UI configuration
   ui:
     enabled: true
-    serviceType: "NodePort"
-    serviceNodePort: 30082
+    serviceType: "ClusterIP"
 
   # Injector configuration (for secret injection)
   injector:
