@@ -64,7 +64,14 @@ spec:
               echo "Waiting for Vault to respond..."
               timeout=300
               elapsed=0
-              until vault status > /dev/null 2>&1; do
+              while true; do
+                vault status > /dev/null 2>&1
+                VAULT_STATUS_CODE=$?
+                # Exit codes: 0=unsealed, 1=error, 2=sealed but responding
+                if [ $VAULT_STATUS_CODE -eq 0 ] || [ $VAULT_STATUS_CODE -eq 2 ]; then
+                  echo "Vault is responding (exit code: $VAULT_STATUS_CODE)"
+                  break
+                fi
                 if [ $elapsed -ge $timeout ]; then
                   echo "Timeout waiting for Vault to respond"
                   exit 1
