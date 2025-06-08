@@ -107,11 +107,6 @@ vault:
         fi
         
         echo "🔓 Auto-unseal process completed"
-    
-    # Environment variables for kubectl access
-    extraEnvironmentVars:
-      VAULT_ADDR: "http://127.0.0.1:8200"
-      VAULT_SKIP_VERIFY: "true"
 
     # Resource limits for single-node cluster
     resources:
