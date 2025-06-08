@@ -1,40 +1,65 @@
 {{/*
-ArgoCD Application template helper
+ArgoCD Application template helper with global defaults
 */}}
-{{- define "app-of-apps.application" }}
+{{- define "app-of-apps.application" -}}
+{{- $root := index . 0 -}}
+{{- $app := index . 1 -}}
+{{- $global := $root.Values.global -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .name }}
+  name: {{ $app.name }}
   namespace: argocd
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    {{- range ($app.finalizers | default $global.finalizers) }}
+    - {{ . }}
+    {{- end }}
 spec:
-  project: default
+  project: {{ $app.project | default $global.project }}
   source:
-    repoURL: {{ .repoURL | default "https://github.com/pavlenkoa/homelab.git" }}
-    targetRevision: {{ .targetRevision | default "HEAD" }}
-    path: {{ .path }}
-    {{- if .helm }}
+    repoURL: {{ (($app.repository).url) | default $global.repository.url }}
+    targetRevision: {{ (($app.repository).targetRevision) | default $global.repository.targetRevision }}
+    path: {{ $app.path }}
+    {{- if $app.helm }}
     helm:
+      {{- if $app.helm.valueFiles }}
       valueFiles:
-        - {{ .helm.valueFiles }}
+        {{- if kindIs "slice" $app.helm.valueFiles }}
+        {{- range $app.helm.valueFiles }}
+        - {{ . }}
+        {{- end }}
+        {{- else }}
+        - {{ $app.helm.valueFiles }}
+        {{- end }}
+      {{- end }}
+      {{- if $app.helm.values }}
+      values: |
+        {{- $app.helm.values | nindent 8 }}
+      {{- end }}
+      {{- if $app.helm.parameters }}
+      parameters:
+        {{- range $app.helm.parameters }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+      {{- end }}
     {{- end }}
   destination:
-    server: https://kubernetes.default.svc
-    namespace: {{ .namespace | default "default" }}
+    server: {{ (($app.destination).server) | default $global.destination.server }}
+    namespace: {{ $app.namespace | default "default" }}
   syncPolicy:
+    {{- $syncPolicy := mergeOverwrite (deepCopy $global.syncPolicy) ($app.syncPolicy | default dict) }}
     automated:
-      prune: {{ .syncPolicy.prune | default true }}
-      selfHeal: {{ .syncPolicy.selfHeal | default true }}
+      prune: {{ $syncPolicy.automated.prune }}
+      selfHeal: {{ $syncPolicy.automated.selfHeal }}
     syncOptions:
-      - CreateNamespace=true
-      - PrunePropagationPolicy=foreground
-      - PruneLast=true
+      {{- range $syncPolicy.syncOptions }}
+      - {{ . }}
+      {{- end }}
     retry:
-      limit: 5
+      limit: {{ $syncPolicy.retry.limit }}
       backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m
+        duration: {{ $syncPolicy.retry.backoff.duration }}
+        factor: {{ $syncPolicy.retry.backoff.factor }}
+        maxDuration: {{ $syncPolicy.retry.backoff.maxDuration }}
 {{- end }}
