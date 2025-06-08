@@ -88,8 +88,9 @@ spec:
                   # Check current Vault status
                   echo "Checking Vault status..."
                   VAULT_STATUS=$(vault status -format=json 2>/dev/null || echo '{"initialized":false,"sealed":true}')
-                  INITIALIZED=$(/shared/jq -r '.initialized // false' <<< "$VAULT_STATUS")
-                  SEALED=$(/shared/jq -r '.sealed // true' <<< "$VAULT_STATUS")
+                  echo "$VAULT_STATUS" > /tmp/vault_status.json
+                  INITIALIZED=$(/shared/jq -r '.initialized // false' /tmp/vault_status.json)
+                  SEALED=$(/shared/jq -r '.sealed // true' /tmp/vault_status.json)
                   
                   echo "Vault initialized: $INITIALIZED, sealed: $SEALED"
                   
@@ -107,12 +108,13 @@ spec:
                     echo "Vault initialized successfully"
                     
                     # Extract keys and token
-                    UNSEAL_KEY_1=$(/shared/jq -r '.unseal_keys_b64[0]' <<< "$INIT_OUTPUT")
-                    UNSEAL_KEY_2=$(/shared/jq -r '.unseal_keys_b64[1]' <<< "$INIT_OUTPUT")
-                    UNSEAL_KEY_3=$(/shared/jq -r '.unseal_keys_b64[2]' <<< "$INIT_OUTPUT")
-                    UNSEAL_KEY_4=$(/shared/jq -r '.unseal_keys_b64[3]' <<< "$INIT_OUTPUT")
-                    UNSEAL_KEY_5=$(/shared/jq -r '.unseal_keys_b64[4]' <<< "$INIT_OUTPUT")
-                    ROOT_TOKEN=$(/shared/jq -r '.root_token' <<< "$INIT_OUTPUT")
+                    echo "$INIT_OUTPUT" > /tmp/vault_init.json
+                    UNSEAL_KEY_1=$(/shared/jq -r '.unseal_keys_b64[0]' /tmp/vault_init.json)
+                    UNSEAL_KEY_2=$(/shared/jq -r '.unseal_keys_b64[1]' /tmp/vault_init.json)
+                    UNSEAL_KEY_3=$(/shared/jq -r '.unseal_keys_b64[2]' /tmp/vault_init.json)
+                    UNSEAL_KEY_4=$(/shared/jq -r '.unseal_keys_b64[3]' /tmp/vault_init.json)
+                    UNSEAL_KEY_5=$(/shared/jq -r '.unseal_keys_b64[4]' /tmp/vault_init.json)
+                    ROOT_TOKEN=$(/shared/jq -r '.root_token' /tmp/vault_init.json)
                     
                     # Create or update Kubernetes secret
                     /shared/kubectl create secret generic vault-unseal-keys \
