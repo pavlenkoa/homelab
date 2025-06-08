@@ -1,0 +1,62 @@
+# MikroTik Monitoring Configuration - kyiv
+# Generated from template - do not edit directly
+
+[{{KYIV_ROUTER1_NAME}}]
+    hostname = {{KYIV_ROUTER1_IP}}
+    username = prometheus
+    password = {{KYIV_ROUTER1_PASSWORD}}
+    
+[{{KYIV_ROUTER2_NAME}}]  
+    hostname = {{KYIV_ROUTER2_IP}}
+    username = prometheus
+    password = {{KYIV_ROUTER2_PASSWORD}}
+
+[default]
+    installed_packages = True
+    firewall = True
+    use_comments_over_names = True
+    user = True
+    kid_control_assigned = False
+    ipip = False
+    route = True
+    ipv6_firewall = False
+    monitor = True
+    check_for_updates = False
+    switch_port = False
+    dns = False
+    use_ssl = False
+    no_ssl_certificate = False
+    certificate = False
+    bgp = False
+    neighbor = True
+    queue = True
+    ssl_certificate_verify = False
+    connection_stats = True
+    ipv6_route = False
+    eoip = False
+    dhcp_lease = True
+    bfd = False
+    kid_control_dynamic = False
+    gre = False
+    wireless_clients = True
+    ipv6_neighbor = False
+    capsman = True
+    connections = True
+    routing_stats = False
+    ipv6_pool = False
+    public_ip = True
+    enabled = True
+    pool = True
+    ipsec = False
+    poe = True
+    lte = False
+    dhcp = True
+    wireless = True
+    plaintext_login = True
+    interface = True
+    netwatch = True
+    capsman_clients = True
+    hostname = localhost
+    port = 8728
+    remote_dhcp_entry = None
+    remote_capsman_entry = None

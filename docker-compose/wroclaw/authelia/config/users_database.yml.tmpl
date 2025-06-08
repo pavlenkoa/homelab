@@ -1,0 +1,16 @@
+---
+# Authelia Users Database Template
+# This template is processed during setup to generate users_database.yml
+
+users:
+  admin:
+    displayname: "Administrator"
+    disabled: false
+    password: "{{ADMIN_PASSWORD_HASH}}"
+    email: admin@pavlenko.io
+    groups:
+      - admins
+
+groups:
+  admins:
+    - admin

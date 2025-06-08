@@ -1,0 +1,20 @@
+---
+services:
+  emby:
+    container_name: emby
+    image: lscr.io/linuxserver/emby:4.8.11
+    environment:
+      - TZ=${TIMEZONE:-Europe/Warsaw}
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ${PWD}/emby/config:/config
+    ports:
+      - 8096:8096
+    restart: unless-stopped
+    networks:
+      - emby_network
+
+networks:
+  emby_network:
+    name: emby_network

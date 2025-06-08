@@ -1,0 +1,60 @@
+# Environment files
+**/.env
+**/.env.generated
+**/.env.user
+
+# Service selection
+**/.service
+scripts/.service
+
+# Block all config files by default, then allow specific patterns
+**/config/*
+
+# Allow template files
+!**/config/*.tmpl
+!**/config/*.j2
+
+# Allow specific reference files (non-secret configs)
+!**/config/_mktxp.conf
+!**/config/Caddyfile
+!**/config/datasources/
+!**/config/datasources/**
+
+# Generated template files (double-check these are blocked)
+**/config/users_database.yml
+**/config/configuration.yml
+**/config/*.yml.generated
+**/config/*.conf.generated
+
+# Python virtual environment
+.venv/
+**/.venv/
+
+# Template timestamps
+**/.template-timestamp
+
+# Monitoring runtime data directories
+**/victoriametrics/data/
+**/victorialogs/data/
+**/grafana/data/
+**/alloy/data/
+
+# Logs
+**/logs/
+*.log
+
+# Python cache files
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime data files
+**/config/db.sqlite3
+**/config/notification.txt
+**/data/
+**/redis-data/
+**/upload/
+
+# System files
+.DS_Store
+Thumbs.db

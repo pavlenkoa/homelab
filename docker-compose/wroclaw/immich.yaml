@@ -1,0 +1,8 @@
+---
+services:
+  immich-server:
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ${PWD}/immich/upload:/usr/src/app/upload
+      - ${DATA_DIR}/photos:/usr/src/app/external/photos:ro
+      - ${PWD}/immich/config:/config

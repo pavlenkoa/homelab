@@ -1,0 +1,161 @@
+// Grafana Alloy configuration - Location: wroclaw
+// Uses built-in exporters where available, external scraping for specialized exporters
+
+// ==============================================================================
+// BUILT-IN EXPORTERS - All locations
+// ==============================================================================
+
+// Unix/Node exporter (built-in replacement for node_exporter)
+prometheus.exporter.unix "node" {
+  // Use default collectors appropriate for the system
+}
+
+// cAdvisor exporter (built-in replacement for cadvisor)
+prometheus.exporter.cadvisor "containers" {
+  docker_host = "unix:///rootfs/var/run/docker.sock"
+  storage_duration = "1m"
+}
+
+// Blackbox exporter (built-in replacement for blackbox_exporter)
+prometheus.exporter.blackbox "health_checks" {
+  config = `{
+  "modules": {
+    "http_2xx": {
+      "prober": "http",
+      "timeout": "5s",
+      "http": {
+        "valid_http_versions": ["HTTP/1.1", "HTTP/2.0"],
+        "valid_status_codes": [200],
+        "method": "GET"
+      }
+    }
+  }
+}`
+
+  target {
+    name = "transmission_kyiv"
+    address = "http://192.168.1.2:9091"
+    module = "http_2xx"
+  }
+}
+
+// ==============================================================================
+// EXTERNAL SCRAPING (for specialized exporters)
+// ==============================================================================
+
+// VictoriaMetrics self-monitoring
+prometheus.scrape "victoriametrics" {
+  targets = [{"__address__" = "victoriametrics:8428"}]
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+  metrics_path = "/metrics"
+}
+
+// VictoriaLogs self-monitoring
+prometheus.scrape "victorialogs" {
+  targets = [{"__address__" = "victorialogs:9428"}]
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+  metrics_path = "/metrics"
+}
+
+// Authelia health endpoint
+prometheus.scrape "authelia_health" {
+  targets = [{"__address__" = "192.168.88.2:9091"}]
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+  metrics_path = "/metrics"
+}
+
+// MikroTik exporter (mktxp - specialized, not available as built-in)
+prometheus.scrape "mikrotik_exporter" {
+  targets = [{"__address__" = "mikrotik_exporter:49090"}]
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+  metrics_path = "/metrics"
+}
+
+// ==============================================================================
+// METRICS COLLECTION AND FORWARDING
+// ==============================================================================
+
+// Scrape built-in unix exporter
+prometheus.scrape "node_metrics" {
+  targets = prometheus.exporter.unix.node.targets
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+}
+
+// Scrape built-in cadvisor exporter  
+prometheus.scrape "container_metrics" {
+  targets = prometheus.exporter.cadvisor.containers.targets
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+}
+
+// Scrape built-in blackbox exporter
+prometheus.scrape "health_check_metrics" {
+  targets = prometheus.exporter.blackbox.health_checks.targets
+  forward_to = [prometheus.remote_write.victoriametrics.receiver]
+  scrape_interval = "15s"
+}
+
+// Remote write to local VictoriaMetrics (on Mac Mini)
+prometheus.remote_write "victoriametrics" {
+  endpoint {
+    url = "http://victoriametrics:8428/api/v1/write"
+  }
+  
+  external_labels = {
+    location = "{{LOCATION}}",
+    instance = "{{INSTANCE_NAME}}",
+  }
+}
+
+// ==============================================================================
+// LOG COLLECTION - All locations send to Wrocław VictoriaLogs
+// ==============================================================================
+
+// Loki client for log forwarding to VictoriaLogs
+loki.write "victorialogs" {
+  endpoint {
+    url = "http://victorialogs:9428/insert/loki/api/v1/push"
+  }
+  
+  external_labels = {
+    location = "{{LOCATION}}",
+    instance = "{{INSTANCE_NAME}}",
+  }
+}
+
+// Docker discovery for container targets
+discovery.docker "containers" {
+  host = "unix:///rootfs/var/run/docker.sock"
+}
+
+// Log scraper for ALL Docker container logs
+loki.source.docker "containers" {
+  host = "unix:///rootfs/var/run/docker.sock"
+  targets = discovery.docker.containers.targets
+  forward_to = [loki.write.victorialogs.receiver]
+  
+  labels = {
+    job = "containerlogs",
+    location = "{{LOCATION}}",
+    instance = "{{INSTANCE_NAME}}",
+  }
+}
+
+// Log scraper for native Emby server logs (runs on macOS, not Docker)
+loki.source.file "emby" {
+  targets = [
+    {
+      __path__ = "/rootfs/Users/andrii/.config/emby-server/logs/embyserver.txt",
+      job = "emby",
+      location = "{{LOCATION}}", 
+      instance = "{{INSTANCE_NAME}}",
+      service = "emby",
+    },
+  ]
+  forward_to = [loki.write.victorialogs.receiver]
+}

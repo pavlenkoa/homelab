@@ -1,0 +1,27 @@
+---
+services:
+  alloy:
+    container_name: alloy
+    image: grafana/alloy:v1.9.1
+    restart: unless-stopped
+    ports:
+      - "12345:12345"
+    volumes:
+      - ${PWD}/monitoring/alloy/config:/etc/alloy:ro
+      - ${PWD}/monitoring/alloy/data:/var/lib/alloy
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+    environment:
+      - TZ=${TIMEZONE:-Europe/Warsaw}
+    networks:
+      - monitoring_network
+
+networks:
+  monitoring_network:
+    name: monitoring_network

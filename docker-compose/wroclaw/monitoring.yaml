@@ -1,0 +1,84 @@
+---
+services:
+  alloy:
+    depends_on:
+      - victorialogs
+      - victoriametrics
+    extra_hosts:
+      - "emby.local:192.168.88.2"
+
+  victorialogs:
+    container_name: victorialogs
+    image: victoriametrics/victoria-logs:v1.23.3-victorialogs
+    restart: unless-stopped
+    ports:
+      - "9428:9428"
+    volumes:
+      - ${PWD}/monitoring/victorialogs/data:/victoria-logs-data
+    command:
+      - --storageDataPath=/victoria-logs-data
+      - --httpListenAddr=:9428
+      - --retentionPeriod=30d
+    environment:
+      - TZ=${TIMEZONE:-Europe/Warsaw}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9428/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - monitoring_network
+
+  victoriametrics:
+    container_name: victoriametrics
+    image: victoriametrics/victoria-metrics:v1.104.0
+    restart: unless-stopped
+    ports:
+      - "8428:8428"
+    volumes:
+      - ${PWD}/monitoring/victoriametrics/data:/victoria-metrics-data
+    command:
+      - --storageDataPath=/victoria-metrics-data
+      - --httpListenAddr=:8428
+      - --retentionPeriod=30d
+    environment:
+      - TZ=${TIMEZONE:-Europe/Warsaw}
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8428/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - monitoring_network
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${PWD}/monitoring/grafana/data:/var/lib/grafana
+      - ${PWD}/monitoring/grafana/config:/etc/grafana/provisioning
+    environment:
+      - TZ=${TIMEZONE:-Europe/Warsaw}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    depends_on:
+      - victoriametrics
+      - victorialogs
+    networks:
+      - monitoring_network
+
+  mikrotik_exporter:
+    container_name: mikrotik_exporter
+    image: ghcr.io/akpw/mktxp:main
+    restart: unless-stopped
+    user: root
+    expose:
+      - 49090
+    volumes:
+      - ${PWD}/monitoring/mikrotik/config:/root/mktxp/
+    networks:
+      - monitoring_network

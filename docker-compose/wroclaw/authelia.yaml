@@ -1,0 +1,7 @@
+---
+# Wrocław-specific Authelia overrides
+services:
+  authelia:
+    # Wrocław-specific environment variables can be added here if needed
+    environment:
+      - DOMAIN=${DOMAIN_NAME}

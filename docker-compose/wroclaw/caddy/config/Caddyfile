@@ -1,0 +1,63 @@
+# Caddy reverse proxy configuration - Wrocław Environment
+# Global ACME configuration for TLS certificates
+{
+  acme_dns cloudflare {env.CF_API_TOKEN}
+}
+
+# Snippet for Authelia authentication
+(authelia) {
+    forward_auth host.docker.internal:9091 {
+        uri /api/authz/forward-auth
+        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+    }
+}
+
+# Snippet for basic authentication
+(basic_auth) {
+    basicauth {
+       {env.BASIC_AUTH_USER} {env.BASIC_AUTH_PASSWORD}
+    }
+}
+
+# Wrocław - Primary services and media server
+{$DOMAIN} {
+    redir https://emby.{$DOMAIN}
+}
+
+emby.{$DOMAIN} {
+    reverse_proxy 192.168.88.2:8096
+}
+
+photos.{$DOMAIN} {
+    import authelia
+    reverse_proxy localhost:2283
+}
+
+transmission.{$DOMAIN} {
+    import authelia
+    reverse_proxy 192.168.1.2:9091
+}
+
+grafana.{$DOMAIN} {
+    import authelia
+    reverse_proxy localhost:3000
+}
+
+victoriametrics.{$DOMAIN} {
+    import authelia
+    reverse_proxy localhost:8428
+}
+
+share.{$DOMAIN} {
+    root * /var/www/share.{$DOMAIN}
+    file_server
+}
+
+auth.{$DOMAIN} {
+    reverse_proxy host.docker.internal:9091
+}
+
+test.{$DOMAIN} {
+    import authelia
+    respond "Authelia Test Page - You are authenticated!"
+}
