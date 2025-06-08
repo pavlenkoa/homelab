@@ -16,13 +16,6 @@ autoUnseal:
     create: true
     serviceAccountName: "vault-auto-unseal"
   
-  # Initialization job configuration
-  initJob:
-    enabled: true
-    image: "hashicorp/vault:1.15.2"
-    
-  # Auto-unseal CronJob configuration  
-  cronJob:
-    enabled: true
-    schedule: "*/5 * * * *"  # Every 5 minutes
-    image: "hashicorp/vault:1.15.2"
+  # Unified auto-unseal job (handles both init and unsealing)
+  schedule: "*/2 * * * *"  # Every 2 minutes
+  image: "hashicorp/vault:1.15.2"
