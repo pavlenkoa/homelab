@@ -1,88 +1,87 @@
 # VictoriaMetrics configuration for homelab
 
-victoria-metrics-single:
-  # Server configuration
-  server:
-    # Resource limits for single-node cluster
-    resources:
-      requests:
-        memory: 512Mi
-        cpu: 200m
-      limits:
-        memory: 1Gi
-        cpu: 1000m
-    
-    # Data retention and storage
-    retentionPeriod: 90d
-    
-    # Performance tuning for homelab
-    extraArgs:
-      # Enable metrics deduplication
-      "dedup.minScrapeInterval": "5s"
-      # Memory optimization
-      "memory.allowedPercent": "60"
-      # Storage optimization
-      "storage.cacheSizeIndexDBDataBlocks": "64MB"
-      "storage.cacheSizeIndexDBIndexBlocks": "32MB"
-      "storage.cacheSizeStorageTSID": "64MB"
-    
-    # Disable StatefulSet to use regular Deployment with NodePort service
-    statefulSet:
-      enabled: false
-    
-    # NodePort service for external access
-    service:
-      type: NodePort
-      nodePort: 30083
-      servicePort: 8428
-      clusterIP: ""  # Empty to allow automatic assignment
-    
-    # Persistent storage
-    persistentVolume:
-      enabled: true
-      size: 20Gi
-      storageClass: "" # Use default storage class
-      accessModes:
-        - ReadWriteOnce
-    
-    # Security context
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
-      fsGroup: 1000
-    
-    # Pod security context
-    podSecurityContext:
-      runAsNonRoot: true
-      seccompProfile:
-        type: RuntimeDefault
-    
-    # Probes configuration
-    readinessProbe:
-      httpGet:
-        path: /health
-        port: http
-      initialDelaySeconds: 30
-      periodSeconds: 30
-      timeoutSeconds: 5
-    
-    livenessProbe:
-      httpGet:
-        path: /health
-        port: http
-      initialDelaySeconds: 60
-      periodSeconds: 30
-      timeoutSeconds: 10
-    
-    # Environment variables
-    env:
-      - name: VM_LOG_LEVEL
-        value: "INFO"
+# Server configuration
+server:
+  # Resource limits for single-node cluster
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 200m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
   
-  # Service monitor for future Prometheus integration
-  serviceMonitor:
-    enabled: false  # Will enable when we have Prometheus operator
+  # Data retention and storage
+  retentionPeriod: 90d
   
-  # Alerting rules
-  alertmanager:
-    enabled: false  # Will configure later with Grafana alerting
+  # Performance tuning for homelab
+  extraArgs:
+    # Enable metrics deduplication
+    "dedup.minScrapeInterval": "5s"
+    # Memory optimization
+    "memory.allowedPercent": "60"
+    # Storage optimization
+    "storage.cacheSizeIndexDBDataBlocks": "64MB"
+    "storage.cacheSizeIndexDBIndexBlocks": "32MB"
+    "storage.cacheSizeStorageTSID": "64MB"
+  
+  # Disable StatefulSet to use regular Deployment with NodePort service
+  statefulSet:
+    enabled: false
+  
+  # NodePort service for external access
+  service:
+    type: NodePort
+    nodePort: 30083
+    servicePort: 8428
+    clusterIP: ""  # Empty to allow automatic assignment
+  
+  # Persistent storage
+  persistentVolume:
+    enabled: true
+    size: 20Gi
+    storageClass: "" # Use default storage class
+    accessModes:
+      - ReadWriteOnce
+  
+  # Security context
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+  
+  # Pod security context
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  
+  # Probes configuration
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+  
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+  
+  # Environment variables
+  env:
+    - name: VM_LOG_LEVEL
+      value: "INFO"
+
+# Service monitor for future Prometheus integration
+serviceMonitor:
+  enabled: false  # Will enable when we have Prometheus operator
+
+# Alerting rules
+alertmanager:
+  enabled: false  # Will configure later with Grafana alerting

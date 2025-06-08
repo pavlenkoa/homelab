@@ -27,7 +27,7 @@ global:
 applications:
   # Infrastructure layer - Core cluster services
   - name: cilium
-    enabled: true  # Deploy via GitOps using new extensible template
+    enabled: true  # Deploy via GitOps using direct chart
     path: kubernetes/infrastructure/charts/cilium
     namespace: kube-system
     helm:
@@ -68,7 +68,7 @@ applications:
 
   - name: victoriametrics
     enabled: true
-    path: kubernetes/platform/charts/victoriametrics
+    path: kubernetes/platform/charts/victoria-metrics-single
     namespace: monitoring
     helm:
       valueFiles: ../../values/homelab/victoriametrics.yaml
