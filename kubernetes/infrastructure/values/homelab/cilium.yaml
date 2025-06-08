@@ -51,7 +51,7 @@ bandwidthManager:
 # Enable local redirect policy
 localRedirectPolicy: true
 
-# Operator resource limits
+# Operator resource limits  
 operator:
   # Single replica for single-node cluster
   replicas: 1
@@ -60,3 +60,7 @@ operator:
       memory: 256Mi
     requests:
       memory: 128Mi
+
+# Alternative path for some Cilium versions
+cilium-operator:
+  replicas: 1
