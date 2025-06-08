@@ -26,11 +26,15 @@ victoria-metrics-single:
       "storage.cacheSizeIndexDBIndexBlocks": "32MB"
       "storage.cacheSizeStorageTSID": "64MB"
     
+    # Disable StatefulSet to use regular Deployment with NodePort service
+    statefulSet:
+      enabled: false
+    
     # NodePort service for external access
     service:
       type: NodePort
       nodePort: 30083
-      port: 8428
+      servicePort: 8428
     
     # Persistent storage
     persistentVolume:
