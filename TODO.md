@@ -1,33 +1,54 @@
 # TODO
 
+## Current Status: GitOps Foundation Complete! 🎉
+
+**✅ Phases 1-2 COMPLETED** (Foundation + GitOps)
+- **Kubernetes Cluster**: OrbStack with Cilium CNI + Hubble observability
+- **GitOps Platform**: ArgoCD with enterprise-grade App-of-Apps pattern
+- **Network Observability**: Hubble UI at http://localhost:30080
+- **GitOps Management**: ArgoCD UI at http://localhost:30081 (admin/BQUb-QTq3RkNkNUm)
+- **Repository**: Public GitHub integration with automated sync
+- **Template System**: Extensible App-of-Apps with global defaults and per-app overrides
+
+**🚀 Next: Phase 3** - Deploy platform services (Vault, VictoriaMetrics, Grafana)
+
+---
+
 ## OrbStack Kubernetes Migration Plan
 
-### Phase 1: Kubernetes Foundation Setup
-- [ ] **Enable OrbStack Kubernetes cluster**:
-  - [ ] Configure OrbStack Kubernetes via UI (one-click setup)
-  - [ ] Verify cluster connectivity: `kubectl get nodes`
-  - [ ] Install Helm package manager
-  - [ ] Configure kubectl context for homelab cluster
-- [ ] **Deploy Cilium CNI with Hubble observability**:
-  - [ ] Create `kubernetes/infrastructure/charts/cilium/` chart
-  - [ ] Create `kubernetes/infrastructure/values/homelab/cilium.yaml` values
-  - [ ] Replace default CNI with Cilium (helm upgrade cilium cilium/cilium)
-  - [ ] Enable Hubble for network observability and flow monitoring
-  - [ ] Configure Cilium Service Mesh for L7 traffic management
-  - [ ] Verify Cilium installation: `cilium status`
+### Phase 1: Kubernetes Foundation Setup ✅ COMPLETED
+- [x] **Enable OrbStack Kubernetes cluster**:
+  - [x] Configure OrbStack Kubernetes via UI (one-click setup)
+  - [x] Verify cluster connectivity: `kubectl get nodes`
+  - [x] Install Helm package manager
+  - [x] Configure kubectl context for homelab cluster (renamed to 'homelab')
+- [x] **Deploy Cilium CNI with Hubble observability**:
+  - [x] Create `kubernetes/infrastructure/charts/cilium/` chart
+  - [x] Create `kubernetes/infrastructure/values/homelab/cilium.yaml` values
+  - [x] Replace default CNI with Cilium (helm upgrade cilium cilium/cilium)
+  - [x] Enable Hubble for network observability and flow monitoring
+  - [x] Configure Cilium Service Mesh for L7 traffic management
+  - [x] Verify Cilium installation: Hubble UI accessible at http://localhost:30080
 
-### Phase 2: ArgoCD GitOps Setup  
-- [ ] **Deploy ArgoCD to Kubernetes cluster**:
-  - [ ] Install ArgoCD via Helm (helm install argocd argo/argo-cd -n argocd --create-namespace)
-  - [ ] Configure Caddy ingress for ArgoCD web UI
-  - [ ] Set up admin access: `kubectl get secret argocd-initial-admin-secret`
-  - [ ] Connect ArgoCD to https://github.com/pavlenkoa/homelab.git repository
-- [ ] **Create App-of-Apps Helm Chart**:
-  - [ ] Create `kubernetes/app-of-apps/Chart.yaml` 
-  - [ ] Create `kubernetes/app-of-apps/templates/_application.tpl` helper
-  - [ ] Create `kubernetes/app-of-apps/templates/applications.yaml` generator
-  - [ ] Create `kubernetes/app-of-apps/values/homelab.yaml` with service definitions
-  - [ ] Deploy app-of-apps: `helm install app-of-apps ./kubernetes/app-of-apps`
+### Phase 2: ArgoCD GitOps Setup ✅ COMPLETED
+- [x] **Deploy ArgoCD to Kubernetes cluster**:
+  - [x] Install ArgoCD via Helm with NodePort access (http://localhost:30081)
+  - [x] Configure insecure mode for local development
+  - [x] Set up admin access: admin / BQUb-QTq3RkNkNUm
+  - [x] Connect ArgoCD to https://github.com/pavlenkoa/homelab.git repository (public)
+- [x] **Create App-of-Apps Helm Chart**:
+  - [x] Create `kubernetes/app-of-apps/Chart.yaml` 
+  - [x] Create `kubernetes/app-of-apps/templates/_application.tpl` helper with global defaults
+  - [x] Create `kubernetes/app-of-apps/templates/applications.yaml` generator
+  - [x] Create `kubernetes/app-of-apps/values.yaml` with global defaults
+  - [x] Create `kubernetes/app-of-apps/values/homelab.yaml` with service definitions
+  - [x] Deploy app-of-apps with extensible template system
+  - [x] Verify GitOps workflow: Git push → ArgoCD auto-sync → Cluster update
+  - [x] **Enhanced App-of-Apps Features**:
+    - [x] Global defaults with per-application overrides
+    - [x] Support for multiple Helm value files and inline values
+    - [x] Configurable sync policies, destinations, and repositories
+    - [x] Enterprise-grade template system for scalability
 
 ### Phase 3: Platform Services - Core Infrastructure
 - [ ] **Deploy Caddy Ingress Controller**:
