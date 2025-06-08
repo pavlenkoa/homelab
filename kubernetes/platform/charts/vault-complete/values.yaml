@@ -16,6 +16,5 @@ autoUnseal:
     create: true
     serviceAccountName: "vault-auto-unseal"
   
-  # Unified auto-unseal job (handles both init and unsealing)
-  schedule: "*/2 * * * *"  # Every 2 minutes
+  # One-time initialization job (helm hook)
   image: "hashicorp/vault:1.15.2"
