@@ -1,0 +1,69 @@
+# App-of-Apps configuration for homelab cluster
+# This defines which applications ArgoCD should deploy
+
+applications:
+  # Infrastructure layer - Core cluster services
+  - name: cilium
+    enabled: false  # Already manually installed
+    path: kubernetes/infrastructure/charts/cilium
+    namespace: kube-system
+    helm:
+      valueFiles: ../../values/homelab/cilium.yaml
+    syncPolicy:
+      prune: false  # Don't auto-prune CNI
+      selfHeal: true
+
+  # Platform layer - DevOps and management services
+  - name: argocd
+    enabled: false  # Already manually installed
+    path: kubernetes/platform/charts/argocd
+    namespace: argocd
+    helm:
+      valueFiles: ../../values/homelab/argocd.yaml
+    syncPolicy:
+      prune: false  # Don't auto-prune ArgoCD itself
+      selfHeal: true
+
+  # Future platform services (commented out for now)
+  # - name: vault
+  #   enabled: false
+  #   path: kubernetes/platform/charts/vault
+  #   namespace: vault
+  #   helm:
+  #     valueFiles: ../../values/homelab/vault.yaml
+
+  # - name: external-secrets
+  #   enabled: false
+  #   path: kubernetes/platform/charts/external-secrets
+  #   namespace: external-secrets
+  #   helm:
+  #     valueFiles: ../../values/homelab/external-secrets.yaml
+
+  # - name: victoriametrics
+  #   enabled: false
+  #   path: kubernetes/platform/charts/victoriametrics
+  #   namespace: monitoring
+  #   helm:
+  #     valueFiles: ../../values/homelab/victoriametrics.yaml
+
+  # - name: grafana
+  #   enabled: false
+  #   path: kubernetes/platform/charts/grafana
+  #   namespace: monitoring
+  #   helm:
+  #     valueFiles: ../../values/homelab/grafana.yaml
+
+  # Application layer - Business applications
+  # - name: immich
+  #   enabled: false
+  #   path: kubernetes/applications/charts/immich
+  #   namespace: immich
+  #   helm:
+  #     valueFiles: ../../values/homelab/immich.yaml
+
+  # - name: emby
+  #   enabled: false
+  #   path: kubernetes/applications/charts/emby
+  #   namespace: emby
+  #   helm:
+  #     valueFiles: ../../values/homelab/emby.yaml
