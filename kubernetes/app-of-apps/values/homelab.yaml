@@ -67,7 +67,7 @@ applications:
       valueFiles: ../../values/homelab/external-secrets.yaml
 
   - name: victoriametrics
-    enabled: false
+    enabled: true
     path: kubernetes/platform/charts/victoriametrics
     namespace: monitoring
     helm:
