@@ -1,68 +1,70 @@
 # Cilium CNI configuration for homelab cluster
 
-# Enable Hubble for network observability
-hubble:
-  enabled: true
-  relay:
+# Values for the cilium dependency chart
+cilium:
+  # Enable Hubble for network observability
+  hubble:
     enabled: true
-  ui:
-    enabled: true
-    service:
-      type: NodePort
-      nodePort: 30080
-    ingress:
-      enabled: false
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - icmp
-      - http
+    relay:
+      enabled: true
+    ui:
+      enabled: true
+      service:
+        type: NodePort
+        nodePort: 30080
+      ingress:
+        enabled: false
+    metrics:
+      enabled:
+        - dns
+        - drop
+        - tcp
+        - flow
+        - icmp
+        - http
 
-# Enable service mesh capabilities
-serviceMonitor:
-  enabled: false  # Will enable when we deploy Prometheus
+  # Enable service mesh capabilities
+  serviceMonitor:
+    enabled: false  # Will enable when we deploy Prometheus
 
-# Network policies
-policyEnforcementMode: "default"
+  # Network policies
+  policyEnforcementMode: "default"
 
-# Enable cluster mesh for future multi-cluster setup
-clustermesh:
-  useAPIServer: false
+  # Enable cluster mesh for future multi-cluster setup
+  clustermesh:
+    useAPIServer: false
 
-# Resource configuration for single-node cluster
-resources:
-  limits:
-    memory: 500Mi
-  requests:
-    memory: 256Mi
-
-# Enable socket LB for better service load balancing
-socketLB:
-  enabled: true
-
-# Enable bandwidth manager
-bandwidthManager:
-  enabled: true
-  bbr: true
-
-# Enable local redirect policy
-localRedirectPolicy: true
-
-# Operator resource limits for single-node cluster
-operator:
-  # CRITICAL: Single replica to avoid hostPort conflicts on single node
-  replicas: 1
-  # Update strategy to prevent multiple pods during rolling updates
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 0        # Never create extra pods
-      maxUnavailable: 1  # Allow 1 pod to be unavailable during update
+  # Resource configuration for single-node cluster
   resources:
     limits:
-      memory: 256Mi
+      memory: 500Mi
     requests:
-      memory: 128Mi
+      memory: 256Mi
+
+  # Enable socket LB for better service load balancing
+  socketLB:
+    enabled: true
+
+  # Enable bandwidth manager
+  bandwidthManager:
+    enabled: true
+    bbr: true
+
+  # Enable local redirect policy
+  localRedirectPolicy: true
+
+  # Operator resource limits for single-node cluster
+  operator:
+    # CRITICAL: Single replica to avoid hostPort conflicts on single node
+    replicas: 1
+    # Update strategy to prevent multiple pods during rolling updates
+    updateStrategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxSurge: 0        # Never create extra pods
+        maxUnavailable: 1  # Allow 1 pod to be unavailable during update
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        memory: 128Mi
