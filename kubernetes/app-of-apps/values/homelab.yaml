@@ -27,7 +27,7 @@ global:
 applications:
   # Infrastructure layer - Core cluster services
   - name: cilium
-    enabled: false  # Already manually installed, GitOps test successful ✅
+    enabled: true  # Deploy via GitOps using new extensible template
     path: kubernetes/infrastructure/charts/cilium
     namespace: kube-system
     helm:
