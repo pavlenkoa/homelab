@@ -76,35 +76,13 @@ vault:
           sleep 2
         done
         
-        # Check if Vault is sealed
-        if vault status | grep -q "Sealed.*true"; then
-          echo "🔐 Vault is sealed, attempting to unseal..."
-          
-          # Try to read unseal keys from mounted secret volume
-          if [ -f "/vault/secrets/unseal-key-1" ]; then
-            echo "📋 Retrieving unseal keys from mounted secret..."
-            
-            # Get unseal keys from mounted files
-            UNSEAL_KEY_1=$(cat /vault/secrets/unseal-key-1)
-            UNSEAL_KEY_2=$(cat /vault/secrets/unseal-key-2)  
-            UNSEAL_KEY_3=$(cat /vault/secrets/unseal-key-3)
-            
-            # Unseal with 3 keys (threshold)
-            vault operator unseal -format=json "$UNSEAL_KEY_1" > /dev/null 2>&1
-            vault operator unseal -format=json "$UNSEAL_KEY_2" > /dev/null 2>&1
-            vault operator unseal -format=json "$UNSEAL_KEY_3" > /dev/null 2>&1
-            
-            if vault status | grep -q "Sealed.*false"; then
-              echo "✅ Vault successfully unsealed!"
-            else
-              echo "❌ Failed to unseal Vault"
-            fi
-          else
-            echo "⚠️  Unseal keys secret not found - Vault may need initialization"
-            echo "ℹ️  Run the init job: kubectl create job --from=job/vault-vault-complete-init vault-manual-init -n vault"
-          fi
+        # Just report status
+        if vault status | grep -q "Initialized.*false"; then
+          echo "⚠️  Vault is not initialized - run init job first"
+        elif vault status | grep -q "Sealed.*true"; then
+          echo "🔐 Vault is sealed - manual unsealing required after initialization"
         else
-          echo "✅ Vault is already unsealed"
+          echo "✅ Vault is ready and unsealed"
         fi
         
         echo "🔓 Auto-unseal process completed"
@@ -132,17 +110,7 @@ vault:
       create: false  # We'll use the custom service account with RBAC
       name: "vault-auto-unseal"
     
-    # Mount unseal keys secret for postStart hook
-    volumes:
-      - name: vault-unseal-keys
-        secret:
-          secretName: vault-unseal-keys
-          optional: true
-    
-    volumeMounts:
-      - name: vault-unseal-keys
-        mountPath: /vault/secrets
-        readOnly: true
+    # No volume mounts for now - will implement auto-unseal after initialization works
 
   # UI configuration
   ui:
