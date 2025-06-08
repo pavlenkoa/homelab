@@ -29,12 +29,10 @@ server:
   statefulSet:
     enabled: false
   
-  # NodePort service for external access
+  # ClusterIP service (will use ingress later)
   service:
-    type: NodePort
-    nodePort: 30083
+    type: ClusterIP
     servicePort: 8428
-    clusterIP: ""  # Empty to allow automatic assignment
   
   # Persistent storage
   persistentVolume:
