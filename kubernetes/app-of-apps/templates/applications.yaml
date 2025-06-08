@@ -1,0 +1,6 @@
+{{- range .Values.applications }}
+{{- if .enabled }}
+---
+{{- include "app-of-apps.application" . }}
+{{- end }}
+{{- end }}
