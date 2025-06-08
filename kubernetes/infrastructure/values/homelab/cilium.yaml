@@ -55,10 +55,14 @@ localRedirectPolicy: true
 operator:
   # CRITICAL: Single replica to avoid hostPort conflicts on single node
   replicas: 1
+  # Update strategy to prevent multiple pods during rolling updates
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0        # Never create extra pods
+      maxUnavailable: 1  # Allow 1 pod to be unavailable during update
   resources:
     limits:
       memory: 256Mi
     requests:
       memory: 128Mi
-  # Pod anti-affinity prevents multiple replicas on same node anyway
-  # but setting replicas=1 avoids the conflict entirely
