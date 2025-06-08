@@ -35,6 +35,7 @@ victoria-metrics-single:
       type: NodePort
       nodePort: 30083
       servicePort: 8428
+      clusterIP: ""  # Empty to allow automatic assignment
     
     # Persistent storage
     persistentVolume:
