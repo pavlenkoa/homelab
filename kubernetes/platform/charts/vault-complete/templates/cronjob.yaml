@@ -58,9 +58,11 @@ spec:
                     exit 0
                   fi
                   
-                  # Check if Vault is responding
-                  if ! vault status > /dev/null 2>&1; then
-                    echo "Vault is not responding, skipping unseal"
+                  # Check if Vault is responding (vault status returns 0=unsealed, 1=error, 2=sealed)
+                  vault status > /dev/null 2>&1
+                  VAULT_STATUS_CODE=$?
+                  if [ $VAULT_STATUS_CODE -ne 0 ] && [ $VAULT_STATUS_CODE -ne 2 ]; then
+                    echo "Vault is not responding (exit code: $VAULT_STATUS_CODE), skipping unseal"
                     exit 0
                   fi
                   
