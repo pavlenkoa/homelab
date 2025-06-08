@@ -1,6 +1,29 @@
 # App-of-Apps configuration for homelab cluster
 # This defines which applications ArgoCD should deploy
 
+# Override global defaults for homelab environment
+global:
+  repository:
+    url: "https://github.com/pavlenkoa/homelab.git"
+    targetRevision: "HEAD"
+  
+  # More permissive sync policy for homelab
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "PrunePropagationPolicy=foreground"
+      - "PruneLast=true"
+      - "ServerSideApply=true"  # Better for large resources
+    retry:
+      limit: 3  # Fewer retries for faster feedback
+      backoff:
+        duration: "5s"
+        factor: 2
+        maxDuration: "2m"
+
 applications:
   # Infrastructure layer - Core cluster services
   - name: cilium
@@ -9,9 +32,11 @@ applications:
     namespace: kube-system
     helm:
       valueFiles: ../../values/homelab/cilium.yaml
+    # Override global sync policy for critical infrastructure
     syncPolicy:
-      prune: false  # Don't auto-prune CNI
-      selfHeal: true
+      automated:
+        prune: false  # Never auto-prune CNI
+        selfHeal: true
 
   # Platform layer - DevOps and management services
   - name: argocd
@@ -20,50 +45,73 @@ applications:
     namespace: argocd
     helm:
       valueFiles: ../../values/homelab/argocd.yaml
+    # Override for ArgoCD safety
     syncPolicy:
-      prune: false  # Don't auto-prune ArgoCD itself
-      selfHeal: true
+      automated:
+        prune: false  # Never auto-prune ArgoCD itself
+        selfHeal: true
 
-  # Future platform services (commented out for now)
-  # - name: vault
-  #   enabled: false
-  #   path: kubernetes/platform/charts/vault
-  #   namespace: vault
-  #   helm:
-  #     valueFiles: ../../values/homelab/vault.yaml
+  # Platform services ready for deployment
+  - name: vault
+    enabled: false
+    path: kubernetes/platform/charts/vault
+    namespace: vault
+    helm:
+      valueFiles: ../../values/homelab/vault.yaml
 
-  # - name: external-secrets
-  #   enabled: false
-  #   path: kubernetes/platform/charts/external-secrets
-  #   namespace: external-secrets
-  #   helm:
-  #     valueFiles: ../../values/homelab/external-secrets.yaml
+  - name: external-secrets
+    enabled: false
+    path: kubernetes/platform/charts/external-secrets
+    namespace: external-secrets
+    helm:
+      valueFiles: ../../values/homelab/external-secrets.yaml
 
-  # - name: victoriametrics
-  #   enabled: false
-  #   path: kubernetes/platform/charts/victoriametrics
-  #   namespace: monitoring
-  #   helm:
-  #     valueFiles: ../../values/homelab/victoriametrics.yaml
+  - name: victoriametrics
+    enabled: false
+    path: kubernetes/platform/charts/victoriametrics
+    namespace: monitoring
+    helm:
+      valueFiles: ../../values/homelab/victoriametrics.yaml
 
-  # - name: grafana
-  #   enabled: false
-  #   path: kubernetes/platform/charts/grafana
-  #   namespace: monitoring
-  #   helm:
-  #     valueFiles: ../../values/homelab/grafana.yaml
+  - name: victorialogs
+    enabled: false
+    path: kubernetes/platform/charts/victorialogs
+    namespace: monitoring
+    helm:
+      valueFiles: ../../values/homelab/victorialogs.yaml
+
+  - name: grafana
+    enabled: false
+    path: kubernetes/platform/charts/grafana
+    namespace: monitoring
+    helm:
+      valueFiles: ../../values/homelab/grafana.yaml
+
+  - name: alloy
+    enabled: false
+    path: kubernetes/platform/charts/alloy
+    namespace: monitoring
+    helm:
+      valueFiles: ../../values/homelab/alloy.yaml
+
+  - name: authelia
+    enabled: false
+    path: kubernetes/platform/charts/authelia
+    namespace: authelia
+    helm:
+      valueFiles: ../../values/homelab/authelia.yaml
 
   # Application layer - Business applications
-  # - name: immich
-  #   enabled: false
-  #   path: kubernetes/applications/charts/immich
-  #   namespace: immich
-  #   helm:
-  #     valueFiles: ../../values/homelab/immich.yaml
+  - name: immich
+    enabled: false
+    path: kubernetes/applications/charts/immich
+    namespace: immich
+    helm:
+      valueFiles: ../../values/homelab/immich.yaml
 
-  # - name: emby
-  #   enabled: false
-  #   path: kubernetes/applications/charts/emby
-  #   namespace: emby
-  #   helm:
-  #     valueFiles: ../../values/homelab/emby.yaml
+  - name: emby
+    enabled: false
+    path: kubernetes/applications/charts/emby
+    namespace: emby
+    helm:
+      valueFiles: ../../values/homelab/emby.yaml

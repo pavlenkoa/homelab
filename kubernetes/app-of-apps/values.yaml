@@ -1,0 +1,40 @@
+# Default values for app-of-apps
+# This file contains global defaults that can be overridden per application
+
+# Global defaults for all applications
+global:
+  # Default repository configuration
+  repository:
+    url: "https://github.com/pavlenkoa/homelab.git"
+    targetRevision: "HEAD"
+  
+  # Default destination cluster
+  destination:
+    server: "https://kubernetes.default.svc"
+    
+  # Default sync policy for all applications
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - "CreateNamespace=true"
+      - "PrunePropagationPolicy=foreground" 
+      - "PruneLast=true"
+    retry:
+      limit: 5
+      backoff:
+        duration: "5s"
+        factor: 2
+        maxDuration: "3m"
+
+  # Default project
+  project: "default"
+  
+  # Default finalizers
+  finalizers:
+    - "resources-finalizer.argocd.argoproj.io"
+
+# Application definitions
+# Each application can override any global default
+applications: []
