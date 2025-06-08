@@ -80,14 +80,14 @@ vault:
         if vault status | grep -q "Sealed.*true"; then
           echo "🔐 Vault is sealed, attempting to unseal..."
           
-          # Check if unseal keys secret exists
-          if kubectl get secret vault-unseal-keys -n vault > /dev/null 2>&1; then
-            echo "📋 Retrieving unseal keys..."
+          # Try to read unseal keys from mounted secret volume
+          if [ -f "/vault/secrets/unseal-key-1" ]; then
+            echo "📋 Retrieving unseal keys from mounted secret..."
             
-            # Get unseal keys
-            UNSEAL_KEY_1=$(kubectl get secret vault-unseal-keys -n vault -o jsonpath='{.data.unseal-key-1}' | base64 -d)
-            UNSEAL_KEY_2=$(kubectl get secret vault-unseal-keys -n vault -o jsonpath='{.data.unseal-key-2}' | base64 -d)
-            UNSEAL_KEY_3=$(kubectl get secret vault-unseal-keys -n vault -o jsonpath='{.data.unseal-key-3}' | base64 -d)
+            # Get unseal keys from mounted files
+            UNSEAL_KEY_1=$(cat /vault/secrets/unseal-key-1)
+            UNSEAL_KEY_2=$(cat /vault/secrets/unseal-key-2)  
+            UNSEAL_KEY_3=$(cat /vault/secrets/unseal-key-3)
             
             # Unseal with 3 keys (threshold)
             vault operator unseal -format=json "$UNSEAL_KEY_1" > /dev/null 2>&1
@@ -101,6 +101,7 @@ vault:
             fi
           else
             echo "⚠️  Unseal keys secret not found - Vault may need initialization"
+            echo "ℹ️  Run the init job: kubectl create job --from=job/vault-vault-complete-init vault-manual-init -n vault"
           fi
         else
           echo "✅ Vault is already unsealed"
@@ -131,31 +132,17 @@ vault:
       create: false  # We'll use the custom service account with RBAC
       name: "vault-auto-unseal"
     
-    # Extra volumes and mounts for kubectl access in postStart hook
+    # Mount unseal keys secret for postStart hook
     volumes:
-      - name: kubectl-binary
-        emptyDir: {}
+      - name: vault-unseal-keys
+        secret:
+          secretName: vault-unseal-keys
+          optional: true
     
     volumeMounts:
-      - name: kubectl-binary
-        mountPath: /usr/local/bin/kubectl
-        subPath: kubectl
-    
-    # Init container to install kubectl for postStart hook
-    extraInitContainers:
-      - name: install-kubectl
-        image: alpine:latest
-        command:
-          - sh
-          - -c
-          - |
-            apk add --no-cache curl
-            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-            chmod +x kubectl
-            cp kubectl /shared/kubectl
-        volumeMounts:
-          - name: kubectl-binary
-            mountPath: /shared
+      - name: vault-unseal-keys
+        mountPath: /vault/secrets
+        readOnly: true
 
   # UI configuration
   ui:
