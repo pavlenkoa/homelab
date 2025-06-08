@@ -53,7 +53,7 @@ applications:
 
   # Platform services ready for deployment
   - name: vault
-    enabled: false
+    enabled: true
     path: kubernetes/platform/charts/vault
     namespace: vault
     helm:
