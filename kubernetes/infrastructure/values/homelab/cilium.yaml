@@ -51,16 +51,14 @@ bandwidthManager:
 # Enable local redirect policy
 localRedirectPolicy: true
 
-# Operator resource limits  
+# Operator resource limits for single-node cluster
 operator:
-  # Single replica for single-node cluster
+  # CRITICAL: Single replica to avoid hostPort conflicts on single node
   replicas: 1
   resources:
     limits:
       memory: 256Mi
     requests:
       memory: 128Mi
-
-# Alternative path for some Cilium versions
-cilium-operator:
-  replicas: 1
+  # Pod anti-affinity prevents multiple replicas on same node anyway
+  # but setting replicas=1 avoids the conflict entirely
