@@ -44,7 +44,7 @@ spec:
           image: {{ .Values.autoUnseal.initJob.image }}
           env:
             - name: VAULT_ADDR
-              value: "http://{{ include "vault-complete.fullname" . }}:8200"
+              value: "http://vault:8200"
             - name: VAULT_SKIP_VERIFY
               value: "true"
             - name: PATH
@@ -55,7 +55,7 @@ spec:
             - |
               # Wait for Vault service to be available
               echo "Waiting for Vault service to be ready..."
-              until /shared/kubectl get service {{ include "vault-complete.fullname" . }} -n {{ .Release.Namespace }} > /dev/null 2>&1; do
+              until /shared/kubectl get service vault -n {{ .Release.Namespace }} > /dev/null 2>&1; do
                 echo "Waiting for Vault service..."
                 sleep 5
               done

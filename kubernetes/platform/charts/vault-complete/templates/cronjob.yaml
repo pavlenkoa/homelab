@@ -43,7 +43,7 @@ spec:
               image: {{ .Values.autoUnseal.cronJob.image }}
               env:
                 - name: VAULT_ADDR
-                  value: "http://{{ include "vault-complete.fullname" . }}:8200"
+                  value: "http://vault:8200"
                 - name: VAULT_SKIP_VERIFY
                   value: "true"
                 - name: PATH
@@ -53,7 +53,7 @@ spec:
                 - -c
                 - |
                   # Check if Vault service is available
-                  if ! /shared/kubectl get service {{ include "vault-complete.fullname" . }} -n {{ .Release.Namespace }} > /dev/null 2>&1; then
+                  if ! /shared/kubectl get service vault -n {{ .Release.Namespace }} > /dev/null 2>&1; then
                     echo "Vault service not found, skipping unseal"
                     exit 0
                   fi
