@@ -1,0 +1,28 @@
+# Vault Complete - Default values
+# This chart deploys Vault with auto-unseal capabilities
+
+# Pass-through values to the vault subchart
+vault:
+  # Default values - will be overridden by homelab values
+  global:
+    enabled: true
+
+# Auto-unseal configuration
+autoUnseal:
+  enabled: true
+  
+  # RBAC configuration
+  rbac:
+    create: true
+    serviceAccountName: "vault-auto-unseal"
+  
+  # Initialization job configuration
+  initJob:
+    enabled: true
+    image: "hashicorp/vault:1.15.2"
+    
+  # Auto-unseal CronJob configuration  
+  cronJob:
+    enabled: true
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    image: "hashicorp/vault:1.15.2"

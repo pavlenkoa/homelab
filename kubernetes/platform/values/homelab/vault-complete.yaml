@@ -1,10 +1,31 @@
-# HashiCorp Vault configuration for homelab
+# HashiCorp Vault Complete configuration for homelab
+# This includes Vault server + auto-unseal capabilities
 
+# Auto-unseal configuration
+autoUnseal:
+  enabled: true
+  
+  # RBAC configuration
+  rbac:
+    create: true
+    serviceAccountName: "vault-auto-unseal"
+  
+  # Initialization job configuration
+  initJob:
+    enabled: true
+    image: "hashicorp/vault:1.15.2"
+    
+  # Auto-unseal CronJob configuration  
+  cronJob:
+    enabled: true
+    schedule: "*/5 * * * *"  # Every 5 minutes
+    image: "hashicorp/vault:1.15.2"
+
+# Vault subchart configuration
 vault:
   # Global configuration
   global:
     enabled: true
-    namespace: "vault"
 
   # Server configuration
   server:
