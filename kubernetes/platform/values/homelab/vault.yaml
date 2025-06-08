@@ -1,0 +1,74 @@
+# HashiCorp Vault configuration for homelab
+
+vault:
+  # Global configuration
+  global:
+    enabled: true
+    namespace: "vault"
+
+  # Server configuration
+  server:
+    # Use development mode for homelab (NOT for production)
+    dev:
+      enabled: true
+      devRootToken: "homelab-vault-token"  # Fixed token for development
+    
+    # Single instance for homelab
+    standalone:
+      enabled: false  # Disabled when dev mode is enabled
+
+    # NodePort service for easy access
+    service:
+      type: NodePort
+      nodePort: 30082
+      port: 8200
+
+    # Data storage (not needed in dev mode)
+    dataStorage:
+      enabled: false
+    
+    # Resource limits for single-node cluster
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+    # Readiness and liveness probes
+    readinessProbe:
+      enabled: true
+      path: "/v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204"
+    livenessProbe:
+      enabled: true
+      path: "/v1/sys/health?standbyok=true"
+      initialDelaySeconds: 60
+
+  # UI configuration
+  ui:
+    enabled: true
+    serviceType: "NodePort"
+    serviceNodePort: 30082
+
+  # Injector configuration (for secret injection)
+  injector:
+    enabled: true
+    
+    # Resource limits for injector
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 128Mi
+        cpu: 250m
+
+    # Agent configuration for sidecar injection
+    agentImage:
+      repository: "hashicorp/vault"
+      tag: "1.15.2"
+
+  # CSI driver (optional for homelab)
+  csi:
+    enabled: false
