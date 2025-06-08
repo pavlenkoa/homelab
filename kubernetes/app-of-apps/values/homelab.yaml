@@ -54,10 +54,10 @@ applications:
   # Platform services ready for deployment
   - name: vault
     enabled: true
-    path: kubernetes/platform/charts/vault
+    path: kubernetes/platform/charts/vault-complete
     namespace: vault
     helm:
-      valueFiles: ../../values/homelab/vault.yaml
+      valueFiles: ../../values/homelab/vault-complete.yaml
 
   - name: external-secrets
     enabled: false
