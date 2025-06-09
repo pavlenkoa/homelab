@@ -7,11 +7,21 @@ kubeProxyReplacement: "true"  # Enable for better observability and performance
 ipv6:
   enabled: false
 
-# Single-node networking optimizations
-tunnel: "vxlan"
-autoDirectNodeRoutes: false  # Disable for single-node
+# OrbStack-specific networking - try native routing mode as suggested in GitHub issues
+routingMode: "native"  # Use native instead of tunnel for OrbStack
+autoDirectNodeRoutes: true  # Enable for native routing
 endpointRoutes:
-  enabled: false  # Not needed for single-node
+  enabled: true  # Enable for native routing
+
+# BPF datapath configuration for OrbStack
+bpf:
+  # Try netkit datapath mode as mentioned in OrbStack issues
+  datapathMode: "netkit"
+  # Enable automatic mount 
+  autoMount:
+    enabled: true
+  # Enable map preallocation for better performance
+  preallocateMaps: true
 
 # Enable Hubble for network observability
 hubble:
@@ -65,9 +75,17 @@ policyEnforcementMode: "default"
 # Single-node cluster optimizations
 nodePort:
   enabled: true  # Enable NodePort for single-node access
+  enableHealthCheck: true  # Enable health checks for NodePort
+
+# Enable HostPort support for single-node
+hostPort:
+  enabled: true
 
 # Enable health checking
 healthChecking: true
+
+# OrbStack-specific device configuration
+devices: "eth+"  # Match OrbStack network devices
 
 # Disable cluster mesh for single-node
 clustermesh:
