@@ -1,0 +1,156 @@
+{{- if .Values.autoUnseal.enabled }}
+---
+# One-time initialization job (helm hook)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "vault-complete.fullname" . }}-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vault-complete.labels" . | nindent 4 }}
+    app.kubernetes.io/component: vault-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "vault-complete.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: vault-init
+    spec:
+      serviceAccountName: {{ .Values.autoUnseal.rbac.serviceAccountName }}
+      restartPolicy: OnFailure
+      initContainers:
+        - name: install-tools
+          image: alpine:latest
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache wget jq > /dev/null 2>&1
+              # Download kubectl
+              KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+              wget -q -O /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+              chmod +x /tmp/kubectl
+              cp /tmp/kubectl /shared/kubectl
+              echo "✓ Tools installed successfully"
+          volumeMounts:
+            - name: shared-tools
+              mountPath: /shared
+      containers:
+        - name: vault-init
+          image: {{ .Values.autoUnseal.image | default "hashicorp/vault:1.15.2" }}
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault:8200"
+            - name: VAULT_SKIP_VERIFY
+              value: "true"
+            - name: PATH
+              value: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/shared"
+          command:
+            - sh
+            - -c
+            - |
+              echo "→ Starting Vault initialization process..."
+              
+              # Wait for Vault service to be available
+              echo "→ Waiting for Vault service..."
+              until /shared/kubectl get service vault -n {{ .Release.Namespace }} > /dev/null 2>&1; do
+                echo "→ Waiting for Vault service..."
+                sleep 5
+              done
+              
+              # Wait for Vault to respond (up to 5 minutes)
+              echo "→ Waiting for Vault to respond..."
+              timeout=300
+              elapsed=0
+              while true; do
+                vault status > /dev/null 2>&1
+                VAULT_STATUS_CODE=$?
+                # Exit codes: 0=unsealed, 1=error, 2=sealed but responding
+                if [ $VAULT_STATUS_CODE -eq 0 ] || [ $VAULT_STATUS_CODE -eq 2 ]; then
+                  echo "✓ Vault is responding (status code: $VAULT_STATUS_CODE)"
+                  break
+                fi
+                if [ $elapsed -ge $timeout ]; then
+                  echo "✗ Timeout waiting for Vault to respond"
+                  exit 1
+                fi
+                echo "→ Waiting for Vault to start... ($elapsed/$timeout seconds)"
+                sleep 5
+                elapsed=$((elapsed + 5))
+              done
+              
+              # Check if already initialized
+              if vault status | grep -q "Initialized.*true"; then
+                echo "✓ Vault is already initialized"
+                exit 0
+              fi
+              
+              # Check if secret already exists (from previous run)
+              if /shared/kubectl get secret vault-unseal-keys -n {{ .Release.Namespace }} > /dev/null 2>&1; then
+                echo "✓ Unseal keys secret already exists"
+                exit 0
+              fi
+              
+              echo "→ Initializing Vault..."
+              
+              # Initialize Vault
+              INIT_OUTPUT=$(vault operator init -key-shares=5 -key-threshold=3 -format=json)
+              if [ $? -ne 0 ]; then
+                echo "✗ Failed to initialize Vault"
+                exit 1
+              fi
+              
+              echo "✓ Vault initialized successfully"
+              
+              # Extract keys and token using simple parsing
+              echo "$INIT_OUTPUT" > /tmp/vault_init.json
+              
+              echo "→ Parsing initialization output..."
+              
+              # Extract unseal keys using shell parsing (works across containers)
+              # The JSON format is predictable, so we can parse it reliably
+              UNSEAL_KEY_1=$(echo "$INIT_OUTPUT" | grep -A 10 '"unseal_keys_b64"' | grep -o '"[A-Za-z0-9+/=]*"' | sed -n '1p' | tr -d '"')
+              UNSEAL_KEY_2=$(echo "$INIT_OUTPUT" | grep -A 10 '"unseal_keys_b64"' | grep -o '"[A-Za-z0-9+/=]*"' | sed -n '2p' | tr -d '"')
+              UNSEAL_KEY_3=$(echo "$INIT_OUTPUT" | grep -A 10 '"unseal_keys_b64"' | grep -o '"[A-Za-z0-9+/=]*"' | sed -n '3p' | tr -d '"')
+              UNSEAL_KEY_4=$(echo "$INIT_OUTPUT" | grep -A 10 '"unseal_keys_b64"' | grep -o '"[A-Za-z0-9+/=]*"' | sed -n '4p' | tr -d '"')
+              UNSEAL_KEY_5=$(echo "$INIT_OUTPUT" | grep -A 10 '"unseal_keys_b64"' | grep -o '"[A-Za-z0-9+/=]*"' | sed -n '5p' | tr -d '"')
+              
+              # Extract root token - it starts with "hvs."
+              ROOT_TOKEN=$(echo "$INIT_OUTPUT" | grep '"root_token"' | grep -o '"hvs\.[^"]*"' | tr -d '"')
+              
+              echo "→ Validating extracted keys..."
+              
+              # Validate we extracted the keys properly
+              if [ -z "$UNSEAL_KEY_1" ] || [ -z "$ROOT_TOKEN" ]; then
+                echo "✗ Failed to extract keys from initialization output"
+                echo "Debugging init output:"
+                cat /tmp/vault_init.json
+                exit 1
+              fi
+              
+              echo "✓ Extracted keys and token successfully"
+              
+              # Create Kubernetes secret
+              /shared/kubectl create secret generic vault-unseal-keys \
+                --from-literal=unseal-key-1="$UNSEAL_KEY_1" \
+                --from-literal=unseal-key-2="$UNSEAL_KEY_2" \
+                --from-literal=unseal-key-3="$UNSEAL_KEY_3" \
+                --from-literal=unseal-key-4="$UNSEAL_KEY_4" \
+                --from-literal=unseal-key-5="$UNSEAL_KEY_5" \
+                --from-literal=root-token="$ROOT_TOKEN" \
+                --namespace={{ .Release.Namespace }}
+              
+              echo "✓ Unseal keys secret created successfully"
+              echo "✓ Vault initialization complete!"
+          volumeMounts:
+            - name: shared-tools
+              mountPath: /shared
+      volumes:
+        - name: shared-tools
+          emptyDir: {}
+{{- end }}
