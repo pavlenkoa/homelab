@@ -16,7 +16,6 @@ global:
       - "CreateNamespace=true"
       - "PrunePropagationPolicy=foreground"
       - "PruneLast=true"
-      - "ServerSideApply=true"  # Better for large resources
     retry:
       limit: 3  # Fewer retries for faster feedback
       backoff:
@@ -61,28 +60,6 @@ applications:
     syncPolicy:
       syncOptions:
         - CreateNamespace=true
-        - RespectIgnoreDifferences=true
-    ignoreDifferences:
-      - group: "apps"
-        kind: "StatefulSet"
-        jqPathExpressions:
-          - ".spec.volumeClaimTemplates[].apiVersion"
-          - ".spec.volumeClaimTemplates[].kind"
-      - group: admissionregistration.k8s.io
-        kind: ValidatingWebhookConfiguration
-        jqPathExpressions:
-          - .webhooks[]?.clientConfig.caBundle
-      - group: "*"
-        kind: "*"
-        jsonPointers:
-          - /metadata/generation
-      - group: admissionregistration.k8s.io
-        kind: ValidatingWebhookConfiguration
-        name: keda-admission
-        jsonPointers:
-          - /webhooks/0/namespaceSelector
-          - /webhooks/1/namespaceSelector
-          - /webhooks/2/namespaceSelector
 
   - name: external-secrets
     enabled: false
