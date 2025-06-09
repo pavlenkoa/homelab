@@ -60,6 +60,17 @@ applications:
     syncPolicy:
       syncOptions:
         - CreateNamespace=true
+        - ServerSideApply=true
+    ignoreDifferences:
+      - group: "apps"
+        kind: "StatefulSet"
+        jqPathExpressions:
+          - ".spec.volumeClaimTemplates[].apiVersion"
+          - ".spec.volumeClaimTemplates[].kind"
+      - group: admissionregistration.k8s.io
+        kind: MutatingWebhookConfiguration
+        jqPathExpressions:
+          - .webhooks[]?.clientConfig.caBundle
 
   - name: external-secrets
     enabled: false
