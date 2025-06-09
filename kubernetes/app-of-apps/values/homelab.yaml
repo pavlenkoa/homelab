@@ -16,6 +16,8 @@ global:
       - "CreateNamespace=true"
       - "PrunePropagationPolicy=foreground"
       - "PruneLast=true"
+      - "ServerSideApply=true"
+      - "ServerSideDiff=true"
     retry:
       limit: 3  # Fewer retries for faster feedback
       backoff:
@@ -57,20 +59,6 @@ applications:
     namespace: vault
     helm:
       valueFiles: ../../values/homelab/vault.yaml
-    syncPolicy:
-      syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
-    ignoreDifferences:
-      - group: "apps"
-        kind: "StatefulSet"
-        jqPathExpressions:
-          - ".spec.volumeClaimTemplates[].apiVersion"
-          - ".spec.volumeClaimTemplates[].kind"
-      - group: admissionregistration.k8s.io
-        kind: MutatingWebhookConfiguration
-        jqPathExpressions:
-          - .webhooks[]?.clientConfig.caBundle
 
   - name: external-secrets
     enabled: false
