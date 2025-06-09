@@ -1,6 +1,8 @@
-{{- range .Values.applications }}
+{{- range $projectName, $projectConfig := (omit .Values "global") }}
+{{- range $projectConfig.applications }}
 {{- if .enabled }}
 ---
-{{- include "app-of-apps.application" (list $ .) }}
+{{- include "app-of-apps.application" (list $ . $projectName $projectConfig) }}
+{{- end }}
 {{- end }}
 {{- end }}
