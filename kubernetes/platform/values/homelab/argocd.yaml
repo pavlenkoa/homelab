@@ -37,6 +37,29 @@ server:
             end
           end
           return hs
+    
+    
+    # Global ignore differences for common Kubernetes normalization issues
+    resource.customizations.ignoreDifferences.all: |
+      jsonPointers:
+      - /metadata/generation
+      managedFieldsManagers:
+      - kube-controller-manager
+    
+    # StatefulSet volumeClaimTemplates normalization  
+    resource.customizations.ignoreDifferences.apps_StatefulSet: |
+      jqPathExpressions:
+      - .spec.volumeClaimTemplates[].apiVersion
+      - .spec.volumeClaimTemplates[].kind
+    
+    # Webhook CA bundle changes (managed by cert-manager)
+    resource.customizations.ignoreDifferences.admissionregistration.k8s.io_MutatingWebhookConfiguration: |
+      jqPathExpressions:
+      - .webhooks[]?.clientConfig.caBundle
+    
+    resource.customizations.ignoreDifferences.admissionregistration.k8s.io_ValidatingWebhookConfiguration: |
+      jqPathExpressions:
+      - .webhooks[]?.clientConfig.caBundle
 
 # Controller configuration
 controller:

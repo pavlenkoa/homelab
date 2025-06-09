@@ -1,10 +1,23 @@
-# HashiCorp Vault configuration for homelab
+# HashiCorp Vault Complete configuration for homelab
+# This includes Vault server + auto-unseal capabilities
 
+# Auto-unseal configuration
+autoUnseal:
+  enabled: true
+  
+  # RBAC configuration
+  rbac:
+    create: true
+    serviceAccountName: "vault-auto-unseal"
+  
+  # One-time initialization job (helm hook)
+  image: "hashicorp/vault:1.15.2"
+
+# Vault subchart configuration
 vault:
   # Global configuration
   global:
     enabled: true
-    namespace: "vault"
 
   # Server configuration
   server:
@@ -50,16 +63,176 @@ vault:
       storageClass: null
       accessMode: ReadWriteOnce
     
-    # Simple postStart hook for basic unsealing (backup to CronJob)
+    # Additional volumes for auto-unseal
+    volumes:
+      - name: vault-unseal-scripts
+        emptyDir: {}
+
+    # Volume mounts for auto-unseal
+    volumeMounts:
+      - name: vault-unseal-scripts
+        mountPath: /vault/scripts
+
+    # Init container for auto-unseal script preparation
+    extraInitContainers:
+      - name: vault-unseal-prep
+        image: alpine:latest
+        env:
+          - name: VAULT_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        command:
+          - sh
+          - -c
+          - |
+            echo "→ Preparing auto-unseal script..."
+            
+            # Install kubectl for secret access  
+            apk add --no-cache wget > /dev/null 2>&1
+            KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+            wget -q -O /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+            chmod +x /tmp/kubectl
+
+            # Copy kubectl to scripts directory for use by unseal script
+            cp /tmp/kubectl /vault/scripts/kubectl
+            
+            # Create smart auto-unseal script with improved logic and performance
+            cat > /vault/scripts/unseal.sh << 'EOF'
+            #!/bin/sh
+            echo "→ Starting smart Vault auto-unseal..."
+            
+            # STEP 1: Early exit check - if already unsealed, nothing to do (fastest path)
+            echo "→ Checking current Vault status..."
+            if vault status > /dev/null 2>&1 && vault status | grep -q "Sealed.*false"; then
+              echo "✓ Vault is already unsealed, nothing to do"
+              rm -f /vault/scripts/unseal.sh /vault/scripts/kubectl
+              echo "✓ Cleaned up script and kubectl"
+              exit 0
+            fi
+            
+            # STEP 2: Wait for Vault to be initialized (aggressive checking)
+            INIT_TIMEOUT=120
+            INIT_ELAPSED=0
+            echo "→ Waiting for Vault initialization..."
+            while true; do
+              vault status > /dev/null 2>&1
+              STATUS_CODE=$?
+              # Exit codes: 0=unsealed, 1=error, 2=sealed but responding
+              if [ $STATUS_CODE -eq 0 ] || [ $STATUS_CODE -eq 2 ]; then
+                if vault status | grep -q "Initialized.*true"; then
+                  echo "✓ Vault is initialized"
+                  break
+                fi
+              fi
+              if [ $INIT_ELAPSED -ge $INIT_TIMEOUT ]; then
+                echo "✗ Timeout waiting for Vault initialization"
+                exit 1
+              fi
+              echo "Waiting for initialization... ($INIT_ELAPSED/$INIT_TIMEOUT seconds)"
+              sleep 1
+              INIT_ELAPSED=$((INIT_ELAPSED + 1))
+            done
+            
+            # STEP 3: Wait for unseal keys secret (created after initialization)
+            SECRET_TIMEOUT=60
+            SECRET_ELAPSED=0
+            echo "→ Waiting for vault-unseal-keys secret..."
+            while ! /vault/scripts/kubectl get secret vault-unseal-keys -n VAULT_NAMESPACE_PLACEHOLDER > /dev/null 2>&1; do
+              if [ $SECRET_ELAPSED -ge $SECRET_TIMEOUT ]; then
+                echo "✗ Timeout waiting for vault-unseal-keys secret"
+                exit 1
+              fi
+              echo "Waiting for secret... ($SECRET_ELAPSED/$SECRET_TIMEOUT seconds)"
+              sleep 2
+              SECRET_ELAPSED=$((SECRET_ELAPSED + 2))
+            done
+            echo "✓ Secret found!"
+            
+            # STEP 4: Extract unseal keys from secret
+            echo "→ Extracting unseal keys..."
+            UNSEAL_KEY_1=$(/vault/scripts/kubectl get secret vault-unseal-keys -n VAULT_NAMESPACE_PLACEHOLDER -o jsonpath='{.data.unseal-key-1}' | base64 -d)
+            UNSEAL_KEY_2=$(/vault/scripts/kubectl get secret vault-unseal-keys -n VAULT_NAMESPACE_PLACEHOLDER -o jsonpath='{.data.unseal-key-2}' | base64 -d)
+            UNSEAL_KEY_3=$(/vault/scripts/kubectl get secret vault-unseal-keys -n VAULT_NAMESPACE_PLACEHOLDER -o jsonpath='{.data.unseal-key-3}' | base64 -d)
+            
+            if [ -z "$UNSEAL_KEY_1" ] || [ -z "$UNSEAL_KEY_2" ] || [ -z "$UNSEAL_KEY_3" ]; then
+              echo "✗ Failed to extract unseal keys from secret"
+              exit 1
+            fi
+            echo "✓ Keys extracted successfully"
+            
+            # STEP 5: Double-check Vault is responding and still sealed
+            echo "→ Final status check before unsealing..."
+            VAULT_TIMEOUT=30
+            VAULT_ELAPSED=0
+            while true; do
+              vault status > /dev/null 2>&1
+              VAULT_STATUS_CODE=$?
+              # Exit codes: 0=unsealed, 1=error, 2=sealed but responding
+              if [ $VAULT_STATUS_CODE -eq 0 ]; then
+                echo "✓ Vault is already unsealed (race condition avoided)"
+                rm -f /vault/scripts/unseal.sh /vault/scripts/kubectl
+                echo "✓ Cleaned up script and kubectl"
+                exit 0
+              elif [ $VAULT_STATUS_CODE -eq 2 ]; then
+                echo "✓ Vault is responding and sealed, ready to unseal"
+                break
+              fi
+              if [ $VAULT_ELAPSED -ge $VAULT_TIMEOUT ]; then
+                echo "✗ Timeout waiting for Vault to respond"
+                exit 1
+              fi
+              echo "Waiting for Vault to respond... ($VAULT_ELAPSED/$VAULT_TIMEOUT seconds)"
+              sleep 1
+              VAULT_ELAPSED=$((VAULT_ELAPSED + 1))
+            done
+            
+            # STEP 6: Unseal Vault with extracted keys
+            echo "→ Unsealing Vault with extracted keys..."
+            vault operator unseal "$UNSEAL_KEY_1" > /dev/null 2>&1
+            vault operator unseal "$UNSEAL_KEY_2" > /dev/null 2>&1  
+            vault operator unseal "$UNSEAL_KEY_3" > /dev/null 2>&1
+            
+            # STEP 7: Verify unsealing worked
+            if vault status | grep -q "Sealed.*false"; then
+              echo "✓ Vault successfully unsealed!"
+            else
+              echo "✗ Failed to unseal Vault"
+              vault status
+              exit 1
+            fi
+            
+            # STEP 8: Clean up sensitive data and tools
+            rm -f /vault/scripts/unseal.sh /vault/scripts/kubectl
+            echo "✓ Cleaned up unseal script and kubectl"
+            echo "✓ Auto-unseal process completed successfully!"
+            EOF
+
+            # Replace namespace placeholder with actual value
+            sed -i "s/VAULT_NAMESPACE_PLACEHOLDER/$VAULT_NAMESPACE/g" /vault/scripts/unseal.sh
+            
+            chmod +x /vault/scripts/unseal.sh
+            echo "✓ Auto-unseal script prepared successfully"
+        volumeMounts:
+          - name: vault-unseal-scripts
+            mountPath: /vault/scripts
+
+    # Auto-unseal postStart hook - executes script with stdout logging
     postStart:
       - sh
       - -c
       - |
-        # Simple unseal attempt on container start
-        sleep 5
-        if vault status 2>/dev/null | grep -q "Sealed.*true"; then
-          echo "Vault is sealed, will be handled by auto-unseal job"
+        # Redirect all output to main container's stdout for kubectl logs visibility
+        exec > /proc/1/fd/1 2>&1
+        echo "→ Starting auto-unseal process..."
+        if [ -f /vault/scripts/unseal.sh ]; then
+          echo "✓ Found unseal script, executing..."
+          /vault/scripts/unseal.sh
+          echo "→ Script exit code: $?"
+        else
+          echo "✗ Auto-unseal script not found"
         fi
+        echo "✓ PostStart hook completed"
 
     # Resource limits for single-node cluster
     resources:
@@ -83,6 +256,8 @@ vault:
     serviceAccount:
       create: false  # We'll use the custom service account with RBAC
       name: "vault-auto-unseal"
+    
+    # No volume mounts for now - will implement auto-unseal after initialization works
 
   # UI configuration
   ui:
