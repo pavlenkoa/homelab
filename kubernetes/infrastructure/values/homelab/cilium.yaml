@@ -1,108 +1,27 @@
-# Cilium CNI configuration for single-node OrbStack cluster
+# Cilium CNI configuration for K3s cluster
 
-# CRITICAL: Single-node specific configurations
-kubeProxyReplacement: "true"  # Enable for better observability and performance
+# IPAM configuration with cluster pool
+ipam:
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - "10.42.0.0/16"
 
-# Disable IPv6 completely to avoid DNS issues
-ipv6:
-  enabled: false
-
-# OrbStack-specific networking - try native routing mode as suggested in GitHub issues
-routingMode: "native"  # Use native instead of tunnel for OrbStack
-autoDirectNodeRoutes: true  # Enable for native routing
-endpointRoutes:
-  enabled: true  # Enable for native routing
-
-# BPF datapath configuration for OrbStack
-bpf:
-  # Try netkit datapath mode as mentioned in OrbStack issues
-  datapathMode: "netkit"
-  # Enable automatic mount 
-  autoMount:
-    enabled: true
-  # Enable map preallocation for better performance
-  preallocateMaps: true
-
-# Enable Hubble for network observability
+# Hubble configuration for network observability
 hubble:
   enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+    service:
+      type: NodePort
+      nodePort: 30080
   metrics:
     enabled:
       - dns
       - drop
       - tcp
       - flow
+      - port-distribution
       - icmp
       - http
-      - port-distribution
-      - httpV2:exemplars=true;labelsContext=source_ip,source_namespace,source_workload,destination_ip,destination_namespace,destination_workload,traffic_direction
-    serviceMonitor:
-      enabled: false  # Will enable when we deploy Prometheus
-  relay:
-    enabled: true
-    rollOutPods: true
-  ui:
-    enabled: true
-    rollOutPods: true
-    service:
-      type: NodePort
-      nodePort: 30080
-    ingress:
-      enabled: false
-
-# Enable socket LB for better service load balancing
-socketLB:
-  enabled: true
-
-# Enable bandwidth manager
-bandwidthManager:
-  enabled: true
-  bbr: true
-
-# Enable local redirect policy
-localRedirectPolicy: true
-
-# Resource configuration for single-node cluster
-resources:
-  limits:
-    memory: 500Mi
-  requests:
-    memory: 256Mi
-
-# Network policies - start permissive for troubleshooting
-policyEnforcementMode: "default"
-
-# Single-node cluster optimizations
-nodePort:
-  enabled: true  # Enable NodePort for single-node access
-  enableHealthCheck: true  # Enable health checks for NodePort
-
-# Enable HostPort support for single-node
-hostPort:
-  enabled: true
-
-# Enable health checking
-healthChecking: true
-
-# OrbStack-specific device configuration
-devices: "eth+"  # Match OrbStack network devices
-
-# Disable cluster mesh for single-node
-clustermesh:
-  useAPIServer: false
-
-# Operator resource limits for single-node cluster
-operator:
-  # CRITICAL: Single replica to avoid hostPort conflicts on single node
-  replicas: 1
-  # Update strategy to prevent multiple pods during rolling updates
-  updateStrategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 0        # Never create extra pods
-      maxUnavailable: 1  # Allow 1 pod to be unavailable during update
-  resources:
-    limits:
-      memory: 256Mi
-    requests:
-      memory: 128Mi
