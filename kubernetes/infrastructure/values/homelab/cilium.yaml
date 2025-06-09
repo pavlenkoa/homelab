@@ -2,8 +2,6 @@
 
 # CRITICAL: Single-node specific configurations
 kubeProxyReplacement: "true"  # Enable for better observability and performance
-k8sServiceHost: "198.19.249.2"  # OrbStack node IP
-k8sServicePort: "6443"
 
 # Disable IPv6 completely to avoid DNS issues
 ipv6:
