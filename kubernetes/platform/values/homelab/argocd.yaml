@@ -1,40 +1,90 @@
 # ArgoCD configuration for homelab cluster
 
-# Bootstrap app-of-apps using extraObjects
+# Bootstrap app-of-apps using Job hook - creates once and deletes itself
 extraObjects:
-  - apiVersion: argoproj.io/v1alpha1
-    kind: Application
+  - apiVersion: batch/v1
+    kind: Job
     metadata:
-      name: app-of-apps
+      name: argocd-bootstrap
       namespace: argocd
-      finalizers:
-        - resources-finalizer.argocd.argoproj.io
+      annotations:
+        "helm.sh/hook": post-install
+        "helm.sh/hook-weight": "10"
+        "helm.sh/hook-delete-policy": hook-succeeded
     spec:
-      project: default
-      source:
-        repoURL: https://github.com/pavlenkoa/homelab.git
-        targetRevision: HEAD
-        path: kubernetes/app-of-apps
-        helm:
-          valueFiles:
-            - values/homelab.yaml
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: argocd
-      syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
-        syncOptions:
-          - "CreateNamespace=true"
-          - "ServerSideApply=true"
-          - "ServerSideDiff=true"
-        retry:
-          limit: 3
-          backoff:
-            duration: "5s"
-            factor: 2
-            maxDuration: "2m"
+      template:
+        spec:
+          serviceAccountName: argocd-application-controller
+          restartPolicy: Never
+          containers:
+          - name: create-app-of-apps
+            image: bitnami/kubectl:1.30
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "→ Checking if app-of-apps already exists..."
+              if kubectl get application app-of-apps -n argocd >/dev/null 2>&1; then
+                echo "✔ App-of-apps already exists, skipping creation"
+                exit 0
+              fi
+              
+              echo "→ Waiting for ArgoCD to be ready..."
+              echo "→ Waiting for ArgoCD server deployment..."
+              if ! kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd; then
+                echo "✗ ArgoCD server failed to become ready"
+                exit 1
+              fi
+              
+              echo "→ Waiting for ArgoCD application controller..."
+              if ! kubectl wait --for=condition=ready --timeout=300s pod/argocd-application-controller-0 -n argocd; then
+                echo "✗ ArgoCD application controller failed to become ready"
+                exit 1
+              fi
+              
+              echo "→ Waiting for ArgoCD repo server..."
+              if ! kubectl wait --for=condition=available --timeout=300s deployment/argocd-repo-server -n argocd; then
+                echo "✗ ArgoCD repo server failed to become ready"
+                exit 1
+              fi
+              
+              echo "✔ All ArgoCD components are ready, creating app-of-apps Application..."
+              cat <<EOF | kubectl apply -f -
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: app-of-apps
+                namespace: argocd
+                finalizers:
+                  - resources-finalizer.argocd.argoproj.io
+              spec:
+                project: default
+                source:
+                  repoURL: https://github.com/pavlenkoa/homelab.git
+                  targetRevision: HEAD
+                  path: kubernetes/app-of-apps
+                  helm:
+                    valueFiles:
+                      - values/homelab.yaml
+                destination:
+                  server: https://kubernetes.default.svc
+                  namespace: argocd
+                syncPolicy:
+                  automated:
+                    prune: true
+                    selfHeal: true
+                  syncOptions:
+                    - "CreateNamespace=true"
+                    - "ServerSideApply=true"
+                    - "ServerSideDiff=true"
+                  retry:
+                    limit: 3
+                    backoff:
+                      duration: "5s"
+                      factor: 2
+                      maxDuration: "2m"
+              EOF
+              echo "✔ App-of-apps created successfully!"
 
 # Server configuration
 server:
