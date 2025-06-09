@@ -35,8 +35,8 @@ applications:
     # Override global sync policy for critical infrastructure
     syncPolicy:
       automated:
-        prune: false  # Never auto-prune CNI
         selfHeal: true
+        prune: false  # Never auto-prune CNI
 
   # Platform layer - DevOps and management services
   - name: argocd
@@ -54,10 +54,10 @@ applications:
   # Platform services ready for deployment
   - name: vault
     enabled: true
-    path: kubernetes/platform/charts/vault-complete
+    path: kubernetes/platform/charts/vault
     namespace: vault
     helm:
-      valueFiles: ../../values/homelab/vault-complete.yaml
+      valueFiles: ../../values/homelab/vault.yaml
 
   - name: external-secrets
     enabled: false
