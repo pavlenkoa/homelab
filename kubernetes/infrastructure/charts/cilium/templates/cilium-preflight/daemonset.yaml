@@ -3,8 +3,12 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: cilium-pre-flight-check
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ include "cilium.namespace" . }}
   {{- with .Values.preflight.annotations }}
+  {{- with .Values.commonLabels }}
+  labels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -24,6 +28,9 @@ spec:
         k8s-app: cilium-pre-flight-check
         app.kubernetes.io/name: cilium-pre-flight-check
         kubernetes.io/cluster-service: "true"
+        {{- with .Values.commonLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         {{- with .Values.preflight.podLabels }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -86,7 +93,7 @@ spec:
           - name: etcd-config-path
             mountPath: /var/lib/etcd-config
             readOnly: true
-          {{- if or .Values.etcd.ssl .Values.etcd.managed }}
+          {{- if .Values.etcd.ssl }}
           - name: etcd-secrets
             mountPath: /var/lib/etcd-secrets
             readOnly: true
@@ -132,11 +139,9 @@ spec:
           env:
           {{- if .Values.k8sServiceHost }}
           - name: KUBERNETES_SERVICE_HOST
-            value: {{ .Values.k8sServiceHost | quote }}
-          {{- end }}
-          {{- if .Values.k8sServicePort }}
+            value: {{ include "k8sServiceHost" . }}
           - name: KUBERNETES_SERVICE_PORT
-            value: {{ .Values.k8sServicePort | quote }}
+            value: {{ include "k8sServicePort" . }}
           {{- end }}
           volumeMounts:
           - name: cilium-run
@@ -145,7 +150,7 @@ spec:
           - name: etcd-config-path
             mountPath: /var/lib/etcd-config
             readOnly: true
-          {{- if or .Values.etcd.ssl .Values.etcd.managed }}
+          {{- if .Values.etcd.ssl }}
           - name: etcd-secrets
             mountPath: /var/lib/etcd-secrets
             readOnly: true
@@ -168,15 +173,9 @@ spec:
           terminationMessagePolicy: FallbackToLogsOnError
         {{- end }}
       hostNetwork: true
-      # This is here to seamlessly allow migrate-identity to work with
-      # etcd-operator setups. The assumption is that other cases would also
-      # work since the cluster DNS would forward the request on.
-      # This differs from the cilium-agent daemonset, where this is only
-      # enabled when etcd.managed=true
       dnsPolicy: ClusterFirstWithHostNet
       restartPolicy: Always
       priorityClassName: {{ include "cilium.priorityClass" (list $ .Values.preflight.priorityClassName "system-node-critical") }}
-      serviceAccount: {{ .Values.serviceAccounts.preflight.name | quote }}
       serviceAccountName: {{ .Values.serviceAccounts.preflight.name | quote }}
       automountServiceAccountToken: {{ .Values.serviceAccounts.preflight.automount }}
       terminationGracePeriodSeconds: {{ .Values.preflight.terminationGracePeriodSeconds }}
@@ -209,7 +208,7 @@ spec:
           - key: etcd-config
             path: etcd.config
         # To read the k8s etcd secrets in case the user might want to use TLS
-      {{- if or .Values.etcd.ssl .Values.etcd.managed }}
+      {{- if .Values.etcd.ssl }}
       - name: etcd-secrets
         secret:
           secretName: cilium-etcd-secrets
@@ -217,8 +216,8 @@ spec:
           defaultMode: 0400
           optional: true
       {{- end }}
+      {{- end }}
       {{- with .Values.preflight.extraVolumes }}
       {{- toYaml . | nindent 6 }}
-      {{- end }}
       {{- end }}
 {{- end }}
