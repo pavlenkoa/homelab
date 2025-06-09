@@ -1,0 +1,47 @@
+{{- range $projectName, $projectConfig := (omit .Values "global") }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $projectName }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: {{ $projectConfig.description | default $projectName | quote }}
+  
+  # Source repositories
+  sourceRepos:
+    {{- range ($projectConfig.sourceRepos | default (list $.Values.global.repository.url)) }}
+    - {{ . }}
+    {{- end }}
+  
+  # Destination clusters and namespaces
+  destinations:
+    {{- range ($projectConfig.destinations | default (list (dict "namespace" "*" "server" $.Values.global.destination.server))) }}
+    - namespace: {{ .namespace | quote }}
+      server: {{ .server }}
+    {{- end }}
+  
+  # Cluster resource allow list
+  clusterResourceWhitelist:
+    {{- range ($projectConfig.clusterResourceWhitelist | default (list (dict "group" "*" "kind" "*"))) }}
+    - group: {{ .group | quote }}
+      kind: {{ .kind | quote }}
+    {{- end }}
+  
+  # Namespace resource allow list
+  namespaceResourceWhitelist:
+    {{- range ($projectConfig.namespaceResourceWhitelist | default (list (dict "group" "*" "kind" "*"))) }}
+    - group: {{ .group | quote }}
+      kind: {{ .kind | quote }}
+    {{- end }}
+  
+  # Project roles (can be customized per project)
+  {{- if $projectConfig.roles }}
+  roles:
+    {{- toYaml $projectConfig.roles | nindent 4 }}
+  {{- else }}
+  roles: []
+  {{- end }}
+{{- end }}

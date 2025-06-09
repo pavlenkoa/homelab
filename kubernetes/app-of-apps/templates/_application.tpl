@@ -1,9 +1,11 @@
 {{/*
-ArgoCD Application template helper with global defaults
+ArgoCD Application template helper with global and project defaults
 */}}
 {{- define "app-of-apps.application" -}}
 {{- $root := index . 0 -}}
 {{- $app := index . 1 -}}
+{{- $projectName := index . 2 -}}
+{{- $projectConfig := index . 3 -}}
 {{- $global := $root.Values.global -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -15,7 +17,7 @@ metadata:
     - {{ . }}
     {{- end }}
 spec:
-  project: {{ $app.project | default $global.project }}
+  project: {{ $projectName }}
   source:
     repoURL: {{ (($app.repository).url) | default $global.repository.url }}
     targetRevision: {{ (($app.repository).targetRevision) | default $global.repository.targetRevision }}
@@ -48,7 +50,7 @@ spec:
     server: {{ (($app.destination).server) | default $global.destination.server }}
     namespace: {{ $app.namespace | default "default" }}
   syncPolicy:
-    {{- $syncPolicy := mergeOverwrite (deepCopy $global.syncPolicy) ($app.syncPolicy | default dict) }}
+    {{- $syncPolicy := mergeOverwrite (deepCopy $global.syncPolicy) ($projectConfig.syncPolicy | default dict) ($app.syncPolicy | default dict) }}
     automated:
       prune: {{ $syncPolicy.automated.prune }}
       selfHeal: {{ $syncPolicy.automated.selfHeal }}
