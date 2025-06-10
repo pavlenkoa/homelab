@@ -104,6 +104,8 @@ server:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     tls: true
+    # Force ingress to use HTTP port since server.insecure=true
+    servicePort: 80
 
 # ArgoCD configuration via configs section
 configs:
