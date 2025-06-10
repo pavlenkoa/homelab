@@ -1,6 +1,6 @@
 # TODO
 
-## Current Status: GitOps Foundation Complete! 🎉
+## Current Status: GitOps Foundation - NETWORK ISSUES IDENTIFIED! ⚠️
 
 **✅ Phases 1-2 COMPLETED** (Foundation + GitOps)
 - **Kubernetes Cluster**: OrbStack with Cilium CNI + Hubble observability
@@ -10,7 +10,18 @@
 - **Repository**: Public GitHub integration with automated sync
 - **Template System**: Extensible App-of-Apps with global defaults and per-app overrides
 
-**🚀 Next: Phase 3** - Deploy platform services (Vault, VictoriaMetrics, Grafana)
+**🚨 CRITICAL ISSUES IDENTIFIED:**
+- **ArgoCD DNS Issues**: `dial tcp: lookup argocd-repo-server: i/o timeout` and `dial tcp: lookup argocd-redis: i/o timeout`
+- **Network Discovery**: Service discovery failing between ArgoCD components
+- **Root Cause**: Likely Cilium networking configuration for K3d environment
+
+**🔧 IMMEDIATE PRIORITIES:**
+1. **Fix Cilium networking configuration** for K3d cluster (192.168.117.x network)
+2. **Resolve ArgoCD internal connectivity** - repo-server and redis communication
+3. **Verify CoreDNS functionality** and service discovery
+4. **Test App-of-Apps workflow** after network fixes
+
+**⏸️ BLOCKED: Phase 3** - Deploy platform services (Vault, VictoriaMetrics, Grafana) until networking is resolved
 
 ---
 
