@@ -10,17 +10,9 @@ controller:
   # Enable additional features  
   enableAnnotationValidations: true
   
-  # Metrics and monitoring
+  # Metrics and monitoring (disabled for now - no Prometheus Operator installed)
   metrics:
-    enabled: true
-    serviceMonitor:
-      enabled: true
-      additionalLabels:
-        release: prometheus
-    prometheusRule:
-      enabled: true
-      additionalLabels:
-        release: prometheus
+    enabled: false
 
   # Resource limits for single-node cluster
   resources:
