@@ -63,7 +63,7 @@ platform:
   # Platform apps inherit global sync policy (prune: true, selfHeal: true)
   applications:
     - name: argocd
-      enabled: false  # Already manually installed
+      enabled: true  # Now self-managed via GitOps
       path: kubernetes/platform/charts/argocd
       namespace: argocd
       helm:
