@@ -1,0 +1,173 @@
+{{- if and .Values.autoUnseal.enabled .Values.vaultConfig.enabled }}
+---
+# Vault configuration job for external services (helm hook)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "vault-complete.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "vault-complete.labels" . | nindent 4 }}
+    app.kubernetes.io/component: vault-config
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "20"  # Run after init job (weight 10)
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "vault-complete.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: vault-config
+    spec:
+      serviceAccountName: {{ .Values.autoUnseal.rbac.serviceAccountName }}
+      restartPolicy: OnFailure
+      initContainers:
+        - name: install-tools
+          image: alpine:latest
+          command:
+            - sh
+            - -c
+            - |
+              apk add --no-cache wget > /dev/null 2>&1
+              # Download kubectl
+              KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
+              wget -q -O /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+              chmod +x /tmp/kubectl
+              cp /tmp/kubectl /shared/kubectl
+              echo "✓ Tools installed successfully"
+          volumeMounts:
+            - name: shared-tools
+              mountPath: /shared
+      containers:
+        - name: vault-config
+          image: {{ .Values.autoUnseal.image | default "hashicorp/vault:1.15.2" }}
+          env:
+            - name: VAULT_ADDR
+              value: "http://vault:8200"
+            - name: VAULT_SKIP_VERIFY
+              value: "true"
+            - name: PATH
+              value: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/shared"
+          command:
+            - sh
+            - -c
+            - |
+              echo "→ Starting Vault configuration for external services..."
+              
+              # Wait for Vault to be available and unsealed
+              echo "→ Waiting for Vault to be ready and unsealed..."
+              timeout=300
+              elapsed=0
+              while true; do
+                vault status > /dev/null 2>&1
+                VAULT_STATUS_CODE=$?
+                # Exit code 0 = unsealed and ready
+                if [ $VAULT_STATUS_CODE -eq 0 ]; then
+                  if vault status | grep -q "Sealed.*false"; then
+                    echo "✓ Vault is unsealed and ready"
+                    break
+                  fi
+                fi
+                if [ $elapsed -ge $timeout ]; then
+                  echo "✗ Timeout waiting for Vault to be unsealed"
+                  vault status
+                  exit 1
+                fi
+                echo "→ Waiting for Vault to be unsealed... ($elapsed/$timeout seconds)"
+                sleep 5
+                elapsed=$((elapsed + 5))
+              done
+              
+              # Get root token from the secret created by init job
+              echo "→ Retrieving root token..."
+              ROOT_TOKEN=$(/shared/kubectl get secret vault-unseal-keys -n {{ .Release.Namespace }} -o jsonpath='{.data.root-token}' | base64 -d)
+              if [ -z "$ROOT_TOKEN" ]; then
+                echo "✗ Failed to retrieve root token"
+                exit 1
+              fi
+              export VAULT_TOKEN="$ROOT_TOKEN"
+              echo "✓ Root token retrieved"
+              
+              {{- if .Values.vaultConfig.kvEngine.enabled }}
+              # Check if KV v2 engine is enabled
+              echo "→ Checking KV {{ .Values.vaultConfig.kvEngine.version }} secret engine..."
+              if vault secrets list | grep -q "{{ .Values.vaultConfig.kvEngine.path }}/"; then
+                echo "✓ KV {{ .Values.vaultConfig.kvEngine.version }} secret engine already enabled"
+              else
+                echo "→ Enabling KV {{ .Values.vaultConfig.kvEngine.version }} secret engine..."
+                vault secrets enable -version={{ .Values.vaultConfig.kvEngine.version }} -path={{ .Values.vaultConfig.kvEngine.path }} kv
+                echo "✓ KV {{ .Values.vaultConfig.kvEngine.version }} secret engine enabled at {{ .Values.vaultConfig.kvEngine.path }}/"
+              fi
+              {{- end }}
+              
+              {{- if .Values.vaultConfig.externalSecrets.enabled }}
+              {{- if .Values.vaultConfig.externalSecrets.kubernetesAuth.enabled }}
+              # Check if Kubernetes auth method is configured
+              echo "→ Checking if Kubernetes auth method exists..."
+              if vault auth list | grep -q "{{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }}/"; then
+                echo "✓ Kubernetes auth method already enabled"
+              else
+                echo "→ Enabling Kubernetes auth method..."
+                vault auth enable -path={{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }} kubernetes
+                echo "✓ Kubernetes auth method enabled"
+              fi
+              
+              # Configure Kubernetes auth method
+              echo "→ Configuring Kubernetes auth method..."
+              vault write auth/{{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }}/config \
+                kubernetes_host="https://kubernetes.default.svc.cluster.local:443"
+              echo "✓ Kubernetes auth method configured"
+              {{- end }}
+              
+              # Check if external-secrets policy exists
+              echo "→ Checking external-secrets policy..."
+              if vault policy list | grep -q "external-secrets"; then
+                echo "✓ external-secrets policy already exists"
+              else
+                echo "→ Creating external-secrets policy..."
+                vault policy write external-secrets - <<EOF
+              # Allow reading secrets from {{ .Values.vaultConfig.kvEngine.path }}/data/* path
+              path "{{ .Values.vaultConfig.kvEngine.path }}/data/*" {
+                capabilities = ["read"]
+              }
+              
+              # Allow listing secrets (for debugging)
+              path "{{ .Values.vaultConfig.kvEngine.path }}/metadata/*" {
+                capabilities = ["list", "read"]
+              }
+              EOF
+                echo "✓ external-secrets policy created"
+              fi
+              
+              # Check if external-secrets role exists
+              echo "→ Checking external-secrets role..."
+              if vault list auth/{{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }}/role | grep -q "external-secrets"; then
+                echo "✓ external-secrets role already exists"
+              else
+                echo "→ Creating external-secrets role..."
+                vault write auth/{{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }}/role/external-secrets \
+                  bound_service_account_names={{ .Values.vaultConfig.externalSecrets.serviceAccount.name }} \
+                  bound_service_account_namespaces={{ .Values.vaultConfig.externalSecrets.serviceAccount.namespace }} \
+                  policies=external-secrets \
+                  ttl={{ .Values.vaultConfig.externalSecrets.tokenTTL }}
+                echo "✓ external-secrets role created"
+              fi
+              {{- end }}
+              
+              echo "✓ Vault configuration for external services completed!"
+              echo ""
+              echo "📋 Next steps:"
+              {{- if .Values.vaultConfig.externalSecrets.enabled }}
+              echo "1. Create your secrets in Vault KV engine (e.g., cloudflare API token)"
+              echo "2. Deploy external-secrets-operator to start syncing secrets"
+              {{- end }}
+              echo ""
+          volumeMounts:
+            - name: shared-tools
+              mountPath: /shared
+      volumes:
+        - name: shared-tools
+          emptyDir: {}
+{{- end }}

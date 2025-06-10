@@ -63,25 +63,26 @@
     - [x] Configurable sync policies, destinations, and repositories
     - [x] Enterprise-grade template system for scalability
 
-### Phase 3: Platform Services - Core Infrastructure
-- [ ] **Deploy Caddy Ingress Controller**:
-  - [ ] Create `kubernetes/infrastructure/charts/caddy/` chart 
-  - [ ] Create `kubernetes/infrastructure/values/homelab/caddy.yaml` values
-  - [ ] Configure auto-TLS with Let's Encrypt
-  - [ ] Set up ingress rules for all services
-  - [ ] Verify external access: `https://homelab.domain.com`
-- [ ] **Deploy HashiCorp Vault**:
-  - [ ] Create `kubernetes/platform/charts/vault/` chart using HashiCorp Helm chart
-  - [ ] Create `kubernetes/platform/values/homelab/vault.yaml` values  
-  - [ ] Install Vault: `helm install vault hashicorp/vault`
-  - [ ] Initialize and unseal Vault cluster: `kubectl exec vault-0 -- vault operator init`
-  - [ ] Configure secret engines (KV v2, PKI, Transit)
-  - [ ] Set up Vault UI access via Caddy ingress
+### Phase 3: Platform Services - Core Infrastructure ✅ COMPLETED
+- [x] **Deploy cert-manager + ingress-nginx** (replaced Caddy):
+  - [x] Create `kubernetes/infrastructure/charts/cert-manager/` chart (v1.18.0)
+  - [x] Create `kubernetes/infrastructure/charts/ingress-nginx/` chart (v4.12.3)
+  - [x] Create `kubernetes/infrastructure/values/homelab/cert-manager.yaml` values
+  - [x] Create `kubernetes/infrastructure/values/homelab/ingress-nginx.yaml` values
+  - [x] Configure LoadBalancer service for OrbStack compatibility
+  - [x] Deploy via ArgoCD App-of-Apps pattern
+- [x] **Deploy HashiCorp Vault**:
+  - [x] Create `kubernetes/platform/charts/vault/` chart using HashiCorp Helm chart
+  - [x] Create `kubernetes/platform/values/homelab/vault.yaml` values  
+  - [x] Deploy via ArgoCD: Vault is running and healthy
+  - [x] Configure KV v2 secret engine: `kv/`
+  - [ ] Configure Cloudflare API token for cert-manager DNS-01 challenge
+  - [ ] Set up Vault UI access via ingress
 - [ ] **Deploy External Secrets Operator**:
-  - [ ] Create `kubernetes/platform/charts/external-secrets/` chart
+  - [ ] Enable external-secrets in app-of-apps configuration
   - [ ] Create `kubernetes/platform/values/homelab/external-secrets.yaml` values
-  - [ ] Install ESO: `helm install external-secrets external-secrets/external-secrets`
   - [ ] Configure Vault SecretStore and ClusterSecretStore
+  - [ ] Create ExternalSecret for Cloudflare API token
   - [ ] Test secret synchronization from Vault to K8s secrets
 
 ### Phase 4: Platform Services - Monitoring & Authentication

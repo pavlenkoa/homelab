@@ -83,7 +83,7 @@ platform:
           - ../../values/homelab/vault.yaml
 
     - name: external-secrets
-      enabled: false
+      enabled: true
       path: kubernetes/platform/charts/external-secrets
       namespace: external-secrets
       helm:
