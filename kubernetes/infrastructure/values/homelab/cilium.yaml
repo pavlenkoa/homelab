@@ -1,53 +1,32 @@
-# Cilium CNI configuration for K3d cluster
+# Cilium CNI configuration for single-node K3d cluster
 
-# K3d optimized configuration with tunnel mode
-# Use VXLAN tunneling which works better with K3d
-routingMode: tunnel
-tunnelProtocol: vxlan
-autoDirectNodeRoutes: false
+# Enable kube-proxy replacement
+kubeProxyReplacement: true
 
-# IPAM configuration with cluster pool  
+# Ingress Controller configuration
+ingressController:
+  enabled: true
+  default: true
+
+# Gateway API support
+gatewayAPI:
+  enabled: true
+
+# IPAM configuration
 ipam:
+  mode: kubernetes
   operator:
     clusterPoolIPv4PodCIDRList:
       - "10.42.0.0/16"
 
-# Disable kube-proxy replacement for K3d compatibility  
-kubeProxyReplacement: false
-
-# Optimize for K3d environment
-bpf:
-  masquerade: true
-enableIPv4Masquerade: true
-
-# LoadBalancer IPAM for internal network exposure
-l2announcements:
-  enabled: true
-
-loadBalancer:
-  algorithm: random
-  mode: snat
-
-# Enable external IPs for LoadBalancer services
-externalIPs:
-  enabled: true
+# Single node setup - ensure only 1 operator
+operator:
+  replicas: 1
 
 # Hubble configuration for network observability
 hubble:
   enabled: true
-  relay:
-    enabled: true
   ui:
     enabled: true
     service:
-      type: NodePort
-      nodePort: 30080
-  metrics:
-    enabled:
-      - dns
-      - drop
-      - tcp
-      - flow
-      - port-distribution
-      - icmp
-      - http
+      type: ClusterIP

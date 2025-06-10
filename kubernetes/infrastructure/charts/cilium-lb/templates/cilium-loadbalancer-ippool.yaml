@@ -1,0 +1,31 @@
+{{- range .Values.ipPools }}
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    {{- include "cilium-lb.labels" $ | nindent 4 }}
+spec:
+  {{- if .cidrs }}
+  cidrs:
+  {{- range .cidrs }}
+  - cidr: {{ . | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if .blocks }}
+  blocks:
+  {{- range .blocks }}
+  - start: {{ .start | quote }}
+    stop: {{ .stop | quote }}
+  {{- end }}
+  {{- end }}
+  {{- if .disabled }}
+  disabled: {{ .disabled }}
+  {{- end }}
+  {{- if .serviceSelector }}
+  serviceSelector:
+    {{- toYaml .serviceSelector | nindent 4 }}
+  {{- end }}
+{{- end }}
