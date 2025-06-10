@@ -84,7 +84,7 @@ extraObjects:
     spec:
       acme:
         server: https://acme-v02.api.letsencrypt.org/directory
-        email: pavlenko.andriy@gmail.com
+        email: contact@pavlenko.io
         privateKeySecretRef:
           name: letsencrypt-prod
         solvers:
