@@ -81,6 +81,8 @@ extraObjects:
     kind: ClusterIssuer
     metadata:
       name: letsencrypt-prod
+      annotations:
+        argocd.argoproj.io/sync-wave: "20"  # Apply after ExternalSecret creates the secret
     spec:
       acme:
         server: https://acme-v02.api.letsencrypt.org/directory
