@@ -89,7 +89,7 @@ extraObjects:
 # Server configuration
 server:
   service:
-    type: LoadBalancer
+    type: ClusterIP
   
   # Disable internal TLS for simplicity in local setup  
   insecure: true
