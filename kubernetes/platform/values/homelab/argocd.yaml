@@ -91,8 +91,8 @@ server:
   service:
     type: ClusterIP
   
-  # Disable internal TLS for simplicity in local setup  
-  insecure: true
+  # Enable internal TLS to match ingress expectations
+  insecure: false
   
   # Ingress configuration for TLS termination
   ingress:
@@ -104,8 +104,6 @@ server:
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     tls: true
-    # Force ingress to use HTTP port since server.insecure=true
-    servicePort: 80
 
 # ArgoCD configuration via configs section
 configs:
