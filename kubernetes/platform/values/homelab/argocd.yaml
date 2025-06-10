@@ -91,10 +91,10 @@ server:
   service:
     type: ClusterIP
   
-  # Enable internal TLS to match ingress expectations
-  insecure: false
+  # Keep ArgoCD in HTTP mode for ingress TLS termination
+  insecure: true
   
-  # Ingress configuration for TLS passthrough  
+  # Ingress configuration for proper TLS termination
   ingress:
     enabled: true
     ingressClassName: nginx
@@ -102,9 +102,18 @@ server:
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/ssl-passthrough: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+      nginx.ingress.kubernetes.io/service-upstream: "true"
     tls: true
+    # Force ingress to use HTTP port 80 for backend
+    extraPaths:
+    - path: /
+      pathType: Prefix
+      backend:
+        service:
+          name: argocd-server
+          port:
+            number: 80
 
 # ArgoCD configuration via configs section
 configs:
