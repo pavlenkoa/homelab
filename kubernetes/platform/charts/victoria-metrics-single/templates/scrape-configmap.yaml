@@ -1,17 +1,20 @@
-{{- if and .Values.server.scrape.enabled (eq .Values.server.scrape.configMap "") }}
+{{- $app := .Values.server }}
+{{- if and $app.scrape.enabled (empty $app.scrape.configMap) }}
+{{- $ctx := dict "helm" . "appKey" "server" }}
+{{- $fullname := include "vm.plain.fullname" $ctx }}
+{{- $ns := include "vm.namespace" $ctx }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "victoria-metrics.server.fullname" . }}-scrapeconfig
-  namespace: {{ .Release.Namespace }}
-  labels: {{- include "victoria-metrics.server.labels" . | nindent 4 }}
+  name: {{ $fullname }}-scrapeconfig
+  namespace: {{ $ns }}
+  labels: {{ include "vm.labels" $ctx | nindent 4 }}
 data:
-  scrape.yml: |
-    {{- range $k, $v := .Values.server.scrape.config }}
-    {{- if and (eq $k "scrape_configs") ($.Values.server.scrape.extraScrapeConfigs) }}
-    {{ dict $k (concat $v $.Values.server.scrape.extraScrapeConfigs) | toYaml | nindent 4 }}
-    {{- else }}
-    {{ dict $k $v | toYaml | nindent 4 }}
+  {{- $config := $app.scrape.config }}
+  {{- with $app.scrape.extraScrapeConfigs }}
+    {{- if hasKey $config "scrape_configs" }}
+      {{- $_ := set $config "scrape_configs" (concat $config.scrape_configs .) }}
     {{- end }}
-    {{- end }}
+  {{- end }}
+  scrape.yml: |{{ toYaml $config | nindent 4 }}
 {{- end }}
