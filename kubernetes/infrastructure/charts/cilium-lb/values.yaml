@@ -1,0 +1,48 @@
+# Default values for cilium-lb chart
+# This is a YAML-formatted file.
+
+# Target namespace for Cilium resources
+namespace: kube-system
+
+# LoadBalancer IP Pools configuration
+ipPools:
+  - name: homelab-internal-pool
+    # CIDR-based pool (recommended for K3d)
+    cidrs:
+      - "192.168.117.100/30"  # IPs .100-.103 for LoadBalancer services
+    # Alternative: block-based pool
+    # blocks:
+    #   - start: "192.168.117.100"
+    #     stop: "192.168.117.110"
+    
+    # Optional: disable pool temporarily
+    disabled: false
+    
+    # Optional: restrict pool to specific services
+    # serviceSelector:
+    #   matchLabels:
+    #     app: "specific-app"
+
+# L2 Announcements configuration
+l2Announcements:
+  enabled: true
+  loadBalancerIPs: true
+  externalIPs: true
+  
+  # Optional: restrict to specific network interfaces
+  # interfaces:
+  #   - "^eth[0-9]+"
+  #   - "^enp[0-9]+s[0-9]+"
+  
+  # Node selector for announcement (empty = all nodes)
+  nodeSelector:
+    matchLabels: {}
+
+# Additional IP pools can be defined here
+# ipPools:
+#   - name: production-pool
+#     cidrs:
+#       - "192.168.117.200/29"
+#   - name: staging-pool
+#     cidrs:
+#       - "192.168.117.210/29"

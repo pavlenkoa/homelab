@@ -1,0 +1,45 @@
+# Cilium LoadBalancer IPAM configuration for homelab K3d cluster
+# Network: 192.168.107.0/24 (K3d network)
+# Nodes: .2 (single server node)
+# LoadBalancer: k3d-homelab-serverlb
+# Gateway: .1
+
+# Target namespace for Cilium resources
+namespace: kube-system
+
+# LoadBalancer IP Pools configuration
+ipPools:
+  # Primary pool for internal services
+  - name: homelab-internal-pool
+    cidrs:
+      - "192.168.107.100/29"  # IPs .100-.107 (8 IPs for LoadBalancer services)
+    disabled: false
+  
+  # Reserved pool for critical services (ArgoCD, monitoring)
+  - name: homelab-critical-pool
+    cidrs:
+      - "192.168.107.110/30"  # IPs .110-.113 (4 IPs for critical services)
+    disabled: false
+    serviceSelector:
+      matchLabels:
+        homelab.local/tier: "critical"
+  
+  # Optional: staging/dev pool
+  - name: homelab-staging-pool
+    cidrs:
+      - "192.168.107.120/30"  # IPs .120-.123 (4 IPs for staging)
+    disabled: true  # Enable when needed
+
+# L2 Announcements configuration
+l2Announcements:
+  enabled: true
+  loadBalancerIPs: true
+  externalIPs: true
+  
+  # Let all nodes participate in L2 announcements
+  nodeSelector:
+    matchLabels: {}
+  
+  # Optional: restrict to specific interfaces if needed
+  # interfaces:
+  #   - "^eth[0-9]+"

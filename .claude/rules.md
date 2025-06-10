@@ -17,8 +17,9 @@
     <rule importance="critical">Always use make commands instead of direct docker/python.</rule>
     <rule importance="critical">Edit existing files rather than creating new ones.</rule>
     <rule importance="critical">Never commit .env files or secrets.</rule>
-    <rule importance="critical">Template with Jinja2: configs/*.j2 → dockermnt/*/</rule>
     <rule importance="critical">Deploy flow for raspberrypi: commit → push → ssh → pull → startup according to README.md </rule>
+    <rule importance="critical">Before updating values in kubernetes/project/values/environment/service.yaml do check values.yaml of the service in kubernetes/project/charts/service/values.yaml.</rule>
+    <rule importance="critical">DO NOT EDIT EXISTING CHART, the charts should be easily upgradable, try to always declare things through environment specific values file.</rule>
 </rules>
 
 ## Quick Reference

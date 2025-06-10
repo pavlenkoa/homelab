@@ -1,0 +1,30 @@
+{{- if .Values.l2Announcements.enabled }}
+---
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: {{ include "cilium-lb.fullname" . }}-l2-policy
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "cilium-lb.labels" . | nindent 4 }}
+spec:
+  # Announce LoadBalancer IPs via L2
+  loadBalancerIPs: {{ .Values.l2Announcements.loadBalancerIPs }}
+  
+  {{- if .Values.l2Announcements.externalIPs }}
+  # Also announce external IPs
+  externalIPs: {{ .Values.l2Announcements.externalIPs }}
+  {{- end }}
+  
+  {{- if .Values.l2Announcements.interfaces }}
+  # Restrict to specific network interfaces
+  interfaces:
+  {{- range .Values.l2Announcements.interfaces }}
+  - {{ . | quote }}
+  {{- end }}
+  {{- end }}
+  
+  # Node selector for which nodes should announce
+  nodeSelector:
+    {{- toYaml .Values.l2Announcements.nodeSelector | nindent 4 }}
+{{- end }}

@@ -48,6 +48,14 @@ infrastructure:
       helm:
         valueFiles: 
           - ../../values/homelab/cilium.yaml
+    
+    - name: cilium-lb
+      enabled: true  # LoadBalancer IPAM for internal network exposure
+      path: kubernetes/infrastructure/charts/cilium-lb
+      namespace: kube-system
+      helm:
+        valueFiles:
+          - ../../values/homelab/cilium-lb.yaml
 
 # Platform project - DevOps and management services  
 platform:
