@@ -10,16 +10,9 @@ ingressShim:
   defaultIssuerKind: ClusterIssuer
   defaultIssuerGroup: cert-manager.io
 
-# Prometheus monitoring
+# Prometheus monitoring (disabled for now - no Prometheus Operator installed)
 prometheus:
-  enabled: true
-  servicemonitor:
-    enabled: true
-    prometheusInstance: default
-    targetPort: 9402
-    path: /metrics
-    interval: 60s
-    scrapeTimeout: 30s
+  enabled: false
 
 # Resource limits for single-node cluster
 resources:
