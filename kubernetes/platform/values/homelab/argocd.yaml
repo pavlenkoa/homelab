@@ -94,21 +94,22 @@ server:
   # Disable internal TLS for simplicity in local setup  
   insecure: true
   
-  # Ingress configuration for OrbStack local access
+  # Ingress configuration for TLS termination
   ingress:
     enabled: true
     ingressClassName: nginx
-    hostname: argocd-server.argocd.k8s.orb.local
+    hostname: argocd.pavlenko.io
     annotations:
-      nginx.ingress.kubernetes.io/ssl-redirect: "false"
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
       nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    tls: false
+    tls: true
 
 # ArgoCD configuration via configs section
 configs:
   cm:
     # Enable anonymous access for easier setup (can be disabled later)
-    url: "http://argocd-server.argocd.k8s.orb.local"
+    url: "https://argocd.pavlenko.io"
     
     # Resource customizations
     resource.customizations: |
