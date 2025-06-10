@@ -1,29 +1,32 @@
 # TODO
 
-## Current Status: OrbStack Foundation - INFRASTRUCTURE MIGRATION ✅
+## Current Status: GitOps Infrastructure - FULLY OPERATIONAL ✅
 
-**✅ Phases 1-2 COMPLETED** (Foundation + GitOps)
-- **Kubernetes Cluster**: OrbStack native Kubernetes (switched from K3d)
-- **GitOps Platform**: ArgoCD with enterprise-grade App-of-Apps pattern
-- **Ingress Controller**: ingress-nginx v4.12.0 (NodePort 30080/30443)
-- **Certificate Management**: cert-manager v1.16.2 with Let's Encrypt
-- **GitOps Management**: ArgoCD UI at http://localhost:30081 (admin/BQUb-QTq3RkNkNUm)
+**✅ Phases 1-3 COMPLETED** (Foundation + GitOps + Platform Services)
+- **Kubernetes Cluster**: OrbStack native Kubernetes with LoadBalancer support
+- **GitOps Platform**: ArgoCD with enterprise-grade App-of-Apps pattern (self-managed via GitOps)
+- **Ingress Controller**: ingress-nginx v4.12.3 with LoadBalancer (IP: 198.19.249.2)
+- **Certificate Management**: cert-manager v1.18.0 with Cloudflare DNS-01 + Let's Encrypt automation
+- **Secret Management**: Vault + external-secrets-operator with automated Kubernetes auth
+- **TLS Automation**: FULLY FUNCTIONAL - Let's Encrypt certificates via Cloudflare DNS-01
+- **GitOps Management**: ArgoCD UI at https://argocd.pavlenko.io (with valid TLS certificate!)
 - **Repository**: Public GitHub integration with automated sync
 - **Template System**: Extensible App-of-Apps with global defaults and per-app overrides
 
-**🔄 INFRASTRUCTURE CHANGES:**
-- **Cilium Removed**: Not supported on OrbStack, switched to standard networking
-- **ingress-nginx Added**: External access via NodePort (http://localhost:30080, https://localhost:30443)
-- **cert-manager Added**: Automated TLS certificate management with Let's Encrypt
-- **OrbStack Benefits**: Native macOS integration, better performance, simpler networking
+**🎉 MAJOR ACHIEVEMENTS:**
+- **Complete TLS Automation**: Let's Encrypt + Cloudflare DNS-01 + external-secrets integration
+- **ArgoCD Self-Management**: ArgoCD manages itself via GitOps (enterprise pattern)
+- **Vault Integration**: Automated Kubernetes auth setup with external-secrets policies
+- **Security Excellence**: No hardcoded secrets, all tokens stored in Vault
+- **Professional Patterns**: Industry-standard configurations using work-proven patterns
 
-**🔧 IMMEDIATE PRIORITIES:**
-1. **Deploy cert-manager and ingress-nginx** via ArgoCD App-of-Apps
-2. **Configure Let's Encrypt ClusterIssuer** for automatic TLS certificates
-3. **Test external access** through ingress-nginx NodePort
-4. **Proceed with Phase 3** - Platform services deployment
+**🚀 READY: Phase 4** - Deploy monitoring stack (VictoriaMetrics, Grafana) and applications
 
-**🚀 READY: Phase 3** - Deploy platform services (Vault, VictoriaMetrics, Grafana) with proper ingress
+**💡 NEXT SESSION PRIORITIES:**
+1. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
+   - Option A: MikroTik + Consul integration for service discovery
+   - Option B: external-dns with MikroTik RouterOS API integration
+   - Option C: Local DNS override solutions (dnsmasq, router configuration)
 
 ---
 
@@ -71,19 +74,30 @@
   - [x] Create `kubernetes/infrastructure/values/homelab/ingress-nginx.yaml` values
   - [x] Configure LoadBalancer service for OrbStack compatibility
   - [x] Deploy via ArgoCD App-of-Apps pattern
+  - [x] Configure external DNS servers for cert-manager DNS01 self-check
+  - [x] Configure Let's Encrypt ClusterIssuer with Cloudflare DNS-01 challenge
 - [x] **Deploy HashiCorp Vault**:
   - [x] Create `kubernetes/platform/charts/vault/` chart using HashiCorp Helm chart
   - [x] Create `kubernetes/platform/values/homelab/vault.yaml` values  
   - [x] Deploy via ArgoCD: Vault is running and healthy
   - [x] Configure KV v2 secret engine: `kv/`
-  - [ ] Configure Cloudflare API token for cert-manager DNS-01 challenge
-  - [ ] Set up Vault UI access via ingress
-- [ ] **Deploy External Secrets Operator**:
-  - [ ] Enable external-secrets in app-of-apps configuration
-  - [ ] Create `kubernetes/platform/values/homelab/external-secrets.yaml` values
-  - [ ] Configure Vault SecretStore and ClusterSecretStore
-  - [ ] Create ExternalSecret for Cloudflare API token
-  - [ ] Test secret synchronization from Vault to K8s secrets
+  - [x] Configure Cloudflare API token for cert-manager DNS-01 challenge
+  - [x] Automate Vault Kubernetes auth configuration with external-secrets policies
+  - [ ] Set up Vault UI access via ingress (next phase)
+- [x] **Deploy External Secrets Operator**:
+  - [x] Enable external-secrets in app-of-apps configuration
+  - [x] Create `kubernetes/platform/values/homelab/external-secrets.yaml` values
+  - [x] Configure Vault ClusterSecretStore with Kubernetes auth
+  - [x] Create ExternalSecret for Cloudflare API token in cert-manager namespace
+  - [x] Test secret synchronization from Vault to K8s secrets
+  - [x] Implement ArgoCD sync waves for proper CRD timing
+  - [x] Fix API version compatibility (external-secrets.io/v1)
+- [x] **Complete TLS Automation Pipeline**:
+  - [x] End-to-end automation: Vault → external-secrets → cert-manager → Let's Encrypt
+  - [x] Automated certificate issuance for argocd.pavlenko.io domain
+  - [x] ArgoCD ingress with valid Let's Encrypt certificate
+  - [x] Professional TLS configuration using extraTls pattern
+  - [x] ArgoCD self-management via GitOps (enterprise pattern)
 
 ### Phase 4: Platform Services - Monitoring & Authentication
 - [ ] **Deploy VictoriaMetrics Stack**:
