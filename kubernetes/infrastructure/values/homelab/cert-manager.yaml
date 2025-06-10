@@ -64,12 +64,8 @@ extraObjects:
       target:
         name: cloudflare-api-token
         creationPolicy: Owner
-        template:
-          type: Opaque
-          data:
-            api-token: "{{ .apiToken }}"
       data:
-      - secretKey: apiToken
+      - secretKey: api-token
         remoteRef:
           key: cloudflare
           property: api-token
