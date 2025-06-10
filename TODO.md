@@ -1,27 +1,29 @@
 # TODO
 
-## Current Status: GitOps Foundation - NETWORK ISSUES IDENTIFIED! ⚠️
+## Current Status: OrbStack Foundation - INFRASTRUCTURE MIGRATION ✅
 
 **✅ Phases 1-2 COMPLETED** (Foundation + GitOps)
-- **Kubernetes Cluster**: OrbStack with Cilium CNI + Hubble observability
+- **Kubernetes Cluster**: OrbStack native Kubernetes (switched from K3d)
 - **GitOps Platform**: ArgoCD with enterprise-grade App-of-Apps pattern
-- **Network Observability**: Hubble UI at http://localhost:30080
+- **Ingress Controller**: ingress-nginx v4.12.0 (NodePort 30080/30443)
+- **Certificate Management**: cert-manager v1.16.2 with Let's Encrypt
 - **GitOps Management**: ArgoCD UI at http://localhost:30081 (admin/BQUb-QTq3RkNkNUm)
 - **Repository**: Public GitHub integration with automated sync
 - **Template System**: Extensible App-of-Apps with global defaults and per-app overrides
 
-**🚨 CRITICAL ISSUES IDENTIFIED:**
-- **ArgoCD DNS Issues**: `dial tcp: lookup argocd-repo-server: i/o timeout` and `dial tcp: lookup argocd-redis: i/o timeout`
-- **Network Discovery**: Service discovery failing between ArgoCD components
-- **Root Cause**: Likely Cilium networking configuration for K3d environment
+**🔄 INFRASTRUCTURE CHANGES:**
+- **Cilium Removed**: Not supported on OrbStack, switched to standard networking
+- **ingress-nginx Added**: External access via NodePort (http://localhost:30080, https://localhost:30443)
+- **cert-manager Added**: Automated TLS certificate management with Let's Encrypt
+- **OrbStack Benefits**: Native macOS integration, better performance, simpler networking
 
 **🔧 IMMEDIATE PRIORITIES:**
-1. **Fix Cilium networking configuration** for K3d cluster (192.168.117.x network)
-2. **Resolve ArgoCD internal connectivity** - repo-server and redis communication
-3. **Verify CoreDNS functionality** and service discovery
-4. **Test App-of-Apps workflow** after network fixes
+1. **Deploy cert-manager and ingress-nginx** via ArgoCD App-of-Apps
+2. **Configure Let's Encrypt ClusterIssuer** for automatic TLS certificates
+3. **Test external access** through ingress-nginx NodePort
+4. **Proceed with Phase 3** - Platform services deployment
 
-**⏸️ BLOCKED: Phase 3** - Deploy platform services (Vault, VictoriaMetrics, Grafana) until networking is resolved
+**🚀 READY: Phase 3** - Deploy platform services (Vault, VictoriaMetrics, Grafana) with proper ingress
 
 ---
 
@@ -33,13 +35,13 @@
   - [x] Verify cluster connectivity: `kubectl get nodes`
   - [x] Install Helm package manager
   - [x] Configure kubectl context for homelab cluster (renamed to 'homelab')
-- [x] **Deploy Cilium CNI with Hubble observability**:
-  - [x] Create `kubernetes/infrastructure/charts/cilium/` chart
-  - [x] Create `kubernetes/infrastructure/values/homelab/cilium.yaml` values
-  - [x] Replace default CNI with Cilium (helm upgrade cilium cilium/cilium)
-  - [x] Enable Hubble for network observability and flow monitoring
-  - [x] Configure Cilium Service Mesh for L7 traffic management
-  - [x] Verify Cilium installation: Hubble UI accessible at http://localhost:30080
+- [x] **Deploy ingress-nginx and cert-manager** (replaced Cilium - not supported on OrbStack):
+  - [x] Create App-of-Apps configuration for cert-manager v1.16.2
+  - [x] Create App-of-Apps configuration for ingress-nginx v4.12.0
+  - [x] Create `kubernetes/infrastructure/values/homelab/cert-manager.yaml` values
+  - [x] Create `kubernetes/infrastructure/values/homelab/ingress-nginx.yaml` values
+  - [x] Configure NodePort access (30080/30443) for external connectivity
+  - [x] Enable Prometheus metrics for monitoring integration
 
 ### Phase 2: ArgoCD GitOps Setup ✅ COMPLETED
 - [x] **Deploy ArgoCD to Kubernetes cluster**:

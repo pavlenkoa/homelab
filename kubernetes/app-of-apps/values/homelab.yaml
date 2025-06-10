@@ -41,21 +41,21 @@ infrastructure:
       prune: false  # Never auto-prune CNI
       selfHeal: true
   applications:
-    - name: cilium
-      enabled: true  # Deploy via GitOps using direct chart
-      path: kubernetes/infrastructure/charts/cilium
-      namespace: kube-system
-      helm:
-        valueFiles: 
-          - ../../values/homelab/cilium.yaml
-    
-    - name: cilium-lb
-      enabled: true  # LoadBalancer IPAM for internal network exposure
-      path: kubernetes/infrastructure/charts/cilium-lb
-      namespace: kube-system
+    - name: cert-manager
+      enabled: true  # Certificate management for TLS
+      path: kubernetes/infrastructure/charts/cert-manager
+      namespace: cert-manager
       helm:
         valueFiles:
-          - ../../values/homelab/cilium-lb.yaml
+          - ../../values/homelab/cert-manager.yaml
+    
+    - name: ingress-nginx
+      enabled: true  # Ingress controller for external access
+      path: kubernetes/infrastructure/charts/ingress-nginx
+      namespace: ingress-nginx
+      helm:
+        valueFiles:
+          - ../../values/homelab/ingress-nginx.yaml
 
 # Platform project - DevOps and management services  
 platform:
