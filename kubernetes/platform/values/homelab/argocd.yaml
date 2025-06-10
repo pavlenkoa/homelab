@@ -89,18 +89,27 @@ extraObjects:
 # Server configuration
 server:
   service:
-    type: NodePort
-    nodePortHttp: 30081
-    nodePortHttps: 30443
+    type: LoadBalancer
   
-  # Disable internal TLS for simplicity in local setup
+  # Disable internal TLS for simplicity in local setup  
   insecure: true
+  
+  # Ingress configuration for TLS termination
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: argocd.pavlenko.io
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    tls: true
 
 # ArgoCD configuration via configs section
 configs:
   cm:
     # Enable anonymous access for easier setup (can be disabled later)
-    url: "http://localhost:30081"
+    url: "https://argocd.pavlenko.io"
     
     # Resource customizations
     resource.customizations: |
