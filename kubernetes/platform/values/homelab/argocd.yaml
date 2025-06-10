@@ -95,17 +95,12 @@ server:
   
   # Disable internal TLS for simplicity in local setup
   insecure: true
-  
-  # ArgoCD configuration
-  config:
+
+# ArgoCD configuration via configs section
+configs:
+  cm:
     # Enable anonymous access for easier setup (can be disabled later)
     url: "http://localhost:30081"
-    
-    # Git repositories configuration
-    repositories: |
-      - type: git
-        url: https://github.com/pavlenkoa/homelab.git
-        name: homelab
     
     # Resource customizations
     resource.customizations: |
@@ -123,7 +118,6 @@ server:
             end
           end
           return hs
-    
     
     # Global ignore differences for common Kubernetes normalization issues
     resource.customizations.ignoreDifferences.all: |
@@ -146,6 +140,13 @@ server:
     resource.customizations.ignoreDifferences.admissionregistration.k8s.io_ValidatingWebhookConfiguration: |
       jqPathExpressions:
       - .webhooks[]?.clientConfig.caBundle
+
+  # Git repositories configuration
+  repositories:
+    homelab:
+      url: https://github.com/pavlenkoa/homelab.git
+      type: git
+      name: homelab
 
 # Controller configuration
 controller:
