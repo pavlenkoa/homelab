@@ -1,0 +1,56 @@
+# cert-manager configuration for OrbStack cluster
+
+# Install CRDs via Helm
+crds:
+  enabled: true
+
+# Enable the default issuer
+ingressShim:
+  defaultIssuerName: letsencrypt-prod
+  defaultIssuerKind: ClusterIssuer
+  defaultIssuerGroup: cert-manager.io
+
+# Prometheus monitoring
+prometheus:
+  enabled: true
+  servicemonitor:
+    enabled: true
+    prometheusInstance: default
+    targetPort: 9402
+    path: /metrics
+    interval: 60s
+    scrapeTimeout: 30s
+
+# Resource limits for single-node cluster
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 10m
+    memory: 32Mi
+
+webhook:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+cainjector:
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
