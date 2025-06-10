@@ -1,19 +1,24 @@
 annotations:
   artifacthub.io/category: monitoring-logging
-  artifacthub.io/changes: '- support disabling default securityContext to keep compatible
-    with platform like openshift, see this [pull request](https://github.com/VictoriaMetrics/helm-charts/pull/995)
-    by @Baboulinet-33 for details.'
+  artifacthub.io/changes: |
+    - bump version of VM components to [v1.118.0](https://github.com/VictoriaMetrics/VictoriaMetrics/releases/tag/v1.118.0)
   artifacthub.io/license: Apache-2.0
   artifacthub.io/links: |
     - name: Sources
-      url: https://github.com/VictoriaMetrics/helm-charts
+      url: https://github.com/VictoriaMetrics/helm-charts/tree/master/charts/victoria-metrics-operator
     - name: Charts repo
       url: https://victoriametrics.github.io/helm-charts/
     - name: Docs
-      url: https://docs.victoriametrics.com/Single-server-VictoriaMetrics.html
-apiVersion: v1
-appVersion: v1.101.0
-description: Victoria Metrics Single version - high-performance, cost-effective and
+      url: https://docs.victoriametrics.com/
+    - name: Changelog
+      url: https://docs.victoriametrics.com/operator/changelog
+apiVersion: v2
+appVersion: v1.118.0
+dependencies:
+- name: victoria-metrics-common
+  repository: https://victoriametrics.github.io/helm-charts
+  version: 0.0.*
+description: VictoriaMetrics Single version - high-performance, cost-effective and
   scalable TSDB, long-term remote storage for Prometheus
 keywords:
 - victoriametrics
@@ -26,8 +31,9 @@ keywords:
 - metrics
 - metricsql
 - timeseries
-kubeVersion: '>=1.23.0-0'
+kubeVersion: '>=1.25.0-0'
 name: victoria-metrics-single
 sources:
 - https://github.com/VictoriaMetrics/helm-charts
-version: 0.9.20
+type: application
+version: 0.20.0
