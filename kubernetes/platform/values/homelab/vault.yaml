@@ -13,6 +13,31 @@ autoUnseal:
   # One-time initialization job (helm hook)
   image: "hashicorp/vault:1.15.2"
 
+# Vault configuration for external services
+vaultConfig:
+  enabled: true
+  
+  # KV v2 secret engine configuration
+  kvEngine:
+    enabled: true
+    path: "kv"
+    version: 2
+  
+  # External Secrets Operator integration
+  externalSecrets:
+    enabled: true
+    # Kubernetes auth configuration
+    kubernetesAuth:
+      enabled: true
+      mountPath: "kubernetes"
+    # Service account and namespace for external-secrets
+    serviceAccount:
+      name: "external-secrets"
+      namespace: "external-secrets"
+    # Token TTL for external-secrets authentication
+    tokenTTL: "24h"
+  
+
 # Vault subchart configuration
 vault:
   # Global configuration
