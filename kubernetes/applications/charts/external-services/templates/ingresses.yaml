@@ -1,0 +1,46 @@
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.ingress }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $serviceName }}
+  labels:
+    {{- include "external-services.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $serviceName }}
+  annotations:
+    {{- if $serviceConfig.ingress.tls.enabled }}
+    cert-manager.io/cluster-issuer: {{ $.Values.global.clusterIssuer }}
+    {{- end }}
+    {{- if and $serviceConfig.auth.enabled $serviceConfig.auth.authelia.enabled }}
+    # Authelia forward-auth configuration
+    nginx.ingress.kubernetes.io/auth-url: {{ $serviceConfig.auth.authelia.authUrl | quote }}
+    nginx.ingress.kubernetes.io/auth-signin: "https://{{ $serviceConfig.auth.authelia.authDomain | default "auth.pavlenko.io" }}/api/authz/forward-auth?rd=$scheme://$http_host$request_uri"
+    nginx.ingress.kubernetes.io/auth-response-headers: "Remote-User,Remote-Name,Remote-Groups,Remote-Email"
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      proxy_set_header X-Forwarded-Method $request_method;
+    {{- end }}
+    {{- with $serviceConfig.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ $.Values.global.ingressClassName }}
+  {{- if $serviceConfig.ingress.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ $serviceConfig.ingress.host }}
+      secretName: {{ include "external-services.tlsSecretName" (dict "serviceName" $serviceName "tls" $serviceConfig.ingress.tls "Values" $.Values) }}
+  {{- end }}
+  rules:
+    - host: {{ $serviceConfig.ingress.host }}
+      http:
+        paths:
+          - path: {{ $serviceConfig.ingress.path | default "/" }}
+            pathType: {{ $serviceConfig.ingress.pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ $serviceName }}
+                port:
+                  number: {{ $serviceConfig.service.port | default 80 }}
+{{- end }}
+{{- end }}

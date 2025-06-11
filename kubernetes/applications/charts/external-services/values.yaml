@@ -1,0 +1,42 @@
+# Default values for external-services
+# This chart creates Services and Ingresses for external endpoints
+
+# Global configuration
+global:
+  # Default ingress class
+  ingressClassName: nginx
+  # Default cluster issuer for TLS certificates
+  clusterIssuer: letsencrypt-prod
+  # Default TLS secret naming pattern
+  tlsSecretSuffix: "-tls"
+
+# Services configuration
+# Each service creates a Service + Ingress pointing to an external endpoint
+services: {}
+  # Example service configuration:
+  # emby:
+  #   # External endpoint configuration
+  #   endpoint:
+  #     host: "192.168.88.2"
+  #     port: 8096
+  #     protocol: http
+  #   # Ingress configuration
+  #   ingress:
+  #     host: "emby.pavlenko.io"
+  #     path: "/"
+  #     pathType: "Prefix"
+  #     tls:
+  #       enabled: true
+  #       secretName: "" # If empty, uses service name + global.tlsSecretSuffix
+  #   # Service configuration
+  #   service:
+  #     port: 80
+  #     targetPort: 8096
+  #   # Authentication (optional)
+  #   auth:
+  #     enabled: false
+  #     # Authelia forward-auth configuration
+  #     authelia:
+  #       enabled: false
+  #       # URL of Authelia forward-auth endpoint
+  #       authUrl: "https://auth.pavlenko.io/api/verify?rd=$scheme://$http_host$request_uri"

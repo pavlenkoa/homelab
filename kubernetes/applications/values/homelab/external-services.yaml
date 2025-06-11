@@ -1,0 +1,62 @@
+# External services configuration for homelab environment
+# Proxies to existing Docker Compose services
+
+# Global configuration
+global:
+  ingressClassName: nginx
+  clusterIssuer: letsencrypt-prod
+  tlsSecretSuffix: "-tls"
+
+# Services configuration
+services:
+  # Emby Media Server - proxy to Docker Compose instance
+  emby:
+    # External endpoint (Docker Compose on Mac Mini)
+    endpoint:
+      host: "192.168.88.2"
+      port: 8096
+      protocol: http
+    
+    # Kubernetes service configuration
+    service:
+      port: 80
+    
+    # Ingress configuration
+    ingress:
+      host: "emby.pavlenko.io"
+      path: "/"
+      pathType: "Prefix"
+      tls:
+        enabled: true
+        # secretName will be auto-generated as "emby-tls"
+      annotations:
+        # Pass through original headers for Emby
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+        nginx.ingress.kubernetes.io/proxy-buffering: "off"
+        # Increase timeouts for media streaming
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    
+    # Authentication (disabled for now - will enable after Authelia deployment)
+    auth:
+      enabled: false
+      authelia:
+        enabled: false
+        # authUrl: "https://auth.pavlenko.io/api/verify?rd=$scheme://$http_host$request_uri"
+
+  # Transmission BitTorrent - commented out (no auth protection needed yet)
+  # transmission:
+  #   endpoint:
+  #     host: "192.168.1.100"  # Kyiv Raspberry Pi
+  #     port: 9091
+  #     protocol: http
+  #   service:
+  #     port: 80
+  #   ingress:
+  #     host: "transmission.pavlenko.io"
+  #     path: "/"
+  #     pathType: "Prefix"
+  #     tls:
+  #       enabled: true
+  #   auth:
+  #     enabled: false
