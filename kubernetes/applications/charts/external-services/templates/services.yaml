@@ -8,25 +8,10 @@ metadata:
     {{- include "external-services.labels" $ | nindent 4 }}
     app.kubernetes.io/component: {{ $serviceName }}
 spec:
-  type: ClusterIP
+  type: ExternalName
+  externalName: {{ $serviceConfig.endpoint.host }}
   ports:
-    - port: {{ $serviceConfig.service.port | default 80 }}
-      targetPort: {{ $serviceConfig.endpoint.port }}
+    - port: {{ $serviceConfig.endpoint.port }}
       protocol: TCP
       name: {{ $serviceConfig.endpoint.protocol | default "http" }}
----
-apiVersion: v1
-kind: Endpoints
-metadata:
-  name: {{ $serviceName }}
-  labels:
-    {{- include "external-services.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: {{ $serviceName }}
-subsets:
-  - addresses:
-      - ip: {{ $serviceConfig.endpoint.host }}
-    ports:
-      - port: {{ $serviceConfig.endpoint.port }}
-        protocol: TCP
-        name: {{ $serviceConfig.endpoint.protocol | default "http" }}
 {{- end }}
