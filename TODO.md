@@ -20,13 +20,23 @@
 - **Security Excellence**: No hardcoded secrets, all tokens stored in Vault
 - **Professional Patterns**: Industry-standard configurations using work-proven patterns
 
-**🚀 READY: Phase 4** - Deploy monitoring stack (VictoriaMetrics, Grafana) and applications
+**🎉 PHASE 4 PROGRESS - External Services Integration ✅ COMPLETED**
+- **✅ External Services Chart**: Created external-services Helm chart for hybrid Docker→K8s migration
+- **✅ Service without Selector + EndpointSlice**: Implemented proper K8s pattern for external backends
+- **✅ ArgoCD Configuration**: Fixed EndpointSlice exclusions to allow external service management  
+- **✅ Emby Integration**: Successfully proxying Docker Compose Emby (192.168.88.2:8096) → https://emby.pavlenko.io
+- **✅ TLS Automation**: External services get automatic Let's Encrypt certificates via cert-manager
+- **✅ GitOps Management**: All external service configs managed through ArgoCD + Git
+
+**🚀 READY: Phase 4** - Continue with monitoring stack (VictoriaMetrics, Grafana) and more applications
 
 **💡 NEXT SESSION PRIORITIES:**
-1. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
+1. **Deploy More External Services**: Add Transmission, Authelia via external-services pattern
+2. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
    - Option A: MikroTik + Consul integration for service discovery
    - Option B: external-dns with MikroTik RouterOS API integration
    - Option C: Local DNS override solutions (dnsmasq, router configuration)
+3. **Monitoring Stack**: Deploy VictoriaMetrics + Grafana to monitor hybrid infrastructure
 
 ---
 
