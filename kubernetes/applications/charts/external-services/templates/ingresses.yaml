@@ -12,6 +12,8 @@ metadata:
     {{- if $serviceConfig.ingress.tls.enabled }}
     cert-manager.io/cluster-issuer: {{ $.Values.global.clusterIssuer }}
     {{- end }}
+    # Use service upstream instead of individual endpoints for external services
+    nginx.ingress.kubernetes.io/service-upstream: "true"
     {{- if and $serviceConfig.auth.enabled $serviceConfig.auth.authelia.enabled }}
     # Authelia forward-auth configuration
     nginx.ingress.kubernetes.io/auth-url: {{ $serviceConfig.auth.authelia.authUrl | quote }}
