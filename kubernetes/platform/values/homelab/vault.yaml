@@ -281,31 +281,29 @@ vault:
     serviceAccount:
       create: false  # We'll use the custom service account with RBAC
       name: "vault-auto-unseal"
-    
-    # No volume mounts for now - will implement auto-unseal after initialization works
+
+    # Ingress configuration for Vault UI
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      pathType: ImplementationSpecific
+      hosts:
+        - host: "vault.pavlenko.io"
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+      tls:
+        - secretName: vault-cert
+          hosts:
+            - "vault.pavlenko.io"
 
   # UI configuration
   ui:
     enabled: true
     serviceType: "ClusterIP"
 
-  # Injector configuration (for secret injection)
+  # Injector configuration (disabled - using ESO instead)
   injector:
-    enabled: true
-    
-    # Resource limits for injector
-    resources:
-      requests:
-        memory: 64Mi
-        cpu: 50m
-      limits:
-        memory: 128Mi
-        cpu: 250m
-
-    # Agent configuration for sidecar injection
-    agentImage:
-      repository: "hashicorp/vault"
-      tag: "1.15.2"
+    enabled: false
 
   # CSI driver (optional for homelab)
   csi:
