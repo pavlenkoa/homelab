@@ -1,0 +1,14 @@
+apiVersion: v2
+name: external-services
+description: A Helm chart for proxying to external services via Kubernetes ingress
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+keywords:
+  - proxy
+  - external
+  - ingress
+home: https://github.com/pavlenkoa/homelab
+maintainers:
+  - name: Andrii Pavlenko
+    email: contact@pavlenko.io
