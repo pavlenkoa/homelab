@@ -3,7 +3,7 @@
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
 metadata:
-  name: {{ $serviceName }}-1
+  name: {{ $serviceName }}-external
   labels:
     {{- include "external-services.labels" $ | nindent 4 }}
     app.kubernetes.io/component: {{ $serviceName }}
