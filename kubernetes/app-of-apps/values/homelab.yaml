@@ -127,6 +127,14 @@ applications:
   description: "End-user applications and services"
   # Applications inherit global sync policy (prune: true, selfHeal: true)
   applications:
+    - name: external-services
+      enabled: true
+      path: kubernetes/applications/charts/external-services
+      namespace: external-services
+      helm:
+        valueFiles:
+          - ../../values/homelab/external-services.yaml
+
     - name: authelia
       enabled: false
       path: kubernetes/platform/charts/authelia
