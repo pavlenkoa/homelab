@@ -9,11 +9,10 @@ metadata:
     app.kubernetes.io/component: {{ $serviceName }}
 spec:
   type: ClusterIP
-  externalIPs:
-    - {{ $serviceConfig.endpoint.host }}
   ports:
     - port: {{ $serviceConfig.service.port | default 80 }}
       targetPort: {{ $serviceConfig.endpoint.port }}
       protocol: TCP
       name: {{ $serviceConfig.endpoint.protocol | default "http" }}
+  # No selector - this service will be paired with manually created EndpointSlice
 {{- end }}
