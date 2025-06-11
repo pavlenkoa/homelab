@@ -8,27 +8,12 @@ metadata:
     {{- include "external-services.labels" $ | nindent 4 }}
     app.kubernetes.io/component: {{ $serviceName }}
 spec:
-  # Service without selector - endpoints managed manually
+  type: ClusterIP
+  externalIPs:
+    - {{ $serviceConfig.endpoint.host }}
   ports:
     - port: {{ $serviceConfig.service.port | default 80 }}
       targetPort: {{ $serviceConfig.endpoint.port }}
       protocol: TCP
       name: {{ $serviceConfig.endpoint.protocol | default "http" }}
----
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
-metadata:
-  name: {{ $serviceName }}
-  labels:
-    {{- include "external-services.labels" $ | nindent 4 }}
-    app.kubernetes.io/component: {{ $serviceName }}
-    kubernetes.io/service-name: {{ $serviceName }}
-addressType: IPv4
-endpoints:
-- addresses:
-  - {{ $serviceConfig.endpoint.host | quote }}
-ports:
-- port: {{ $serviceConfig.endpoint.port }}
-  protocol: TCP
-  name: {{ $serviceConfig.endpoint.protocol | default "http" }}
 {{- end }}
