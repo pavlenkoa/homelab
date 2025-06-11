@@ -88,23 +88,18 @@ extraObjects:
 
 # Server configuration
 server:
-  service:
-    type: ClusterIP
-  
   # Ingress configuration for proper TLS termination
   ingress:
     enabled: true
-    ingressClassName: nginx
-    hostname: argocd.pavlenko.io
+    ingressClassName: "nginx"
+    hostname: "argocd.pavlenko.io"
     pathType: ImplementationSpecific
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/ssl-redirect: "true"
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     extraTls:
     - secretName: argocd-server-tls
       hosts:
-      - argocd.pavlenko.io
+      - "argocd.pavlenko.io"
 
 # ArgoCD configuration via configs section
 configs:
