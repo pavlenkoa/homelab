@@ -49,10 +49,9 @@ securityContext:
   fsGroup: 1000
 
 # DNS01 self-check configuration
-global:
-  # Use external DNS servers for zone detection and self-check
-  dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
-  dns01RecursiveNameserversOnly: true
+# Use external DNS servers for zone detection and self-check
+dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
+dns01RecursiveNameserversOnly: true
 
 # Extra objects - ExternalSecret for Cloudflare API token and ClusterIssuer
 extraObjects:
