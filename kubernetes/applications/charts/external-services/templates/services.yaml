@@ -12,7 +12,6 @@ spec:
   externalName: {{ $serviceConfig.endpoint.host }}
   ports:
     - port: {{ $serviceConfig.service.port | default 80 }}
-      targetPort: {{ $serviceConfig.endpoint.port }}
       protocol: TCP
       name: {{ $serviceConfig.endpoint.protocol | default "http" }}
 {{- end }}
