@@ -292,7 +292,7 @@ vault:
       annotations:
         cert-manager.io/cluster-issuer: letsencrypt-prod
       tls:
-        - secretName: vault-cert
+        - secretName: vault-tls
           hosts:
             - "vault.pavlenko.io"
 
