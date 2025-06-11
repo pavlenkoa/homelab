@@ -110,27 +110,13 @@ configs:
     # Enable anonymous access for easier setup (can be disabled later)
     url: "https://argocd.pavlenko.io"
     
-    # Resource exclusions - override default to allow EndpointSlices for external services
+    # Resource exclusions - override default to exclude only Endpoints (not EndpointSlice)
     resource.exclusions: |
-      ### Network resources created by the Kubernetes control plane (excluding EndpointSlice for external-services)
+      ### Network resources created by the Kubernetes control plane (keeping only Endpoints excluded)
       - apiGroups:
         - ''
         kinds:
         - Endpoints
-      - apiGroups:
-        - discovery.k8s.io
-        kinds:
-        - EndpointSlice
-        clusters:
-        - "*"
-        namespaces:
-        - "*"
-        # Allow EndpointSlices in external-services namespace
-        except:
-        - clusters:
-          - "*"
-          namespaces:
-          - external-services
       ### Internal Kubernetes resources excluded reduce the number of watched events
       - apiGroups:
         - coordination.k8s.io
