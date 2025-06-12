@@ -12,6 +12,15 @@ kind: Application
 metadata:
   name: {{ $app.name }}
   namespace: argocd
+  {{- if or $app.annotations $global.annotations }}
+  annotations:
+    {{- with $global.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- with $app.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
   finalizers:
     {{- range ($app.finalizers | default $global.finalizers) }}
     - {{ . }}
