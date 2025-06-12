@@ -12,6 +12,15 @@ global:
   destination:
     server: "https://kubernetes.default.svc"
     
+  # Global annotations applied to all applications (can be overridden per app)
+  # Common use cases:
+  # - argocd.argoproj.io/sync-wave: "0" (for dependency ordering)
+  # - argocd.argoproj.io/hook: PreSync (for hooks)
+  annotations: {}
+  # annotations:
+  #   argocd.argoproj.io/sync-wave: "0"
+  #   notifications.argoproj.io/subscribe.on-sync-succeeded.slack: "homelab-alerts"
+    
   # Default sync policy for all applications
   syncPolicy:
     automated:
@@ -21,12 +30,14 @@ global:
       - "CreateNamespace=true"
       - "PrunePropagationPolicy=foreground" 
       - "PruneLast=true"
+      - "ServerSideApply=true"
+      - "ServerSideDiff=true"
     retry:
-      limit: 5
+      limit: 3  # Reduced for faster feedback
       backoff:
         duration: "5s"
         factor: 2
-        maxDuration: "3m"
+        maxDuration: "2m"
 
   # Default project
   project: "default"
@@ -35,6 +46,66 @@ global:
   finalizers:
     - "resources-finalizer.argocd.argoproj.io"
 
-# Application definitions
-# Each application can override any global default
+# Projects and Applications Structure
+# 
+# This file supports both flat applications list (legacy) and project-based structure (current).
+# The homelab.yaml file demonstrates the project-based approach with sync waves.
+#
+# Example structure:
+#
+# # Project-based structure (recommended)
+# infrastructure:
+#   description: "Core cluster infrastructure"
+#   syncPolicy:
+#     automated:
+#       prune: false  # Override for safety
+#   applications:
+#     - name: ingress-nginx
+#       enabled: true
+#       path: kubernetes/infrastructure/charts/ingress-nginx
+#       namespace: ingress-nginx
+#       annotations:
+#         argocd.argoproj.io/sync-wave: "-2"  # App-specific annotation
+#       helm:
+#         valueFiles:
+#           - ../../values/homelab/ingress-nginx.yaml
+#         values: |  # Inline values (optional)
+#           controller:
+#             replicaCount: 2
+#         parameters:  # Helm parameters (optional)
+#           - name: "controller.service.type"
+#             value: "LoadBalancer"
+#       syncPolicy:  # Override sync policy for this app
+#         automated:
+#           prune: false
+#
+# platform:
+#   description: "Platform services"
+#   applications:
+#     - name: vault
+#       enabled: true
+#       path: kubernetes/platform/charts/vault
+#       namespace: vault
+#       annotations:
+#         argocd.argoproj.io/sync-wave: "-1"
+#
+# applications:
+#   description: "End-user applications"
+#   applications:
+#     - name: authelia
+#       enabled: false
+#       path: kubernetes/platform/charts/authelia
+#       namespace: authelia
+#       annotations:
+#         argocd.argoproj.io/sync-wave: "1"
+#
+# # Legacy flat structure (still supported)
+# applications:
+#   - name: my-app
+#     enabled: true
+#     path: kubernetes/my-app
+#     namespace: default
+
+# Application definitions (flat structure for backwards compatibility)
+# Use the project-based structure in homelab.yaml instead
 applications: []

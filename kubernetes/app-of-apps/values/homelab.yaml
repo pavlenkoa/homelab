@@ -32,7 +32,7 @@ global:
         factor: 2
         maxDuration: "2m"
 
-# Infrastructure project - Core cluster services
+# Infrastructure project - Core cluster services with sync wave ordering
 infrastructure:
   description: "Core cluster infrastructure (CNI, ingress, storage)"
   # Override sync policy for infrastructure safety
@@ -41,31 +41,37 @@ infrastructure:
       prune: false  # Never auto-prune CNI
       selfHeal: true
   applications:
-    - name: cert-manager
-      enabled: true  # Certificate management for TLS
-      path: kubernetes/infrastructure/charts/cert-manager
-      namespace: cert-manager
-      helm:
-        valueFiles:
-          - ../../values/homelab/cert-manager.yaml
-    
     - name: ingress-nginx
-      enabled: true  # Ingress controller for external access
+      enabled: true  # Wave -2: Ingress controller for external access (needed for vault ingress)
       path: kubernetes/infrastructure/charts/ingress-nginx
       namespace: ingress-nginx
+      annotations:
+        argocd.argoproj.io/sync-wave: "-2"
       helm:
         valueFiles:
           - ../../values/homelab/ingress-nginx.yaml
+    
+    - name: cert-manager
+      enabled: true  # Wave 0: Certificate management (depends on vault for ACME secrets)
+      path: kubernetes/infrastructure/charts/cert-manager
+      namespace: cert-manager
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+      helm:
+        valueFiles:
+          - ../../values/homelab/cert-manager.yaml
 
-# Platform project - DevOps and management services  
+# Platform project - DevOps and management services with sync wave ordering
 platform:
   description: "Platform services and DevOps tools"
   # Platform apps inherit global sync policy (prune: true, selfHeal: true)
   applications:
     - name: argocd
-      enabled: true  # Now self-managed via GitOps
+      enabled: true  # Wave -3: ArgoCD self-management (first to establish GitOps)
       path: kubernetes/platform/charts/argocd
       namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "-3"
       helm:
         valueFiles:
           - ../../values/homelab/argocd.yaml
@@ -75,86 +81,106 @@ platform:
           prune: false  # Never auto-prune ArgoCD itself
 
     - name: vault
-      enabled: true
+      enabled: true  # Wave -1: Vault for secret management (needs ingress-nginx)
       path: kubernetes/platform/charts/vault
       namespace: vault
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
       helm:
         valueFiles:
           - ../../values/homelab/vault.yaml
 
     - name: external-secrets
-      enabled: true
+      enabled: true  # Wave -1: External secrets (parallel with vault)
       path: kubernetes/platform/charts/external-secrets
       namespace: external-secrets
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
       helm:
         valueFiles:
           - ../../values/homelab/external-secrets.yaml
 
     - name: victoriametrics
-      enabled: true
+      enabled: true  # Wave 1: Monitoring services (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/victoria-metrics-single
       namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/victoriametrics.yaml
 
     - name: victorialogs
-      enabled: false
+      enabled: false  # Wave 1: Log aggregation (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/victorialogs
       namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/victorialogs.yaml
 
     - name: grafana
-      enabled: false
+      enabled: false  # Wave 1: Monitoring dashboard (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/grafana
       namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/grafana.yaml
 
     - name: alloy
-      enabled: false
+      enabled: false  # Wave 1: Metrics collection (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/alloy
       namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/alloy.yaml
 
-# Applications project - End-user applications
+# Applications project - End-user applications with sync wave ordering
 applications:
   description: "End-user applications and services"
   # Applications inherit global sync policy (prune: true, selfHeal: true)
   applications:
     - name: external-services
-      enabled: true
+      enabled: true  # Wave 1: External service proxies (depends on cert-manager for TLS)
       path: kubernetes/applications/charts/external-services
       namespace: external-services
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/external-services.yaml
 
     - name: authelia
-      enabled: false
+      enabled: false  # Wave 1: Authentication service (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/authelia
       namespace: authelia
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/authelia.yaml
 
     - name: immich
-      enabled: false
+      enabled: false  # Wave 1: Photo management (depends on cert-manager for TLS)
       path: kubernetes/applications/charts/immich
       namespace: immich
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/immich.yaml
 
     - name: emby
-      enabled: false
+      enabled: false  # Wave 1: Media server (depends on cert-manager for TLS)
       path: kubernetes/applications/charts/emby
       namespace: emby
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       helm:
         valueFiles:
           - ../../values/homelab/emby.yaml
