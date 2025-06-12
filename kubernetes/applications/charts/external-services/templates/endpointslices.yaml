@@ -16,4 +16,5 @@ ports:
 endpoints:
   - addresses:
       - {{ $serviceConfig.endpoint.host | quote }}
+    conditions: {}
 {{- end }}
