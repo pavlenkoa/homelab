@@ -1,0 +1,226 @@
+# Wrapper chart configuration
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+# Upstream chart control
+upstream:
+  enabled: true
+
+# Pre-install job configuration
+preInstall:
+  enabled: true
+  image: "hashicorp/vault:1.15.2"
+  adminPassword: "changeMe123!"
+  adminUser:
+    displayName: "Administrator"
+    email: "admin@pavlenko.io"
+
+# Vault configuration
+vault:
+  address: "http://vault.vault.svc.cluster.local:8200"
+  secretPath: "kv/authelia"
+  secretStoreName: "vault-backend"
+
+# External secret configuration
+externalSecret:
+  enabled: true
+  refreshInterval: "1h"
+
+# Upstream authelia chart values
+authelia:
+  # Use StatefulSet for persistent storage
+  pod:
+    kind: StatefulSet
+    replicas: 1
+  
+  # Enable RBAC
+  rbac:
+    enabled: true
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 80
+  
+  # Ingress configuration
+  ingress:
+    enabled: true
+    className: 'nginx'
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    tls:
+      enabled: true
+      secret: 'authelia-tls'
+  
+  # Persistent volume
+  persistence:
+    enabled: true
+    storageClass: ''
+    size: 1Gi
+  
+  # Configure external secrets
+  secret:
+    disabled: false
+    existingSecret: 'authelia-secrets'
+    mountPath: '/secrets'
+    additionalSecrets:
+      authelia-secrets: {}
+  
+  # Main Authelia configuration
+  configMap:
+    server:
+      port: 9091
+      
+    log:
+      level: 'info'
+      format: 'text'
+      
+    theme: 'dark'
+    
+    identity_validation:
+      elevated_session:
+        require_second_factor: false
+        skip_second_factor: true
+        code_lifespan: '5m'
+        elevation_lifespan: '10m'
+      reset_password:
+        secret:
+          disabled: false
+          secret_name: 'authelia-secrets'
+          path: 'jwt_secret'
+    
+    totp:
+      issuer: 'authelia.com'
+      
+    webauthn:
+      disable: false
+      display_name: 'Homelab Auth'
+      timeout: '60s'
+      attestation_conveyance_preference: 'indirect'
+      user_verification: 'preferred'
+      
+    authentication_backend:
+      refresh_interval: '5m'
+      password_reset:
+        disable: false
+      file:
+        enabled: true
+        path: '/secrets/users_database.yml'
+        watch: true
+        search:
+          email: false
+          case_insensitive: false
+        password:
+          algorithm: 'argon2id'
+          argon2:
+            variant: 'argon2id'
+            iterations: 1
+            memory: 512
+            parallelism: 8
+            key_length: 32
+            salt_length: 16
+            
+    access_control:
+      default_policy: 'deny'
+      rules:
+        - domain: 'test.pavlenko.io'
+          policy: 'two_factor'
+        - domain: 'photos.pavlenko.io'
+          policy: 'two_factor'
+        
+    session:
+      secret:
+        disabled: false
+        secret_name: 'authelia-secrets' 
+        path: 'session_secret'
+      cookies:
+        - name: 'authelia_session'
+          domain: 'pavlenko.io'
+          authelia_url: 'https://auth.pavlenko.io'
+          default_redirection_url: 'https://pavlenko.io'
+          expiration: '3600'
+          inactivity: '300'
+      redis:
+        enabled: true
+        host: 'authelia-redis'
+        port: 6379
+        
+    regulation:
+      max_retries: 3
+      find_time: '120s'
+      ban_time: '300s'
+      
+    storage:
+      encryption_key:
+        disabled: false
+        secret_name: 'authelia-secrets'
+        path: 'storage_encryption_key'
+      local:
+        path: '/config/db.sqlite3'
+        
+    identity_providers:
+      oidc:
+        enabled: true
+        hmac_secret:
+          disabled: false
+          secret_name: 'authelia-secrets'
+          path: 'oidc_hmac_secret'
+        jwks:
+          - key_id: 'main-signing-key'
+            key:
+              secret_name: 'authelia-secrets'
+              path: 'oidc_jwks_key'
+        clients:
+          - client_id: 'immich'
+            client_name: 'Immich'
+            client_secret:
+              secret_name: 'authelia-secrets'
+              path: 'immich_oidc_client_secret'
+            public: false
+            authorization_policy: 'two_factor'
+            redirect_uris:
+              - 'https://photos.pavlenko.io/auth/login'
+              - 'https://photos.pavlenko.io/user-settings'
+              - 'app.immich:///oauth-callback'
+            scopes:
+              - 'openid'
+              - 'profile'
+              - 'email'
+            userinfo_signed_response_alg: 'none'
+            token_endpoint_auth_method: 'client_secret_post'
+            
+    notifier:
+      disable_startup_check: true
+      filesystem:
+        filename: '/config/notification.txt'
+  
+  # Redis subchart configuration
+  redis:
+    enabled: true
+    auth:
+      enabled: false
+    master:
+      persistence:
+        enabled: true
+        size: 1Gi
+      resources:
+        requests:
+          memory: 64Mi
+          cpu: 50m
+        limits:
+          memory: 128Mi
+          cpu: 100m
+  
+  # Disable other database subcharts
+  postgresql:
+    enabled: false
+  mariadb:
+    enabled: false
