@@ -92,9 +92,13 @@ spec:
           storage_encryption_key=$(openssl rand -base64 64 | tr -d '\n')
           oidc_hmac_secret=$(openssl rand -base64 64 | tr -d '\n')
           immich_oidc_client_secret=$(openssl rand -base64 32 | tr -d '\n')
-          oidc_jwks_key=$(openssl rand -base64 128 | tr -d '\n')
           redis_password=$(openssl rand -base64 32 | tr -d '\n')
-          echo "✓ Cryptographic secrets generated"
+          echo "✓ Random secrets generated"
+          
+          # Generate RSA private key for OIDC JWKS signing
+          echo "→ Generating RSA private key for OIDC JWKS..."
+          oidc_jwks_key=$(openssl genrsa 4096 2>/dev/null)
+          echo "✓ RSA private key generated for OIDC JWKS"
           
           # Auto-generate secure admin password
           echo "→ Generating admin credentials..."
