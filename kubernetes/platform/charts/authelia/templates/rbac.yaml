@@ -1,4 +1,4 @@
-{{- if .Values.serviceAccount.create }}
+{{- if .Values.preInstall.enabled }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -25,6 +25,6 @@ roleRef:
   name: {{ include "authelia.fullname" . }}-secret-generator
 subjects:
 - kind: ServiceAccount
-  name: {{ include "authelia.serviceAccountName" . }}
+  name: {{ include "authelia.fullname" . }}-pre-install
   namespace: {{ .Release.Namespace }}
 {{- end }}

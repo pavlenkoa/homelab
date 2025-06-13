@@ -2,9 +2,9 @@
 nameOverride: ""
 fullnameOverride: ""
 
-# Service account configuration
+# Service account configuration (disabled - using upstream chart's ServiceAccount)
 serviceAccount:
-  create: true
+  create: false
   automount: true
   annotations: {}
   name: ""
