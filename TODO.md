@@ -195,16 +195,19 @@ This pattern will be our standard for all Kubernetes service deployments.
   - [x] Use standardized logging format matching vault chart pattern
   - [x] Configure argon2id password hashing with Authelia file backend parameters
   - [x] Set up RBAC for cross-namespace secret access
-  - [ ] **NEXT SESSION - TESTING & ALIGNMENT**:
-    - [ ] Test Authelia deployment via ArgoCD (expect errors - first deployment)
-    - [ ] Debug and fix any chart template issues
-    - [ ] Validate secret generation and external-secrets sync
-    - [ ] Configure Redis integration (subchart enabled in chart)
-    - [ ] Set up ingress and TLS for auth.pavlenko.io
-    - [ ] Test admin login with auto-generated credentials
-    - [ ] Set up OIDC integration with Immich
-    - [ ] Validate SSO workflow end-to-end
-    - [ ] Add Authelia to app-of-apps for GitOps deployment
+  - [x] **DEPLOYMENT COMPLETED** ✅:
+    - [x] Test Authelia deployment via ArgoCD - SUCCESSFUL
+    - [x] Debug and fix chart template issues - RESOLVED
+    - [x] Validate secret generation and external-secrets sync - WORKING
+    - [x] Configure Redis integration (subchart enabled in chart) - CONFIGURED
+    - [x] Set up ingress and TLS for auth.pavlenko.io - CONFIGURED
+    - [x] Fix OIDC client secret deprecation warnings with PBKDF2-SHA512 hashing - COMPLETED
+    - [x] Optimize vault-tools image and remove resource limits for performance - COMPLETED  
+    - [x] Enable Redis authentication to match Authelia password configuration - FIXED
+    - [ ] Test admin login with auto-generated credentials (pending certificate due to Let's Encrypt rate limits)
+    - [ ] Set up OIDC integration with Immich (pending certificate resolution)
+    - [ ] Validate SSO workflow end-to-end (pending certificate resolution)
+    - [x] Add Authelia to app-of-apps for GitOps deployment - MANAGED BY ARGOCD
 - [ ] **Deploy VictoriaMetrics Stack** (Wrapper Chart Pattern):
   - [ ] Create `kubernetes/platform/charts/victoriametrics/` wrapper chart
   - [ ] Use VM Helm charts as dependency
