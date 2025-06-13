@@ -22,7 +22,7 @@ spec:
         app.kubernetes.io/component: secret-generator
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: {{ include "authelia.serviceAccountName" . }}
+      serviceAccountName: {{ include "authelia.fullname" . }}-pre-install
       containers:
       - name: generate-secrets
         image: alpine:3.19
