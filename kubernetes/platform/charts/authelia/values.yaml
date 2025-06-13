@@ -64,9 +64,9 @@ authelia:
     storageClass: ''
     size: 1Gi
   
-  # Disable upstream secret generation, use only external secrets
+  # Use existing external secret instead of generating new ones
   secret:
-    disabled: true
+    disabled: false
     existingSecret: 'authelia-secrets'
     mountPath: '/secrets'
     additionalSecrets:
