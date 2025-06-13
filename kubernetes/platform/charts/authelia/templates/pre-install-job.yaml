@@ -25,46 +25,82 @@ spec:
       serviceAccountName: {{ include "authelia.serviceAccountName" . }}
       containers:
       - name: generate-secrets
-        image: {{ .Values.preInstall.image }}
+        image: alpine:3.19
         command: ["/bin/sh"]
         args:
         - -c
         - |
           set -e
-          echo "🔐 Starting Authelia secret generation..."
+          echo "→ Starting Authelia secret generation..."
+          
+          # Install required tools
+          echo "→ Installing required tools..."
+          apk add --no-cache curl openssl argon2 > /dev/null 2>&1
+          echo "✓ Base tools installed"
+          
+          # Download and install Vault CLI
+          echo "→ Installing Vault CLI..."
+          VAULT_VERSION="1.15.2"
+          curl -sSL "https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip" -o vault.zip
+          unzip vault.zip > /dev/null 2>&1
+          chmod +x vault
+          mv vault /usr/local/bin/
+          echo "✓ Vault CLI installed"
           
           # Wait for Vault to be available
-          echo "⏳ Waiting for Vault to be ready..."
-          until vault status > /dev/null 2>&1; do
-            echo "Waiting for Vault to respond..."
+          echo "→ Waiting for Vault to respond..."
+          timeout=300
+          elapsed=0
+          while true; do
+            vault status > /dev/null 2>&1
+            VAULT_STATUS_CODE=$?
+            # Exit codes: 0=unsealed, 1=error, 2=sealed but responding
+            if [ $VAULT_STATUS_CODE -eq 0 ] || [ $VAULT_STATUS_CODE -eq 2 ]; then
+              echo "✓ Vault is responding (status code: $VAULT_STATUS_CODE)"
+              break
+            fi
+            if [ $elapsed -ge $timeout ]; then
+              echo "✗ Timeout waiting for Vault to respond"
+              exit 1
+            fi
+            echo "→ Waiting for Vault to start... ($elapsed/$timeout seconds)"
             sleep 5
+            elapsed=$((elapsed + 5))
           done
-          echo "✅ Vault is ready"
           
           # Check if secrets already exist
+          echo "→ Checking if Authelia secrets already exist..."
           if vault kv get {{ .Values.vault.secretPath }} > /dev/null 2>&1; then
-            echo "✅ Authelia secrets already exist in Vault"
+            echo "✓ Authelia secrets already exist in Vault"
             exit 0
           fi
           
-          echo "🔄 Generating new Authelia secrets..."
+          echo "→ Generating new Authelia secrets..."
           
           # Generate cryptographically secure random secrets
+          echo "→ Generating cryptographic secrets..."
           jwt_secret=$(openssl rand -base64 64 | tr -d '\n')
           session_secret=$(openssl rand -base64 64 | tr -d '\n')
           storage_encryption_key=$(openssl rand -base64 64 | tr -d '\n')
           oidc_hmac_secret=$(openssl rand -base64 64 | tr -d '\n')
           immich_oidc_client_secret=$(openssl rand -base64 32 | tr -d '\n')
           oidc_jwks_key=$(openssl rand -base64 128 | tr -d '\n')
+          echo "✓ Cryptographic secrets generated"
           
-          # Generate admin password (user will need to change this)
-          admin_password="{{ .Values.preInstall.adminPassword | default "changeMe123!" }}"
+          # Auto-generate secure admin password
+          echo "→ Generating admin credentials..."
+          admin_password=$(openssl rand -base64 32 | tr -d '\n')
+          echo "✓ Admin password generated: $admin_password"
           
-          # Generate users_database.yml content with hashed password
-          echo "🔐 Generating password hash..."
-          # Use argon2 hash compatible with Authelia - using htpasswd with bcrypt for now
-          admin_password_hash=$(htpasswd -bnBC 10 "" "$admin_password" | tr -d ':\n' | sed 's/^://')
+          # Generate argon2id hash for Authelia using the file backend parameters
+          echo "→ Generating argon2id password hash..."
+          # Use a random salt and argon2 with file backend parameters: m=512KB (2^9), t=1, p=8
+          salt=$(openssl rand -hex 16)
+          admin_password_hash=$(echo -n "$admin_password" | argon2 "$salt" -id -t 1 -m 9 -p 8 -l 32 -e)
+          echo "✓ Password hash generated using argon2id"
           
+          # Generate users database YAML
+          echo "→ Creating users database configuration..."
           users_database=$(cat <<EOF
           ---
           users:
@@ -80,9 +116,10 @@ spec:
               - admin
           EOF
           )
+          echo "✓ Users database configuration created"
           
           # Store all secrets in Vault
-          echo "💾 Storing secrets in Vault..."
+          echo "→ Storing secrets in Vault..."
           vault kv put {{ .Values.vault.secretPath }} \
             jwt_secret="$jwt_secret" \
             session_secret="$session_secret" \
@@ -92,10 +129,19 @@ spec:
             oidc_jwks_key="$oidc_jwks_key" \
             admin_password="$admin_password" \
             users_database="$users_database"
+          
+          if [ $? -eq 0 ]; then
+            echo "✓ Secrets stored in Vault successfully"
+          else
+            echo "✗ Failed to store secrets in Vault"
+            exit 1
+          fi
             
-          echo "✅ Authelia secrets generated and stored in Vault"
-          echo "ℹ️  Admin credentials: admin / $admin_password"
-          echo "⚠️  Please change the default admin password after first login"
+          echo "✓ Authelia secret generation complete!"
+          echo "→ Admin credentials: admin / $admin_password"
+          echo "→ Admin password stored in Vault for reference"
+          echo "→ Password hash generated using argon2id algorithm"
+          echo "→ All secrets available via external-secrets sync"
         env:
         - name: VAULT_ADDR
           value: {{ .Values.vault.address }}

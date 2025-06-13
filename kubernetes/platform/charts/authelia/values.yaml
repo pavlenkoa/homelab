@@ -16,8 +16,6 @@ upstream:
 # Pre-install job configuration
 preInstall:
   enabled: true
-  image: "hashicorp/vault:1.15.2"
-  adminPassword: "changeMe123!"
   adminUser:
     displayName: "Administrator"
     email: "admin@pavlenko.io"

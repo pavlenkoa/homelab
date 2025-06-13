@@ -28,16 +28,25 @@
 - **✅ TLS Automation**: External services get automatic Let's Encrypt certificates via cert-manager
 - **✅ GitOps Management**: All external service configs managed through ArgoCD + Git
 
-**🚀 READY: Phase 4** - Continue with monitoring stack (VictoriaMetrics, Grafana) and more applications
+**🚀 READY: Phase 4** - Testing and alignment of Authelia deployment, then monitoring stack
 
 **💡 NEXT SESSION PRIORITIES:**
-1. **Standardize Wrapper Chart Pattern**: Implement Authelia using wrapper chart approach (see below)
-2. **Deploy More External Services**: Add Transmission via external-services pattern
-3. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
+1. **Commit and Push Current Changes**: 
+   - Complete Authelia wrapper chart implementation ready for testing
+   - Auto-generated passwords with argon2id hashing
+   - Standardized logging format matching vault pattern
+2. **Test Authelia Deployment**: Deploy and debug Authelia wrapper chart (expect initial errors)
+   - Validate pre-install job and secret generation in Vault
+   - Debug any chart template or configuration issues  
+   - Test external-secrets sync and secret mounting
+   - Configure ingress, TLS, and test admin login
+   - Set up OIDC integration and validate SSO workflow
+3. **Deploy More External Services**: Add Transmission via external-services pattern
+4. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
    - Option A: MikroTik + Consul integration for service discovery
    - Option B: external-dns with MikroTik RouterOS API integration
    - Option C: Local DNS override solutions (dnsmasq, router configuration)
-4. **Monitoring Stack**: Deploy VictoriaMetrics + Grafana to monitor hybrid infrastructure
+5. **Monitoring Stack**: Deploy VictoriaMetrics + Grafana using established wrapper chart pattern
 
 ---
 
@@ -45,30 +54,37 @@
 
 We've established a pattern for creating wrapper charts that handle secret generation and upstream chart integration. This provides consistency and eliminates manual secret management.
 
-### **Authelia Wrapper Chart Implementation**
+### **Authelia Wrapper Chart Implementation** ✅ COMPLETED
 
 **Chart Structure:**
 ```
 kubernetes/platform/charts/authelia/
-├── Chart.yaml                     # Wrapper chart with upstream dependency
+├── Chart.yaml                     # Wrapper chart with upstream dependency (v0.10.12)
+├── charts/authelia-0.10.12.tgz   # Downloaded upstream chart
 ├── templates/
-│   ├── pre-install-job.yaml      # Secret generation in Vault
-│   └── external-secret.yaml      # Vault → K8s secret sync
-└── values.yaml                   # Wrapper configuration + upstream values
+│   ├── _helpers.tpl               # Chart helper functions
+│   ├── serviceaccount.yaml        # Service account for pre-install job
+│   ├── rbac.yaml                  # RBAC for cross-namespace secret access
+│   ├── pre-install-job.yaml       # Secret generation in Vault with argon2id
+│   └── external-secret.yaml       # Vault → K8s secret sync
+└── values.yaml                    # Wrapper configuration + upstream values
 ```
 
 **Key Components:**
 
-1. **Chart.yaml** - Dependencies on upstream Authelia chart
-2. **Pre-install Job** - Generates secrets in Vault if missing
-3. **External Secret** - Syncs secrets from Vault to Kubernetes
-4. **Values** - Configures both wrapper and upstream chart
+1. **Chart.yaml** - Dependencies on upstream Authelia chart v0.10.12
+2. **Pre-install Job** - Generates secrets in Vault with argon2id password hashing
+3. **External Secret** - Syncs secrets from Vault to Kubernetes (12 secrets total)
+4. **RBAC** - Allows cross-namespace secret access for external-secrets
+5. **Values** - Configures both wrapper and upstream chart with file backend
 
 **Secret Generation Strategy:**
-- **Pre-install Helm hook** generates secrets in Vault (idempotent)
+- **Pre-install Helm hook** generates secrets in Vault (idempotent, standardized logging)
+- **Auto-generated passwords** using `openssl rand -base64 32` (no manual input)
+- **Argon2id hashing** with Authelia file backend parameters (`m=512KB, t=1, p=8`)
 - **Vault token** sourced from `vault-unseal-keys` secret in vault namespace
 - **External-secrets** pulls generated secrets into Kubernetes
-- **Upstream chart** uses `existingSecret` pattern
+- **Upstream chart** uses `existingSecret` pattern with file paths
 
 **Benefits:**
 - ✅ **Fully declarative** - No manual secret management
@@ -76,14 +92,17 @@ kubernetes/platform/charts/authelia/
 - ✅ **Reusable pattern** - Same approach for all services
 - ✅ **Environment agnostic** - Works across dev/staging/prod
 - ✅ **Secure** - Secrets never in Git, generated in Vault
+- ✅ **Professional logging** - Matches vault chart logging format
+- ✅ **Password security** - Argon2id with proper parameters
 
-**Implementation Steps:**
-1. Create wrapper chart structure
-2. Add upstream authelia chart dependency
-3. Implement pre-install secret generation job
-4. Create external-secret for Vault integration
-5. Configure upstream chart to use generated secrets
-6. Test with manual sync first, then enable auto-sync
+**Implementation Status:** ✅ COMPLETED
+1. ✅ Create wrapper chart structure
+2. ✅ Add upstream authelia chart dependency
+3. ✅ Implement pre-install secret generation job with argon2id
+4. ✅ Create external-secret for Vault integration
+5. ✅ Configure upstream chart to use generated secrets
+6. ✅ Add RBAC for cross-namespace access
+7. ⏳ **NEXT**: Test deployment and debug any issues
 
 **Next Services to Migrate:**
 - Authelia (authentication)
@@ -165,18 +184,27 @@ This pattern will be our standard for all Kubernetes service deployments.
   - [x] ArgoCD self-management via GitOps (enterprise pattern)
 
 ### Phase 4: Platform Services - Monitoring & Authentication (Using Wrapper Chart Pattern)
-- [ ] **Deploy Authelia** (Priority 1 - Wrapper Chart Pattern):
-  - [ ] Create `kubernetes/platform/charts/authelia/` wrapper chart
-  - [ ] Add upstream authelia chart dependency in Chart.yaml
-  - [ ] Implement pre-install job for secret generation in Vault
-  - [ ] Create external-secret template for Vault → K8s integration
-  - [ ] Configure wrapper values.yaml with upstream chart configuration
-  - [ ] Create `kubernetes/platform/values/homelab/authelia.yaml` environment values
-  - [ ] Test manual sync first, then enable auto-sync
-  - [ ] Migrate users_database.yml using template generation
-  - [ ] Configure Redis integration (subchart or external)
-  - [ ] Set up OIDC integration with Immich
-  - [ ] Validate SSO workflow end-to-end
+- [x] **Deploy Authelia** (Priority 1 - Wrapper Chart Pattern) - INITIAL SETUP COMPLETE:
+  - [x] Create `kubernetes/platform/charts/authelia/` wrapper chart
+  - [x] Add upstream authelia chart dependency in Chart.yaml (v0.10.12)
+  - [x] Implement pre-install job for secret generation in Vault with argon2id hashing
+  - [x] Create external-secret template for Vault → K8s integration
+  - [x] Configure wrapper values.yaml with upstream chart configuration
+  - [x] Create `kubernetes/platform/values/homelab/authelia.yaml` environment values
+  - [x] Implement auto-generated admin passwords (no manual configuration)
+  - [x] Use standardized logging format matching vault chart pattern
+  - [x] Configure argon2id password hashing with Authelia file backend parameters
+  - [x] Set up RBAC for cross-namespace secret access
+  - [ ] **NEXT SESSION - TESTING & ALIGNMENT**:
+    - [ ] Test Authelia deployment via ArgoCD (expect errors - first deployment)
+    - [ ] Debug and fix any chart template issues
+    - [ ] Validate secret generation and external-secrets sync
+    - [ ] Configure Redis integration (subchart enabled in chart)
+    - [ ] Set up ingress and TLS for auth.pavlenko.io
+    - [ ] Test admin login with auto-generated credentials
+    - [ ] Set up OIDC integration with Immich
+    - [ ] Validate SSO workflow end-to-end
+    - [ ] Add Authelia to app-of-apps for GitOps deployment
 - [ ] **Deploy VictoriaMetrics Stack** (Wrapper Chart Pattern):
   - [ ] Create `kubernetes/platform/charts/victoriametrics/` wrapper chart
   - [ ] Use VM Helm charts as dependency

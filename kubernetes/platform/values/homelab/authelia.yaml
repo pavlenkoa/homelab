@@ -3,12 +3,11 @@
 # Vault configuration for homelab
 vault:
   address: "http://vault.vault.svc.cluster.local:8200"
-  secretPath: "kv/authelia"
+  secretPath: "homelab/authelia"
   secretStoreName: "vault-backend"
 
 # Admin user configuration
 preInstall:
-  adminPassword: "HomeLabAdmin2024!"
   adminUser:
     displayName: "Homelab Administrator"
     email: "admin@pavlenko.io"
