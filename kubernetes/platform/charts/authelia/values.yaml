@@ -111,7 +111,7 @@ authelia:
         disable: false
       file:
         enabled: true
-        path: '/secrets/users_database.yml'
+        path: '/secrets/authelia-secrets/users_database'
         watch: true
         search:
           email: false
@@ -150,6 +150,10 @@ authelia:
         enabled: true
         host: 'authelia-redis'
         port: 6379
+        password:
+          disabled: false
+          secret_name: 'authelia-secrets'
+          path: 'redis_password'
         
     regulation:
       max_retries: 3
