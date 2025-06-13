@@ -14,20 +14,20 @@ preInstall:
 
 # Override upstream chart values for homelab
 authelia:
-  # Ingress configuration for pavlenko.io
+  # Ingress configuration for pavlenko.io (TLS temporarily disabled due to rate limits)
   ingress:
     enabled: true
     className: 'nginx'
     annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      # cert-manager.io/cluster-issuer: letsencrypt-prod
+      # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     rulesOverride:
       - host: 'auth.pavlenko.io'
         path: '/'
     tls:
-      enabled: true
-      secret: 'authelia-tls'
-      hostNameOverride: 'auth.pavlenko.io'
+      enabled: false
+      # secret: 'authelia-tls'
+      # hostNameOverride: 'auth.pavlenko.io'
 
   # Main configuration overrides  
   configMap:
@@ -70,8 +70,8 @@ authelia:
       cookies:
         - name: 'authelia_session'
           domain: 'pavlenko.io'
-          authelia_url: 'https://auth.pavlenko.io'
-          default_redirection_url: 'https://test.pavlenko.io'
+          authelia_url: 'http://auth.pavlenko.io'
+          default_redirection_url: 'http://test.pavlenko.io'
           expiration: '3600'
           inactivity: '300'
       redis:
@@ -124,8 +124,8 @@ authelia:
             public: false
             authorization_policy: 'two_factor'
             redirect_uris:
-              - 'https://photos.pavlenko.io/auth/login'
-              - 'https://photos.pavlenko.io/user-settings'
+              - 'http://photos.pavlenko.io/auth/login'
+              - 'http://photos.pavlenko.io/user-settings'
               - 'app.immich:///oauth-callback'
             scopes:
               - 'openid'
