@@ -148,9 +148,8 @@ spec:
         - name: VAULT_TOKEN
           valueFrom:
             secretKeyRef:
-              name: vault-unseal-keys
+              name: vault-root-token
               key: root-token
-              namespace: vault
         resources:
           requests:
             memory: "64Mi"
