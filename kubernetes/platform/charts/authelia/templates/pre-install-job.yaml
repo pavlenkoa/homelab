@@ -1,0 +1,115 @@
+{{- if .Values.preInstall.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "authelia.fullname" . }}-secrets-generator
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "authelia.labels" . | nindent 4 }}
+    app.kubernetes.io/component: secret-generator
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        {{- include "authelia.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: secret-generator
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ include "authelia.serviceAccountName" . }}
+      containers:
+      - name: generate-secrets
+        image: {{ .Values.preInstall.image }}
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          set -e
+          echo "🔐 Starting Authelia secret generation..."
+          
+          # Wait for Vault to be available
+          echo "⏳ Waiting for Vault to be ready..."
+          until vault status > /dev/null 2>&1; do
+            echo "Waiting for Vault to respond..."
+            sleep 5
+          done
+          echo "✅ Vault is ready"
+          
+          # Check if secrets already exist
+          if vault kv get {{ .Values.vault.secretPath }} > /dev/null 2>&1; then
+            echo "✅ Authelia secrets already exist in Vault"
+            exit 0
+          fi
+          
+          echo "🔄 Generating new Authelia secrets..."
+          
+          # Generate cryptographically secure random secrets
+          jwt_secret=$(openssl rand -base64 64 | tr -d '\n')
+          session_secret=$(openssl rand -base64 64 | tr -d '\n')
+          storage_encryption_key=$(openssl rand -base64 64 | tr -d '\n')
+          oidc_hmac_secret=$(openssl rand -base64 64 | tr -d '\n')
+          immich_oidc_client_secret=$(openssl rand -base64 32 | tr -d '\n')
+          oidc_jwks_key=$(openssl rand -base64 128 | tr -d '\n')
+          
+          # Generate admin password (user will need to change this)
+          admin_password="{{ .Values.preInstall.adminPassword | default "changeMe123!" }}"
+          
+          # Generate users_database.yml content with hashed password
+          echo "🔐 Generating password hash..."
+          # Use argon2 hash compatible with Authelia - using htpasswd with bcrypt for now
+          admin_password_hash=$(htpasswd -bnBC 10 "" "$admin_password" | tr -d ':\n' | sed 's/^://')
+          
+          users_database=$(cat <<EOF
+          ---
+          users:
+            admin:
+              displayname: "{{ .Values.preInstall.adminUser.displayName | default "Administrator" }}"
+              disabled: false
+              password: "$admin_password_hash"
+              email: "{{ .Values.preInstall.adminUser.email | default "admin@pavlenko.io" }}"
+              groups:
+                - admins
+          groups:
+            admins:
+              - admin
+          EOF
+          )
+          
+          # Store all secrets in Vault
+          echo "💾 Storing secrets in Vault..."
+          vault kv put {{ .Values.vault.secretPath }} \
+            jwt_secret="$jwt_secret" \
+            session_secret="$session_secret" \
+            storage_encryption_key="$storage_encryption_key" \
+            oidc_hmac_secret="$oidc_hmac_secret" \
+            immich_oidc_client_secret="$immich_oidc_client_secret" \
+            oidc_jwks_key="$oidc_jwks_key" \
+            admin_password="$admin_password" \
+            users_database="$users_database"
+            
+          echo "✅ Authelia secrets generated and stored in Vault"
+          echo "ℹ️  Admin credentials: admin / $admin_password"
+          echo "⚠️  Please change the default admin password after first login"
+        env:
+        - name: VAULT_ADDR
+          value: {{ .Values.vault.address }}
+        - name: VAULT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: vault-unseal-keys
+              key: root-token
+              namespace: vault
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+{{- end }}

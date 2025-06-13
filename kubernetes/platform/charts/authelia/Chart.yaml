@@ -1,0 +1,16 @@
+apiVersion: v2
+name: authelia
+version: 1.0.0
+description: "Wrapper chart for Authelia with homelab secret management"
+appVersion: "4.39.4"
+
+dependencies:
+- name: authelia
+  version: "0.10.12"
+  repository: "https://charts.authelia.com"
+  condition: upstream.enabled
+
+annotations:
+  homelab.io/type: "wrapper"
+  homelab.io/upstream-chart: "authelia/authelia"
+  homelab.io/secret-management: "vault"
