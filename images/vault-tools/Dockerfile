@@ -36,11 +36,16 @@ RUN apk add --no-cache \
     mv vault /usr/local/bin/vault && \
     chmod +x /usr/local/bin/vault && \
     \
-    # Download and install Authelia
-    curl -fsSL -o /tmp/authelia.tar.gz "https://github.com/authelia/authelia/releases/download/${AUTHELIA_VERSION}/authelia-${AUTHELIA_VERSION}-linux-${BIN_ARCH}.tar.gz" && \
+    # Download and install Authelia (musl version for Alpine compatibility)
+    curl -fsSL -o /tmp/authelia.tar.gz "https://github.com/authelia/authelia/releases/download/${AUTHELIA_VERSION}/authelia-${AUTHELIA_VERSION}-linux-${BIN_ARCH}-musl.tar.gz" && \
     cd /tmp && tar -xzf authelia.tar.gz && \
     find /tmp -name "authelia*" -type f -executable | head -1 | xargs -I {} mv {} /usr/local/bin/authelia && \
     chmod +x /usr/local/bin/authelia && \
+    \
+    # Verify installations
+    kubectl version --client && \
+    vault version && \
+    /usr/local/bin/authelia --version && \
     \
     # Clean up download artifacts
     rm -rf /tmp/* && \
@@ -55,11 +60,6 @@ WORKDIR /home/vault-tools
 
 # Switch to non-root user
 USER vault-tools
-
-# Verify installations
-RUN kubectl version --client && \
-    vault version && \
-    (authelia --version || echo "Authelia binary not found in PATH")
 
 # Default command
 CMD ["/bin/bash"]
