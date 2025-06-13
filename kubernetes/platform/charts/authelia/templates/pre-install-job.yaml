@@ -107,6 +107,7 @@ spec:
           oidc_hmac_secret=$(openssl rand -base64 64 | tr -d '\n')
           immich_oidc_client_secret=$(openssl rand -base64 32 | tr -d '\n')
           oidc_jwks_key=$(openssl rand -base64 128 | tr -d '\n')
+          redis_password=$(openssl rand -base64 32 | tr -d '\n')
           echo "✓ Cryptographic secrets generated"
           
           # Auto-generate secure admin password
@@ -149,6 +150,7 @@ spec:
             oidc_hmac_secret="$oidc_hmac_secret" \
             immich_oidc_client_secret="$immich_oidc_client_secret" \
             oidc_jwks_key="$oidc_jwks_key" \
+            redis_password="$redis_password" \
             admin_password="$admin_password" \
             users_database="$users_database"
           
