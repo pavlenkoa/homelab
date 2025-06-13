@@ -149,7 +149,7 @@ authelia:
       redis:
         enabled: true
         deploy: true
-        host: 'authelia-redis'
+        host: 'authelia-redis-master'
         port: 6379
         password:
           disabled: false

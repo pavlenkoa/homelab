@@ -76,7 +76,7 @@ authelia:
           inactivity: '300'
       redis:
         enabled: true
-        host: 'authelia-redis'
+        host: 'authelia-redis-master'
         port: 6379
         database_index: 0
         password:
