@@ -135,7 +135,7 @@ authelia:
           policy: 'two_factor'
         
     session:
-      secret:
+      encryption_key:
         disabled: false
         secret_name: 'authelia-secrets'
         path: 'session_secret'
