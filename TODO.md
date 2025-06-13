@@ -31,12 +31,67 @@
 **🚀 READY: Phase 4** - Continue with monitoring stack (VictoriaMetrics, Grafana) and more applications
 
 **💡 NEXT SESSION PRIORITIES:**
-1. **Deploy More External Services**: Add Transmission, Authelia via external-services pattern
-2. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
+1. **Standardize Wrapper Chart Pattern**: Implement Authelia using wrapper chart approach (see below)
+2. **Deploy More External Services**: Add Transmission via external-services pattern
+3. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
    - Option A: MikroTik + Consul integration for service discovery
    - Option B: external-dns with MikroTik RouterOS API integration
    - Option C: Local DNS override solutions (dnsmasq, router configuration)
-3. **Monitoring Stack**: Deploy VictoriaMetrics + Grafana to monitor hybrid infrastructure
+4. **Monitoring Stack**: Deploy VictoriaMetrics + Grafana to monitor hybrid infrastructure
+
+---
+
+## 🔧 Standardized Wrapper Chart Pattern
+
+We've established a pattern for creating wrapper charts that handle secret generation and upstream chart integration. This provides consistency and eliminates manual secret management.
+
+### **Authelia Wrapper Chart Implementation**
+
+**Chart Structure:**
+```
+kubernetes/platform/charts/authelia/
+├── Chart.yaml                     # Wrapper chart with upstream dependency
+├── templates/
+│   ├── pre-install-job.yaml      # Secret generation in Vault
+│   └── external-secret.yaml      # Vault → K8s secret sync
+└── values.yaml                   # Wrapper configuration + upstream values
+```
+
+**Key Components:**
+
+1. **Chart.yaml** - Dependencies on upstream Authelia chart
+2. **Pre-install Job** - Generates secrets in Vault if missing
+3. **External Secret** - Syncs secrets from Vault to Kubernetes
+4. **Values** - Configures both wrapper and upstream chart
+
+**Secret Generation Strategy:**
+- **Pre-install Helm hook** generates secrets in Vault (idempotent)
+- **Vault token** sourced from `vault-unseal-keys` secret in vault namespace
+- **External-secrets** pulls generated secrets into Kubernetes
+- **Upstream chart** uses `existingSecret` pattern
+
+**Benefits:**
+- ✅ **Fully declarative** - No manual secret management
+- ✅ **GitOps ready** - Everything in Git, secrets auto-generated
+- ✅ **Reusable pattern** - Same approach for all services
+- ✅ **Environment agnostic** - Works across dev/staging/prod
+- ✅ **Secure** - Secrets never in Git, generated in Vault
+
+**Implementation Steps:**
+1. Create wrapper chart structure
+2. Add upstream authelia chart dependency
+3. Implement pre-install secret generation job
+4. Create external-secret for Vault integration
+5. Configure upstream chart to use generated secrets
+6. Test with manual sync first, then enable auto-sync
+
+**Next Services to Migrate:**
+- Authelia (authentication)
+- VictoriaMetrics (monitoring)
+- Grafana (visualization)
+- Future applications
+
+This pattern will be our standard for all Kubernetes service deployments.
 
 ---
 
@@ -109,37 +164,45 @@
   - [x] Professional TLS configuration using extraTls pattern
   - [x] ArgoCD self-management via GitOps (enterprise pattern)
 
-### Phase 4: Platform Services - Monitoring & Authentication
-- [ ] **Deploy VictoriaMetrics Stack**:
-  - [ ] Create `kubernetes/platform/charts/victoriametrics/` chart using VM Helm charts
+### Phase 4: Platform Services - Monitoring & Authentication (Using Wrapper Chart Pattern)
+- [ ] **Deploy Authelia** (Priority 1 - Wrapper Chart Pattern):
+  - [ ] Create `kubernetes/platform/charts/authelia/` wrapper chart
+  - [ ] Add upstream authelia chart dependency in Chart.yaml
+  - [ ] Implement pre-install job for secret generation in Vault
+  - [ ] Create external-secret template for Vault → K8s integration
+  - [ ] Configure wrapper values.yaml with upstream chart configuration
+  - [ ] Create `kubernetes/platform/values/homelab/authelia.yaml` environment values
+  - [ ] Test manual sync first, then enable auto-sync
+  - [ ] Migrate users_database.yml using template generation
+  - [ ] Configure Redis integration (subchart or external)
+  - [ ] Set up OIDC integration with Immich
+  - [ ] Validate SSO workflow end-to-end
+- [ ] **Deploy VictoriaMetrics Stack** (Wrapper Chart Pattern):
+  - [ ] Create `kubernetes/platform/charts/victoriametrics/` wrapper chart
+  - [ ] Use VM Helm charts as dependency
+  - [ ] Implement secret generation for authentication
   - [ ] Create `kubernetes/platform/values/homelab/victoriametrics.yaml` values
-  - [ ] Install VictoriaMetrics: `helm install vm vm/victoria-metrics-cluster`
   - [ ] Configure persistent storage for metrics data
-- [ ] **Deploy VictoriaLogs**:
-  - [ ] Create `kubernetes/platform/charts/victorialogs/` chart
+- [ ] **Deploy VictoriaLogs** (Wrapper Chart Pattern):
+  - [ ] Create `kubernetes/platform/charts/victorialogs/` wrapper chart  
+  - [ ] Use VM charts as dependency
+  - [ ] Implement log retention and storage configuration
   - [ ] Create `kubernetes/platform/values/homelab/victorialogs.yaml` values
-  - [ ] Install VictoriaLogs: `helm install vlogs vm/victoria-logs-single`
-  - [ ] Configure log retention and storage policies
-- [ ] **Deploy Grafana**:
-  - [ ] Create `kubernetes/platform/charts/grafana/` chart using Grafana Helm chart
+- [ ] **Deploy Grafana** (Wrapper Chart Pattern):
+  - [ ] Create `kubernetes/platform/charts/grafana/` wrapper chart
+  - [ ] Use upstream Grafana Helm chart as dependency
+  - [ ] Generate admin password and API keys in Vault
   - [ ] Create `kubernetes/platform/values/homelab/grafana.yaml` values
-  - [ ] Install Grafana: `helm install grafana grafana/grafana`
   - [ ] Configure VictoriaMetrics and VictoriaLogs data sources
   - [ ] Import monitoring dashboards from current Docker setup
   - [ ] Set up alerting rules and notification channels
-- [ ] **Deploy Alloy (Metrics Collection)**:
-  - [ ] Create `kubernetes/platform/charts/alloy/` chart using Grafana Helm chart
-  - [ ] Create `kubernetes/platform/values/homelab/alloy.yaml` values
-  - [ ] Install Alloy: `helm install alloy grafana/alloy`
+- [ ] **Deploy Alloy (Metrics Collection)** (Wrapper Chart Pattern):
+  - [ ] Create `kubernetes/platform/charts/alloy/` wrapper chart
+  - [ ] Use Grafana Helm chart as dependency
+  - [ ] Generate collection credentials in Vault
+  - [ ] Create `kubernetes/platform/values/homelab/alloy.yaml` values  
   - [ ] Configure metrics collection from Kubernetes and external sources
   - [ ] Set up metrics forwarding to VictoriaMetrics
-- [ ] **Deploy Authelia**:
-  - [ ] Create `kubernetes/platform/charts/authelia/` custom chart
-  - [ ] Create `kubernetes/platform/values/homelab/authelia.yaml` values
-  - [ ] Configure Redis StatefulSet for session storage
-  - [ ] Migrate authentication configuration from Docker Compose
-  - [ ] Set up OIDC integration with other services
-  - [ ] Configure Caddy integration for SSO
 
 ### Phase 5: Application Services Migration
 - [ ] **Deploy Immich (Photo Management)**:
