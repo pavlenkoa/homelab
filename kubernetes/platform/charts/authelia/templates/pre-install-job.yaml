@@ -91,9 +91,15 @@ spec:
           session_secret=$(openssl rand -base64 64 | tr -d '\n')
           storage_encryption_key=$(openssl rand -base64 64 | tr -d '\n')
           oidc_hmac_secret=$(openssl rand -base64 64 | tr -d '\n')
-          immich_oidc_client_secret=$(openssl rand -base64 32 | tr -d '\n')
           redis_password=$(openssl rand -base64 32 | tr -d '\n')
           echo "✓ Random secrets generated"
+          
+          # Generate OIDC client secret with proper PBKDF2 hashing
+          echo "→ Generating OIDC client secret..."
+          immich_oidc_client_secret_plaintext=$(openssl rand -base64 72 | tr -d '\n')
+          immich_oidc_client_secret=$(authelia crypto hash generate pbkdf2 --variant sha512 --password="$immich_oidc_client_secret_plaintext" --no-confirm)
+          echo "✓ OIDC client secret generated (hashed with PBKDF2-SHA512)"
+          echo "→ Plaintext client secret for Immich config: $immich_oidc_client_secret_plaintext"
           
           # Generate RSA private key for OIDC JWKS signing
           echo "→ Generating RSA private key for OIDC JWKS..."
@@ -105,12 +111,10 @@ spec:
           admin_password=$(openssl rand -base64 32 | tr -d '\n')
           echo "✓ Admin password generated: $admin_password"
           
-          # Generate argon2id hash for Authelia using the file backend parameters
+          # Generate argon2id hash for Authelia using built-in crypto functions
           echo "→ Generating argon2id password hash..."
-          # Use a random salt and argon2 with file backend parameters: m=512KB (2^9), t=1, p=8
-          salt=$(openssl rand -hex 16)
-          admin_password_hash=$(echo -n "$admin_password" | argon2 "$salt" -id -t 1 -m 9 -p 8 -l 32 -e)
-          echo "✓ Password hash generated using argon2id"
+          admin_password_hash=$(authelia crypto hash generate argon2 --password="$admin_password" --no-confirm)
+          echo "✓ Password hash generated using Authelia crypto (argon2id)"
           
           # Generate users database YAML
           echo "→ Creating users database configuration..."
