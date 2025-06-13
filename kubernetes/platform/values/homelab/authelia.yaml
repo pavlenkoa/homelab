@@ -3,7 +3,7 @@
 # Vault configuration for homelab
 vault:
   address: "http://vault.vault.svc.cluster.local:8200"
-  secretPath: "homelab/authelia"
+  secretPath: "kv/authelia"
   secretStoreName: "vault-backend"
 
 # Admin user configuration
