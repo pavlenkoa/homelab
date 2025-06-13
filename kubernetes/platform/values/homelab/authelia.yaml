@@ -140,5 +140,9 @@ authelia:
   
   # Redis configuration
   redis:
+    auth:
+      enabled: true
+      existingSecret: 'authelia-secrets'
+      existingSecretPasswordKey: 'redis_password'
     master:
       resources: {}
