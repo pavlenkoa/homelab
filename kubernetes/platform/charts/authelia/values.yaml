@@ -90,10 +90,7 @@ authelia:
         code_lifespan: '5m'
         elevation_lifespan: '10m'
       reset_password:
-        secret:
-          disabled: false
-          secret_name: 'authelia-secrets'
-          path: 'jwt_secret'
+        secret_file: '/secrets/authelia-secrets/jwt_secret'
     
     totp:
       issuer: 'authelia.com'
@@ -135,10 +132,7 @@ authelia:
           policy: 'two_factor'
         
     session:
-      secret:
-        disabled: false
-        secret_name: 'authelia-secrets' 
-        path: 'session_secret'
+      secret_file: '/secrets/authelia-secrets/session_secret'
       cookies:
         - name: 'authelia_session'
           domain: 'pavlenko.io'
@@ -150,10 +144,7 @@ authelia:
         enabled: true
         host: 'authelia-redis'
         port: 6379
-        password:
-          disabled: false
-          secret_name: 'authelia-secrets'
-          path: 'redis_password'
+        password_file: '/secrets/authelia-secrets/redis_password'
         
     regulation:
       max_retries: 3
@@ -161,31 +152,21 @@ authelia:
       ban_time: '300s'
       
     storage:
-      encryption_key:
-        disabled: false
-        secret_name: 'authelia-secrets'
-        path: 'storage_encryption_key'
+      encryption_key_file: '/secrets/authelia-secrets/storage_encryption_key'
       local:
         path: '/config/db.sqlite3'
         
     identity_providers:
       oidc:
         enabled: true
-        hmac_secret:
-          disabled: false
-          secret_name: 'authelia-secrets'
-          path: 'oidc_hmac_secret'
+        hmac_secret_file: '/secrets/authelia-secrets/oidc_hmac_secret'
         jwks:
           - key_id: 'main-signing-key'
-            key:
-              secret_name: 'authelia-secrets'
-              path: 'oidc_jwks_key'
+            key_file: '/secrets/authelia-secrets/oidc_jwks_key'
         clients:
           - client_id: 'immich'
             client_name: 'Immich'
-            client_secret:
-              secret_name: 'authelia-secrets'
-              path: 'immich_oidc_client_secret'
+            client_secret_file: '/secrets/authelia-secrets/immich_oidc_client_secret'
             public: false
             authorization_policy: 'two_factor'
             redirect_uris:
