@@ -18,14 +18,10 @@ kubernetes/
 ├── infrastructure/                 # Core cluster infrastructure
 │   ├── charts/                    # Infrastructure Helm charts
 │   │   ├── cert-manager/          # Certificate management (Let's Encrypt + Cloudflare)
-│   │   ├── cilium/               # CNI with Hubble observability (unused on OrbStack)
-│   │   ├── cilium-lb/            # LoadBalancer IP pool configuration
 │   │   └── ingress-nginx/        # Ingress controller with LoadBalancer
 │   └── values/
 │       └── homelab/              # Environment-specific values
 │           ├── cert-manager.yaml
-│           ├── cilium.yaml
-│           ├── cilium-lb.yaml
 │           └── ingress-nginx.yaml
 ├── platform/                      # Platform services and DevOps tools
 │   ├── charts/                    # Platform service Helm charts
@@ -234,55 +230,11 @@ Critical services override sync policies for safety:
 - **ArgoCD**: `prune: false` (never auto-delete ArgoCD itself)
 - **Infrastructure**: `prune: false` (never auto-delete CNI/ingress)
 
-## 📊 Monitoring
-
-### Service Health
-
-Monitor application health in ArgoCD UI or CLI:
-
-```bash
-# Application status
-argocd app list
-
-# Application details
-argocd app get vault
-
-# Sync application manually
-argocd app sync vault
-```
-
-### Troubleshooting
-
-```bash
-# Check sync waves
-kubectl get applications -n argocd -o custom-columns=NAME:.metadata.name,WAVE:.metadata.annotations.'argocd\.argoproj\.io/sync-wave'
-
-# Application events
-kubectl describe application vault -n argocd
-
-# Pod status by namespace
-kubectl get pods -A
-
-# Check ingress
-kubectl get ingress -A
-```
-
-## 🌐 Network Architecture
-
 ### Traffic Flow
 
 ```
 Internet → Cloudflare → Kyiv Router → WireGuard → OrbStack LoadBalancer → ingress-nginx → Services
 ```
-
-### LoadBalancer IPs
-
-OrbStack provides LoadBalancer support with IP range `198.19.249.0/24`:
-
-- **ingress-nginx**: `198.19.249.2:80,443`
-- **ArgoCD**: `198.19.249.3:80,443`
-
-### TLS Certificates
 
 Automated via cert-manager + Let's Encrypt + Cloudflare DNS-01:
 
@@ -301,13 +253,11 @@ Automated via cert-manager + Let's Encrypt + Cloudflare DNS-01:
 
 ## 🔄 Migration Guide
 
-### From Docker Compose
+### Hybrid Kubernetes/Docker Compose
 
-The infrastructure supports hybrid deployments during migration:
+The infrastructure supports hybrid deployments:
 
 1. **Keep Docker services running** on Wrocław/Kyiv
 2. **Add external-services** chart to proxy Docker → Kubernetes
-3. **Migrate incrementally** service by service
-4. **Maintain data compatibility** during transition
 
 See `applications/charts/external-services/` for hybrid architecture patterns.

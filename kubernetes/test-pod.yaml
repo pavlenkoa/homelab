@@ -1,0 +1,136 @@
+---
+# Simple test HTTP server pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-http-server
+  namespace: default
+  labels:
+    app: test-http-server
+spec:
+  containers:
+  - name: http-server
+    image: nginx:alpine
+    ports:
+    - containerPort: 80
+    volumeMounts:
+    - name: html
+      mountPath: /usr/share/nginx/html
+  volumes:
+  - name: html
+    configMap:
+      name: test-html
+
+---
+# ConfigMap with simple HTML content
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-html
+  namespace: default
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Homelab Test Server</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-align: center;
+            }
+            .container {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 40px;
+                backdrop-filter: blur(10px);
+            }
+            h1 { font-size: 3em; margin-bottom: 20px; }
+            .info { margin: 20px 0; font-size: 1.2em; }
+            .status { color: #4CAF50; font-weight: bold; }
+            .details { 
+                background: rgba(0, 0, 0, 0.2);
+                padding: 20px;
+                border-radius: 5px;
+                margin: 20px 0;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🚀 Hello from Homelab!</h1>
+            <div class="info">
+                <span class="status">✅ Kubernetes Pod Running</span>
+            </div>
+            <div class="details">
+                <strong>Service:</strong> test.pavlenko.io<br>
+                <strong>Namespace:</strong> default<br>
+                <strong>Pod:</strong> test-http-server<br>
+                <strong>Purpose:</strong> Authelia integration testing<br>
+                <strong>TLS:</strong> Automated via cert-manager + Let's Encrypt<br>
+                <strong>Status:</strong> Ready for authentication testing
+            </div>
+            <div class="info">
+                This endpoint will be protected by Authelia once configured.
+            </div>
+        </div>
+    </body>
+    </html>
+
+---
+# Service to expose the pod
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-http-server
+  namespace: default
+  labels:
+    app: test-http-server
+spec:
+  selector:
+    app: test-http-server
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Ingress for external access with TLS
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-http-server
+  namespace: default
+  annotations:
+    # Automatic TLS certificate generation
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Force HTTPS redirect
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Later we'll add Authelia annotations:
+    # nginx.ingress.kubernetes.io/auth-url: "https://auth.pavlenko.io/api/verify?rd=$scheme://$http_host$request_uri"
+    # nginx.ingress.kubernetes.io/auth-signin: "https://auth.pavlenko.io/?rd=$scheme://$http_host$request_uri"
+    # nginx.ingress.kubernetes.io/auth-response-headers: "Remote-User,Remote-Name,Remote-Email,Remote-Groups"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - test.pavlenko.io
+    secretName: test-pavlenko-io-tls
+  rules:
+  - host: test.pavlenko.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: test-http-server
+            port:
+              number: 80
