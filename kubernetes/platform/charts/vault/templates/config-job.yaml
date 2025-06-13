@@ -156,6 +156,40 @@ spec:
               fi
               {{- end }}
               
+              # Universal secret generator configuration for wrapper charts
+              echo "→ Checking secret-generator policy..."
+              if vault policy list | grep -q "secret-generator"; then
+                echo "✓ secret-generator policy already exists"
+              else
+                echo "→ Creating secret-generator policy..."
+                vault policy write secret-generator - <<EOF
+              # Allow reading and writing secrets to {{ .Values.vaultConfig.kvEngine.path }}/data/* path
+              path "{{ .Values.vaultConfig.kvEngine.path }}/data/*" {
+                capabilities = ["create", "read", "update", "delete"]
+              }
+              
+              # Allow listing and reading metadata (for debugging and secret existence checks)
+              path "{{ .Values.vaultConfig.kvEngine.path }}/metadata/*" {
+                capabilities = ["list", "read"]
+              }
+              EOF
+                echo "✓ secret-generator policy created"
+              fi
+              
+              # Check if secret-generator role exists
+              echo "→ Checking secret-generator role..."
+              if vault list auth/{{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }}/role | grep -q "secret-generator"; then
+                echo "✓ secret-generator role already exists"
+              else
+                echo "→ Creating secret-generator role..."
+                vault write auth/{{ .Values.vaultConfig.externalSecrets.kubernetesAuth.mountPath }}/role/secret-generator \
+                  bound_service_account_names="*-secret-generator" \
+                  bound_service_account_namespaces="*" \
+                  policies="secret-generator" \
+                  ttl="1h"
+                echo "✓ secret-generator role created"
+              fi
+              
               echo "✓ Vault configuration for external services completed!"
               echo ""
               echo "📋 Next steps:"

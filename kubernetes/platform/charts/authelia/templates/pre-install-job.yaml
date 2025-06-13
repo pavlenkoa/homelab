@@ -22,7 +22,7 @@ spec:
         app.kubernetes.io/component: secret-generator
     spec:
       restartPolicy: OnFailure
-      serviceAccountName: {{ include "authelia.fullname" . }}-pre-install
+      serviceAccountName: {{ include "authelia.fullname" . }}-secret-generator
       containers:
       - name: generate-secrets
         image: alpine:3.19
@@ -67,6 +67,28 @@ spec:
             sleep 5
             elapsed=$((elapsed + 5))
           done
+          
+          # Authenticate with Vault using Kubernetes auth
+          echo "→ Authenticating with Vault using Kubernetes auth..."
+          SERVICE_ACCOUNT_JWT=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+          if [ -z "$SERVICE_ACCOUNT_JWT" ]; then
+            echo "✗ Failed to read service account JWT token"
+            exit 1
+          fi
+          
+          # Authenticate and get Vault token
+          VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
+            role=secret-generator \
+            jwt="$SERVICE_ACCOUNT_JWT")
+          
+          if [ -z "$VAULT_TOKEN" ]; then
+            echo "✗ Failed to authenticate with Vault using Kubernetes auth"
+            echo "→ Check if secret-generator role exists and is properly configured"
+            exit 1
+          fi
+          
+          export VAULT_TOKEN
+          echo "✓ Successfully authenticated with Vault using Kubernetes auth"
           
           # Check if secrets already exist
           echo "→ Checking if Authelia secrets already exist..."
@@ -145,11 +167,6 @@ spec:
         env:
         - name: VAULT_ADDR
           value: {{ .Values.vault.address }}
-        - name: VAULT_TOKEN
-          valueFrom:
-            secretKeyRef:
-              name: vault-root-token
-              key: root-token
         resources:
           requests:
             memory: "64Mi"

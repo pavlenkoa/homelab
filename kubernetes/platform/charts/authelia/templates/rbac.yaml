@@ -1,30 +1,6 @@
 {{- if .Values.preInstall.enabled }}
 ---
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: {{ include "authelia.fullname" . }}-secret-generator
-  labels:
-    {{- include "authelia.labels" . | nindent 4 }}
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get", "list"]
-  resourceNames: ["vault-unseal-keys"]
-
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: {{ include "authelia.fullname" . }}-secret-generator
-  labels:
-    {{- include "authelia.labels" . | nindent 4 }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ include "authelia.fullname" . }}-secret-generator
-subjects:
-- kind: ServiceAccount
-  name: {{ include "authelia.fullname" . }}-pre-install
-  namespace: {{ .Release.Namespace }}
+# Note: No custom RBAC needed for Kubernetes auth
+# Service account JWT token is automatically mounted and used for Vault authentication
+# Vault handles authorization through the secret-generator role and policy
 {{- end }}
