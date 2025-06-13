@@ -114,11 +114,13 @@ authelia:
           - key_id: 'main-signing-key'
             algorithm: 'RS256'
             use: 'sig'
-            key_file: '/secrets/authelia-secrets/oidc_jwks_key'
+            key:
+              path: '/secrets/authelia-secrets/oidc_jwks_key'
         clients:
           - client_id: 'immich'
             client_name: 'Immich Photos'
-            client_secret_file: '/secrets/authelia-secrets/immich_oidc_client_secret'
+            client_secret:
+              path: '/secrets/authelia-secrets/immich_oidc_client_secret'
             public: false
             authorization_policy: 'two_factor'
             redirect_uris:
