@@ -97,7 +97,7 @@ spec:
           # Generate OIDC client secret with proper PBKDF2 hashing
           echo "→ Generating OIDC client secret..."
           immich_oidc_client_secret_plaintext=$(openssl rand -base64 72 | tr -d '\n')
-          immich_oidc_client_secret=$(authelia crypto hash generate pbkdf2 --variant sha512 --password="$immich_oidc_client_secret_plaintext" --no-confirm)
+          immich_oidc_client_secret=$(authelia crypto hash generate pbkdf2 --variant sha512 --password="$immich_oidc_client_secret_plaintext" --no-confirm | sed 's/^Digest: //')
           echo "✓ OIDC client secret generated (hashed with PBKDF2-SHA512)"
           echo "→ Plaintext client secret for Immich config: $immich_oidc_client_secret_plaintext"
           
@@ -113,7 +113,7 @@ spec:
           
           # Generate argon2id hash for Authelia using built-in crypto functions
           echo "→ Generating argon2id password hash..."
-          admin_password_hash=$(authelia crypto hash generate argon2 --password="$admin_password" --no-confirm)
+          admin_password_hash=$(authelia crypto hash generate argon2 --password="$admin_password" --no-confirm | sed 's/^Digest: //')
           echo "✓ Password hash generated using Authelia crypto (argon2id)"
           
           # Generate users database YAML
