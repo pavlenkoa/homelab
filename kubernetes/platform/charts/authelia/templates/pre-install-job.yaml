@@ -25,32 +25,19 @@ spec:
       serviceAccountName: {{ include "authelia.fullname" . }}-secret-generator
       containers:
       - name: generate-secrets
-        image: alpine:3.19
+        image: vault-tools:local
         command: ["/bin/sh"]
         args:
         - -c
         - |
           set -e
           echo "→ Starting Authelia secret generation..."
+          echo "✓ Using pre-built vault-tools image with kubectl, vault-cli, and argon2"
           
-          # Install required tools
-          echo "→ Installing required tools..."
-          apk add --no-cache curl openssl argon2 > /dev/null 2>&1
-          echo "✓ Base tools installed"
-          
-          # Download and install Vault CLI
-          echo "→ Installing Vault CLI..."
-          VAULT_VERSION="1.15.2"
-          curl -sSL "https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip" -o vault.zip
-          unzip vault.zip > /dev/null 2>&1
-          chmod +x vault
-          mv vault /usr/local/bin/
-          echo "✓ Vault CLI installed"
-          
-          # Wait for Vault to be available
+          # Wait for Vault to be available (aggressive checking like vault unseal)
           echo "→ Waiting for Vault to respond..."
-          timeout=300
-          elapsed=0
+          VAULT_TIMEOUT=120
+          VAULT_ELAPSED=0
           while true; do
             vault status > /dev/null 2>&1
             VAULT_STATUS_CODE=$?
@@ -59,13 +46,12 @@ spec:
               echo "✓ Vault is responding (status code: $VAULT_STATUS_CODE)"
               break
             fi
-            if [ $elapsed -ge $timeout ]; then
+            if [ $VAULT_ELAPSED -ge $VAULT_TIMEOUT ]; then
               echo "✗ Timeout waiting for Vault to respond"
               exit 1
             fi
-            echo "→ Waiting for Vault to start... ($elapsed/$timeout seconds)"
-            sleep 5
-            elapsed=$((elapsed + 5))
+            sleep 1
+            VAULT_ELAPSED=$((VAULT_ELAPSED + 1))
           done
           
           # Authenticate with Vault using Kubernetes auth
