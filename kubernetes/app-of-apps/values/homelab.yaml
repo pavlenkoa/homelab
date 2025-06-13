@@ -156,7 +156,7 @@ applications:
           - ../../values/homelab/external-services.yaml
 
     - name: authelia
-      enabled: false  # Wave 1: Authentication service (depends on cert-manager for TLS)
+      enabled: true  # Wave 1: Authentication service (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/authelia
       namespace: authelia
       annotations:
