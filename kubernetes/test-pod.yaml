@@ -113,10 +113,10 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     # Force HTTPS redirect
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    # Later we'll add Authelia annotations:
-    # nginx.ingress.kubernetes.io/auth-url: "https://auth.pavlenko.io/api/verify?rd=$scheme://$http_host$request_uri"
-    # nginx.ingress.kubernetes.io/auth-signin: "https://auth.pavlenko.io/?rd=$scheme://$http_host$request_uri"
-    # nginx.ingress.kubernetes.io/auth-response-headers: "Remote-User,Remote-Name,Remote-Email,Remote-Groups"
+    # Authelia forward auth annotations
+    nginx.ingress.kubernetes.io/auth-url: "https://auth.pavlenko.io/api/authz/auth-request"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.pavlenko.io/?rd=$scheme://$http_host$request_uri"
+    nginx.ingress.kubernetes.io/auth-response-headers: "Remote-User,Remote-Name,Remote-Email,Remote-Groups"
 spec:
   ingressClassName: nginx
   tls:

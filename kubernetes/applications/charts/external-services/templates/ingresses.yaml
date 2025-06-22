@@ -16,11 +16,9 @@ metadata:
     nginx.ingress.kubernetes.io/service-upstream: "true"
     {{- if and $serviceConfig.auth.enabled $serviceConfig.auth.authelia.enabled }}
     # Authelia forward-auth configuration
-    nginx.ingress.kubernetes.io/auth-url: {{ $serviceConfig.auth.authelia.authUrl | quote }}
-    nginx.ingress.kubernetes.io/auth-signin: "https://{{ $serviceConfig.auth.authelia.authDomain | default "auth.pavlenko.io" }}/api/authz/forward-auth?rd=$scheme://$http_host$request_uri"
-    nginx.ingress.kubernetes.io/auth-response-headers: "Remote-User,Remote-Name,Remote-Groups,Remote-Email"
-    nginx.ingress.kubernetes.io/auth-snippet: |
-      proxy_set_header X-Forwarded-Method $request_method;
+    nginx.ingress.kubernetes.io/auth-url: "https://auth.pavlenko.io/api/authz/auth-request"
+    nginx.ingress.kubernetes.io/auth-signin: "https://auth.pavlenko.io/?rd=$scheme://$http_host$request_uri"
+    nginx.ingress.kubernetes.io/auth-response-headers: "Remote-User,Remote-Name,Remote-Email,Remote-Groups"
     {{- end }}
     {{- with $serviceConfig.ingress.annotations }}
     {{- toYaml . | nindent 4 }}
