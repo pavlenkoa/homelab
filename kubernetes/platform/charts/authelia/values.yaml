@@ -142,7 +142,7 @@ authelia:
       cookies:
         - name: 'authelia_session'
           domain: 'pavlenko.io'
-          authelia_url: 'https://auth.pavlenko.io'
+          subdomain: 'auth'
           default_redirection_url: 'https://auth.pavlenko.io'
           expiration: '3600'
           inactivity: '300'
