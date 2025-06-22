@@ -28,25 +28,29 @@
 - **✅ TLS Automation**: External services get automatic Let's Encrypt certificates via cert-manager
 - **✅ GitOps Management**: All external service configs managed through ArgoCD + Git
 
-**🚀 READY: Phase 4** - Testing and alignment of Authelia deployment, then monitoring stack
+**🎉 PHASE 4 COMPLETED - Authentication & External Services ✅**
+- **✅ Authelia SSO**: Successfully deployed with working authentication flow
+- **✅ Forward Auth**: test.pavlenko.io and transmission.pavlenko.io protected by 2FA
+- **✅ External Services Security**: Fixed auth configuration, safe Transmission deployment  
+- **✅ Session Management**: Proper cookie handling and logout behavior verified
+
+**🚀 READY: Phase 5** - Monitoring stack deployment using established wrapper chart pattern
 
 **💡 NEXT SESSION PRIORITIES:**
-1. **Commit and Push Current Changes**: 
-   - Complete Authelia wrapper chart implementation ready for testing
-   - Auto-generated passwords with argon2id hashing
-   - Standardized logging format matching vault pattern
-2. **Test Authelia Deployment**: Deploy and debug Authelia wrapper chart (expect initial errors)
-   - Validate pre-install job and secret generation in Vault
-   - Debug any chart template or configuration issues  
-   - Test external-secrets sync and secret mounting
-   - Configure ingress, TLS, and test admin login
-   - Set up OIDC integration and validate SSO workflow
-3. **Deploy More External Services**: Add Transmission via external-services pattern
-4. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
+1. **Deploy Monitoring Stack**: VictoriaMetrics + Grafana using wrapper chart pattern
+   - Create monitoring wrapper charts with secret generation
+   - Deploy VictoriaMetrics for metrics storage
+   - Deploy Grafana with Authelia OIDC integration
+   - Import dashboards from current Docker setup
+2. **Deploy Immich Photo Management**: 
+   - Create Immich wrapper chart
+   - Test OIDC integration with Authelia
+   - Validate SSO workflow end-to-end
+3. **Internal DNS Resolution**: Investigate local network DNS for *.pavlenko.io domains
    - Option A: MikroTik + Consul integration for service discovery
    - Option B: external-dns with MikroTik RouterOS API integration
    - Option C: Local DNS override solutions (dnsmasq, router configuration)
-5. **Monitoring Stack**: Deploy VictoriaMetrics + Grafana using established wrapper chart pattern
+4. **Security Hardening**: Network policies and pod security standards
 
 ---
 
@@ -204,9 +208,13 @@ This pattern will be our standard for all Kubernetes service deployments.
     - [x] Fix OIDC client secret deprecation warnings with PBKDF2-SHA512 hashing - COMPLETED
     - [x] Optimize vault-tools image and remove resource limits for performance - COMPLETED  
     - [x] Enable Redis authentication to match Authelia password configuration - FIXED
-    - [ ] Test admin login with auto-generated credentials (pending certificate due to Let's Encrypt rate limits)
-    - [ ] Set up OIDC integration with Immich (pending certificate resolution)
-    - [ ] Validate SSO workflow end-to-end (pending certificate resolution)
+    - [x] Test admin login with auto-generated credentials - SUCCESS ✅
+    - [x] Fix session configuration for proper authentication flow - COMPLETED ✅
+    - [x] Enable forward-auth for test.pavlenko.io - SUCCESS ✅
+    - [x] Deploy Transmission with mandatory 2FA protection - COMPLETED ✅
+    - [x] Fix external-services chart auth endpoints to use correct API - FIXED ✅
+    - [ ] Set up OIDC integration with Immich (requires Immich deployment first)
+    - [ ] Validate SSO workflow end-to-end (pending Immich deployment)
     - [x] Add Authelia to app-of-apps for GitOps deployment - MANAGED BY ARGOCD
 - [ ] **Deploy VictoriaMetrics Stack** (Wrapper Chart Pattern):
   - [ ] Create `kubernetes/platform/charts/victoriametrics/` wrapper chart
