@@ -44,19 +44,34 @@ services:
         enabled: false
         # authUrl: "https://auth.pavlenko.io/api/verify?rd=$scheme://$http_host$request_uri"
 
-  # Transmission BitTorrent - commented out (no auth protection needed yet)
-  # transmission:
-  #   endpoint:
-  #     host: "192.168.1.100"  # Kyiv Raspberry Pi
-  #     port: 9091
-  #     protocol: http
-  #   service:
-  #     port: 80
-  #   ingress:
-  #     host: "transmission.pavlenko.io"
-  #     path: "/"
-  #     pathType: "Prefix"
-  #     tls:
-  #       enabled: true
-  #   auth:
-  #     enabled: false
+  # Transmission BitTorrent - PROTECTED by Authelia 2FA
+  transmission:
+    # External endpoint (Docker Compose on Kyiv Raspberry Pi)
+    endpoint:
+      host: "192.168.1.2"  # Kyiv Raspberry Pi
+      port: 9091
+      protocol: http
+    
+    # Kubernetes service configuration
+    service:
+      port: 9091
+    
+    # Ingress configuration
+    ingress:
+      host: "transmission.pavlenko.io"
+      path: "/"
+      pathType: "Prefix"
+      tls:
+        enabled: true
+        # secretName will be auto-generated as "transmission-tls"
+      annotations:
+        # Transmission-specific headers
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    
+    # Authentication - MANDATORY for security
+    auth:
+      enabled: true
+      authelia:
+        enabled: true
