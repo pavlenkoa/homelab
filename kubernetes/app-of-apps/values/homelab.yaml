@@ -140,6 +140,16 @@ platform:
         valueFiles:
           - ../../values/homelab/alloy.yaml
 
+    - name: n8n
+      enabled: true  # Wave 1: Workflow automation (depends on cert-manager for TLS)
+      path: kubernetes/platform/charts/n8n
+      namespace: n8n
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+      helm:
+        valueFiles:
+          - ../../values/homelab/n8n.yaml
+
 # Applications project - End-user applications with sync wave ordering
 applications:
   description: "End-user applications and services"
