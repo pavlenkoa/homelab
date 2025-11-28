@@ -35,7 +35,12 @@
 - [ ] **Data Sources**: Configure Grafana connections to VictoriaMetrics and Loki
 
 ### Application Services
-- [ ] **Immich**: 
+- [ ] **n8n**:
+  - Workflow automation platform with wrapper chart
+  - Local-only access (no SSO/external exposure)
+  - Persistent storage for workflow data
+  - Ingress: n8n.pavlenko.io (router DNS override to 192.168.139.2)
+- [ ] **Immich**:
   - Photo management service with wrapper chart
   - OIDC integration with Authelia
   - Persistent storage for photos and metadata
