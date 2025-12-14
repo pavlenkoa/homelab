@@ -100,6 +100,19 @@ platform:
         valueFiles:
           - ../../values/homelab/external-secrets.yaml
 
+    - name: vault-secrets-generator
+      enabled: true  # Wave 0: Vault secrets generator (test deployment)
+      repository:
+        url: "https://github.com/pavlenkoa/vault-secrets-generator.git"
+        targetRevision: "HEAD"
+      path: helm/vault-secrets-generator
+      namespace: vsg
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+      helm:
+        valueFiles:
+          - kubernetes/platform/values/homelab/vault-secrets-generator.yaml
+
     - name: victoriametrics
       enabled: true  # Wave 1: Monitoring services (depends on cert-manager for TLS)
       path: kubernetes/platform/charts/victoria-metrics-single
