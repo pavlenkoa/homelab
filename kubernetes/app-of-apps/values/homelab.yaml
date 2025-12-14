@@ -65,6 +65,10 @@ infrastructure:
 platform:
   description: "Platform services and DevOps tools"
   # Platform apps inherit global sync policy (prune: true, selfHeal: true)
+  # Allow external chart repositories
+  sourceRepos:
+    - "https://github.com/pavlenkoa/homelab.git"
+    - "https://github.com/pavlenkoa/vault-secrets-generator.git"
   applications:
     - name: argocd
       enabled: true  # Wave -3: ArgoCD self-management (first to establish GitOps)
