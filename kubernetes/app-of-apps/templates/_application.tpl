@@ -1,5 +1,6 @@
 {{/*
 ArgoCD Application template helper with global and project defaults
+Supports external chart repositories with values from homelab repo using multiple sources
 */}}
 {{- define "app-of-apps.application" -}}
 {{- $root := index . 0 -}}
@@ -7,6 +8,8 @@ ArgoCD Application template helper with global and project defaults
 {{- $projectName := index . 2 -}}
 {{- $projectConfig := index . 3 -}}
 {{- $global := $root.Values.global -}}
+{{- $appRepoURL := (($app.repository).url) | default $global.repository.url -}}
+{{- $useMultipleSources := and ($app.repository).url (ne $appRepoURL $global.repository.url) -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -27,8 +30,43 @@ metadata:
     {{- end }}
 spec:
   project: {{ $projectName }}
+  {{- if $useMultipleSources }}
+  {{- /* Multiple sources: chart from external repo, values from homelab repo */}}
+  sources:
+    - repoURL: {{ $appRepoURL }}
+      targetRevision: {{ (($app.repository).targetRevision) | default $global.repository.targetRevision }}
+      path: {{ $app.path }}
+      {{- if $app.helm }}
+      helm:
+        {{- if $app.helm.valueFiles }}
+        valueFiles:
+          {{- if kindIs "slice" $app.helm.valueFiles }}
+          {{- range $app.helm.valueFiles }}
+          - $values/{{ . }}
+          {{- end }}
+          {{- else }}
+          - $values/{{ $app.helm.valueFiles }}
+          {{- end }}
+        {{- end }}
+        {{- if $app.helm.values }}
+        values: |
+          {{- $app.helm.values | nindent 10 }}
+        {{- end }}
+        {{- if $app.helm.parameters }}
+        parameters:
+          {{- range $app.helm.parameters }}
+          - name: {{ .name }}
+            value: {{ .value | quote }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    - repoURL: {{ $global.repository.url }}
+      targetRevision: {{ $global.repository.targetRevision }}
+      ref: values
+  {{- else }}
+  {{- /* Single source: chart and values from same repo */}}
   source:
-    repoURL: {{ (($app.repository).url) | default $global.repository.url }}
+    repoURL: {{ $appRepoURL }}
     targetRevision: {{ (($app.repository).targetRevision) | default $global.repository.targetRevision }}
     path: {{ $app.path }}
     {{- if $app.helm }}
@@ -55,6 +93,7 @@ spec:
         {{- end }}
       {{- end }}
     {{- end }}
+  {{- end }}
   destination:
     server: {{ (($app.destination).server) | default $global.destination.server }}
     namespace: {{ $app.namespace | default "default" }}
