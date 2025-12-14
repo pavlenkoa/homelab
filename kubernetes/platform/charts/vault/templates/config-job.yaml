@@ -167,10 +167,20 @@ spec:
               path "{{ .Values.vaultConfig.kvEngine.path }}/data/*" {
                 capabilities = ["create", "read", "update", "delete"]
               }
-              
+
               # Allow listing and reading metadata (for debugging and secret existence checks)
               path "{{ .Values.vaultConfig.kvEngine.path }}/metadata/*" {
                 capabilities = ["list", "read"]
+              }
+
+              # Allow reading KV engine config for version detection
+              path "{{ .Values.vaultConfig.kvEngine.path }}/config" {
+                capabilities = ["read"]
+              }
+
+              # Allow reading sys/mounts for KV version auto-detection
+              path "sys/mounts" {
+                capabilities = ["read"]
               }
               EOF
                 echo "✓ secret-generator policy created"
