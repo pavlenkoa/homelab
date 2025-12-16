@@ -48,7 +48,7 @@ services:
   transmission:
     # External endpoint (Docker Compose on Kyiv Raspberry Pi)
     endpoint:
-      host: "192.168.1.2"  # Kyiv Raspberry Pi
+      host: "192.168.88.3"  # Kyiv Raspberry Pi
       port: 9091
       protocol: http
     
