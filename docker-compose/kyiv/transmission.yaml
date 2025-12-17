@@ -1,9 +1,0 @@
----
-services:
-  transmission:
-    volumes:
-      - /media/transmission/watch:/watch
-      - /media/emby/tv:/downloads/tv
-      - /media/emby/movies:/downloads/movies
-      - /media/emby/tvanimation:/downloads/tvanimation
-      - /media/emby/animation:/downloads/animation
