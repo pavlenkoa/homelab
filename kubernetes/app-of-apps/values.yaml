@@ -1,111 +1,146 @@
 # Default values for app-of-apps
-# This file contains global defaults that can be overridden per application
+# Application definitions with enabled: true/false
+# Environment-specific files override global.environmentName
 
-# Global defaults for all applications
 global:
-  # Default repository configuration
+  # Environment name - used for auto-generating valueFiles path: values/<environmentName>.yaml
+  environmentName: ""
+
+  # Set to true to prefix project and app names with environmentName
+  prefixNames: false
+
   repository:
     url: "https://github.com/pavlenkoa/homelab.git"
     targetRevision: "HEAD"
-  
-  # Default destination cluster
+
   destination:
     server: "https://kubernetes.default.svc"
-    
-  # Global annotations applied to all applications (can be overridden per app)
-  # Common use cases:
-  # - argocd.argoproj.io/sync-wave: "0" (for dependency ordering)
-  # - argocd.argoproj.io/hook: PreSync (for hooks)
+
   annotations: {}
-  # annotations:
-  #   argocd.argoproj.io/sync-wave: "0"
-  #   notifications.argoproj.io/subscribe.on-sync-succeeded.slack: "homelab-alerts"
-    
-  # Default sync policy for all applications
+
   syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
+    # automated:
+    #   prune: true
+    #   selfHeal: true
     syncOptions:
       - "CreateNamespace=true"
-      - "PrunePropagationPolicy=foreground" 
+      - "PrunePropagationPolicy=foreground"
       - "PruneLast=true"
       - "ServerSideApply=true"
       - "ServerSideDiff=true"
-    retry:
-      limit: 3  # Reduced for faster feedback
-      backoff:
-        duration: "5s"
-        factor: 2
-        maxDuration: "2m"
 
-  # Default project
-  project: "default"
-  
-  # Default finalizers
   finalizers:
     - "resources-finalizer.argocd.argoproj.io"
 
-# Projects and Applications Structure
-# 
-# This file supports both flat applications list (legacy) and project-based structure (current).
-# The homelab.yaml file demonstrates the project-based approach with sync waves.
-#
-# Example structure:
-#
-# # Project-based structure (recommended)
-# infrastructure:
-#   description: "Core cluster infrastructure"
-#   syncPolicy:
-#     automated:
-#       prune: false  # Override for safety
-#   applications:
-#     - name: ingress-nginx
-#       enabled: true
-#       path: kubernetes/infrastructure/charts/ingress-nginx
-#       namespace: ingress-nginx
-#       annotations:
-#         argocd.argoproj.io/sync-wave: "-2"  # App-specific annotation
-#       helm:
-#         valueFiles:
-#           - ../../values/homelab/ingress-nginx.yaml
-#         values: |  # Inline values (optional)
-#           controller:
-#             replicaCount: 2
-#         parameters:  # Helm parameters (optional)
-#           - name: "controller.service.type"
-#             value: "LoadBalancer"
-#       syncPolicy:  # Override sync policy for this app
-#         automated:
-#           prune: false
-#
-# platform:
-#   description: "Platform services"
-#   applications:
-#     - name: vault
-#       enabled: true
-#       path: kubernetes/platform/charts/vault
-#       namespace: vault
-#       annotations:
-#         argocd.argoproj.io/sync-wave: "-1"
-#
-# applications:
-#   description: "End-user applications"
-#   applications:
-#     - name: authelia
-#       enabled: false
-#       path: kubernetes/platform/charts/authelia
-#       namespace: authelia
-#       annotations:
-#         argocd.argoproj.io/sync-wave: "1"
-#
-# # Legacy flat structure (still supported)
-# applications:
-#   - name: my-app
-#     enabled: true
-#     path: kubernetes/my-app
-#     namespace: default
+# Infrastructure - Core cluster services
+infrastructure:
+  description: "Core cluster infrastructure (CNI, ingress, certificates)"
+  # syncPolicy:
+  #   automated:
+  #     prune: false  # Never auto-prune infrastructure
+  #     selfHeal: true
+  applications:
+    - name: ingress-nginx
+      enabled: true
+      path: kubernetes/charts/ingress-nginx
+      namespace: ingress-nginx
+      annotations:
+        argocd.argoproj.io/sync-wave: "-2"
 
-# Application definitions (flat structure for backwards compatibility)
-# Use the project-based structure in homelab.yaml instead
-applications: []
+    - name: cert-manager
+      enabled: true
+      path: kubernetes/charts/cert-manager
+      namespace: cert-manager
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+
+# Platform - DevOps and management services
+platform:
+  description: "Platform services and DevOps tools"
+  sourceRepos:
+    - "https://github.com/pavlenkoa/homelab.git"
+    - "https://github.com/pavlenkoa/vault-secrets-generator.git"
+  applications:
+    - name: argocd
+      enabled: true
+      path: kubernetes/charts/argocd
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "-3"
+
+    - name: vault
+      enabled: true
+      path: kubernetes/charts/vault
+      namespace: vault
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
+
+    - name: external-secrets
+      enabled: true
+      path: kubernetes/charts/external-secrets
+      namespace: external-secrets
+      annotations:
+        argocd.argoproj.io/sync-wave: "-1"
+
+    - name: vault-secrets-generator
+      enabled: true
+      repository:
+        url: "https://github.com/pavlenkoa/vault-secrets-generator.git"
+        targetRevision: "HEAD"
+      path: helm/vault-secrets-generator
+      namespace: vsg
+      annotations:
+        argocd.argoproj.io/sync-wave: "0"
+
+    - name: victoriametrics
+      enabled: true
+      path: kubernetes/charts/victoriametrics
+      namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+
+    - name: victorialogs
+      enabled: false
+      path: kubernetes/charts/victorialogs
+      namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+
+    - name: grafana
+      enabled: false
+      path: kubernetes/charts/grafana
+      namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+
+    - name: alloy
+      enabled: false
+      path: kubernetes/charts/alloy
+      namespace: monitoring
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+
+    - name: n8n
+      enabled: true
+      path: kubernetes/charts/n8n
+      namespace: n8n
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+
+# Applications - End-user services
+applications:
+  description: "End-user applications and services"
+  applications:
+    - name: external-services
+      enabled: true
+      path: kubernetes/charts/external-services
+      namespace: external-services
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+
+    - name: authelia
+      enabled: true
+      path: kubernetes/charts/authelia
+      namespace: authelia
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
