@@ -15,7 +15,7 @@ Personal homelab with Kubernetes (OrbStack) on Mac Mini M4 and Docker Compose on
 
 ## What Runs Where
 
-**Kubernetes (Mac Mini):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, ingress-nginx, n8n
+**Kubernetes (Mac Mini):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, ingress-nginx, n8n, victoriametrics
 
 **Docker Compose (Raspberry Pi):** Transmission
 
@@ -38,11 +38,32 @@ homelab/
 ├── docs/
 │   └── setup/
 │       └── mikrotik-wireguard.md
-└── kubernetes/                      # needs restructure
+└── kubernetes/
     ├── app-of-apps/
-    ├── infrastructure/
-    ├── platform/
-    └── applications/
+    │   ├── Chart.yaml
+    │   ├── templates/
+    │   │   ├── _application.tpl
+    │   │   ├── applications.yaml
+    │   │   └── projects.yaml
+    │   ├── values.yaml             # All apps defined (enabled: true/false)
+    │   └── values/
+    │       └── homelab.yaml        # Just environmentName
+    └── charts/                     # Flat structure
+        ├── argocd/
+        │   ├── Chart.yaml
+        │   └── values/
+        │       └── homelab.yaml
+        ├── authelia/
+        ├── cert-manager/
+        ├── external-secrets/
+        ├── external-services/
+        ├── ingress-nginx/
+        ├── n8n/
+        ├── vault/
+        ├── vault-secrets-generator/  # External chart - values only
+        │   └── values/
+        │       └── homelab.yaml
+        └── victoriametrics/
 ```
 
 ## SSH Access
@@ -56,45 +77,7 @@ ssh andrii@wroclaw-router.local     # Wrocław MikroTik
 
 ## Git Conventions
 
-- Stage files explicitly: `git add <file>`
+- Stage files explicitly with `git add <file>`
 - Commit with `git commit -m 'message'`
-- **Never use `git add -A`**
-- Never commit `.env` files or secrets
-
-## TODO
-
-### Restructure kubernetes/ directory
-
-Migrate from layered structure (infrastructure/, platform/, applications/) to flat charts/ structure:
-
-```
-kubernetes/
-├── app-of-apps/
-│   ├── Chart.yaml
-│   ├── templates/
-│   │   ├── _application.tpl
-│   │   ├── applications.yaml
-│   │   └── projects.yaml
-│   └── values/
-│       └── homelab.yaml
-└── charts/
-    ├── argocd/
-    │   ├── Chart.yaml
-    │   └── values/
-    │       └── homelab.yaml
-    ├── cert-manager/
-    ├── external-secrets/
-    ├── external-services/
-    ├── ingress-nginx/
-    ├── n8n/
-    ├── vault/
-    ├── vault-secrets-generator/   # External chart - values only, no Chart.yaml
-    │   └── values/
-    │       └── homelab.yaml
-    └── victoriametrics/
-```
-
-**Implementation:**
-- Update app-of-apps to support flat charts/ structure
-- Use `_application.tpl` helper template for DRY Application resources
-- External charts (like vault-secrets-generator) have values only, no Chart.yaml
+- Can use `git commit -am 'message'` for tracked files
+- **Never use `git add -A`** - always stage files explicitly
