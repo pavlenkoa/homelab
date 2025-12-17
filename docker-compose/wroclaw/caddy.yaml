@@ -1,7 +1,0 @@
----
-# Wrocław-specific Caddy overrides
-services:
-  caddy:
-    volumes:
-      # Add share volume for file serving
-      - ${DATA_DIR:-.}/share.${DOMAIN_NAME}:/var/www/share.${DOMAIN_NAME}

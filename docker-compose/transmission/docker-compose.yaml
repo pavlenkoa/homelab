@@ -1,4 +1,3 @@
----
 services:
   gluetun:
     image: kubernia/gluetun-transmission-cli:latest
@@ -32,8 +31,6 @@ services:
       timeout: 10s
       retries: 3
     restart: unless-stopped
-    networks:
-      - transmission_network
 
   transmission:
     image: lscr.io/linuxserver/transmission:4.0.6
@@ -46,9 +43,10 @@ services:
       - PGID=1000
       - TZ=${TIMEZONE:-Europe/Kyiv}
     volumes:
-      - ${PWD}/transmission/config:/config
+      - ./transmission-config:/config
+      - /media/transmission/watch:/watch
+      - /media/emby/tv:/downloads/tv
+      - /media/emby/movies:/downloads/movies
+      - /media/emby/tvanimation:/downloads/tvanimation
+      - /media/emby/animation:/downloads/animation
     restart: unless-stopped
-
-networks:
-  transmission_network:
-    name: transmission_network
