@@ -65,31 +65,36 @@ ssh andrii@wroclaw-router.local     # Wrocław MikroTik
 
 ### Restructure kubernetes/ directory
 
-Flatten structure by moving values into chart directories:
+Migrate from layered structure (infrastructure/, platform/, applications/) to flat charts/ structure:
 
 ```
 kubernetes/
 ├── app-of-apps/
 │   ├── Chart.yaml
 │   ├── templates/
+│   │   ├── _application.tpl
+│   │   ├── applications.yaml
+│   │   └── projects.yaml
 │   └── values/
 │       └── homelab.yaml
-├── infrastructure/
-│   ├── cert-manager/
-│   │   ├── Chart.yaml
-│   │   ├── templates/
-│   │   └── values/
-│   │       └── homelab.yaml
-│   └── ingress-nginx/
-│       └── ...
-├── platform/
-│   ├── argocd/
-│   │   └── values/
-│   │       └── homelab.yaml
-│   └── vault/
-│       └── ...
-└── applications/
-    └── external-services/
-        └── values/
-            └── homelab.yaml
+└── charts/
+    ├── argocd/
+    │   ├── Chart.yaml
+    │   └── values/
+    │       └── homelab.yaml
+    ├── cert-manager/
+    ├── external-secrets/
+    ├── external-services/
+    ├── ingress-nginx/
+    ├── n8n/
+    ├── vault/
+    ├── vault-secrets-generator/   # External chart - values only, no Chart.yaml
+    │   └── values/
+    │       └── homelab.yaml
+    └── victoriametrics/
 ```
+
+**Implementation:**
+- Update app-of-apps to support flat charts/ structure
+- Use `_application.tpl` helper template for DRY Application resources
+- External charts (like vault-secrets-generator) have values only, no Chart.yaml
