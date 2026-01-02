@@ -1,12 +1,13 @@
 # Homelab
 
-Personal homelab infrastructure. Kubernetes on Mac Mini M4, Docker Compose on Raspberry Pi. Traffic routes through Kyiv router via WireGuard to bypass CGNAT.
+Personal homelab infrastructure. Kubernetes (k3s) on Mac Mini M4 and Raspberry Pi 4. Traffic routes through Kyiv router via WireGuard to bypass CGNAT.
 
 ## Infrastructure
 
 | Location | Hardware | Role |
 |----------|----------|------|
-| **Wrocław** | Mac Mini M4 + Raspberry Pi 4 | All compute (Kubernetes, Docker, native apps) |
+| **Wrocław** | Mac Mini M4 | k3s server + worker (OrbStack VM), Emby (native macOS) |
+| **Wrocław** | Raspberry Pi 4 | k3s worker, media storage |
 | **Kyiv** | MikroTik Router | WireGuard gateway (static IP) |
 
 ## Traffic Flow
@@ -19,20 +20,21 @@ Internet → Cloudflare → Kyiv Router → WireGuard → Wrocław → Services
 
 ```
 homelab/
-├── docker-compose/          # Raspberry Pi services
-│   └── transmission/
-├── kubernetes/              # Mac Mini K8s (ArgoCD, Vault, Authelia, etc.)
+├── kubernetes/
+│   ├── app-of-apps/         # ArgoCD app-of-apps pattern
+│   ├── charts/              # Helm charts (argocd, vault, authelia, etc.)
+│   └── manifests/           # Raw manifests (transmission)
+├── docker-compose/          # Legacy (migrated to k8s)
 ├── images/                  # Custom Docker images
-└── docs/setup/              # Router setup guides
+└── docs/setup/              # Setup guides
 ```
 
-## Quick Start
+## Setup
 
-**Transmission (Raspberry Pi):**
-```bash
-cd docker-compose/transmission
-cp .env.example .env         # Configure VPN credentials
-docker compose up -d
-```
+See [docs/setup/k3s-cluster.md](docs/setup/k3s-cluster.md) for cluster installation.
 
-See [CLAUDE.md](CLAUDE.md) for detailed documentation.
+See [CLAUDE.md](CLAUDE.md) for detailed project documentation.
+
+---
+
+*Latest iteration done with help of [Claude Code](https://github.com/anthropics/claude-code) using Opus 4.5 :)*
