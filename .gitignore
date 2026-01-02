@@ -9,6 +9,7 @@ scripts/.service
 
 # Block all config files by default, then allow specific patterns
 **/config/*
+docker-compose/**/*-config
 
 # Allow template files
 !**/config/*.tmpl
