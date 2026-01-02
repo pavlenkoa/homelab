@@ -1,12 +1,12 @@
 # Homelab Infrastructure
 
-Personal homelab with Kubernetes (OrbStack) on Mac Mini M4 and Docker Compose on Raspberry Pi. External traffic routes through Kyiv router via WireGuard to bypass CGNAT.
+Personal homelab with Kubernetes on Mac Mini M4 (OrbStack) and Raspberry Pi 4 (k3s). External traffic routes through Kyiv router via WireGuard to bypass CGNAT.
 
 ## Infrastructure
 
 **Wrocław (all compute):**
 - Mac Mini M4 - Kubernetes (OrbStack), Emby (native)
-- Raspberry Pi 4 - Docker Compose (Transmission)
+- Raspberry Pi 4 - Kubernetes (k3s)
 
 **Kyiv:**
 - MikroTik Router - WireGuard gateway to static IP
@@ -17,9 +17,26 @@ Personal homelab with Kubernetes (OrbStack) on Mac Mini M4 and Docker Compose on
 
 **Kubernetes (Mac Mini):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, ingress-nginx, n8n, victoriametrics
 
-**Docker Compose (Raspberry Pi):** Transmission
+**Kubernetes (Raspberry Pi):** Transmission (with Gluetun VPN sidecar)
 
 **Native (Mac Mini):** Emby
+
+## Raspberry Pi k3s Plan
+
+k3s installed with `--disable traefik --disable servicelb`. Transmission manually deployed for testing.
+
+**TODO:**
+- Rename `values/homelab.yaml` to `values/macmini.yaml`
+- Add RPi as second cluster in ArgoCD (`values/raspberrypi.yaml`)
+- Install Traefik on RPi
+- Configure Vault AppRole for RPi (separate cluster can't use k8s auth)
+- Install ESO on RPi (AppRole auth, Secret ID created manually)
+- Migrate Transmission to ArgoCD-managed deployment
+
+**Notes:**
+- Custom image `kubernia/gluetun-transmission-cli:latest` requires `imagePullPolicy: Never` (local image)
+- Config: `/home/andrii/transmission-config` (hostPath)
+- Media: `/media/emby/*` (hostPath)
 
 ## Project Structure
 
@@ -28,7 +45,7 @@ homelab/
 ├── CLAUDE.md
 ├── README.md
 ├── docker-compose/
-│   └── transmission/
+│   └── transmission/           # Legacy - migrated to k8s
 │       ├── docker-compose.yaml
 │       └── .env.example
 ├── images/
@@ -39,6 +56,12 @@ homelab/
 │   └── setup/
 │       └── mikrotik-wireguard.md
 └── kubernetes/
+    ├── manifests/              # Raw manifests for RPi k3s
+    │   └── transmission/
+    │       ├── namespace.yaml
+    │       ├── secret.yaml
+    │       ├── statefulset.yaml
+    │       └── service.yaml
     ├── app-of-apps/
     │   ├── Chart.yaml
     │   ├── templates/
@@ -50,9 +73,6 @@ homelab/
     │       └── homelab.yaml        # Just environmentName
     └── charts/                     # Flat structure
         ├── argocd/
-        │   ├── Chart.yaml
-        │   └── values/
-        │       └── homelab.yaml
         ├── authelia/
         ├── cert-manager/
         ├── external-secrets/
@@ -60,9 +80,7 @@ homelab/
         ├── ingress-nginx/
         ├── n8n/
         ├── vault/
-        ├── vault-secrets-generator/  # External chart - values only
-        │   └── values/
-        │       └── homelab.yaml
+        ├── vault-secrets-generator/
         └── victoriametrics/
 ```
 
