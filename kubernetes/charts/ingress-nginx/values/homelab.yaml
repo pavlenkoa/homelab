@@ -1,20 +1,26 @@
-# ingress-nginx configuration for OrbStack cluster
-# LoadBalancer service will be exposed by OrbStack automatically
+# ingress-nginx configuration for k3s in OrbStack VM
+# Uses hostNetwork so nginx binds to 0.0.0.0:80/443, which OrbStack forwards to LAN
 
 controller:
-  # Use LoadBalancer for standard ingress functionality
-  service:
-    type: LoadBalancer
-    externalTrafficPolicy: Local
+  # hostNetwork binds nginx directly to VM's network interface
+  # OrbStack forwards 0.0.0.0 bindings to Mac's LAN IP (192.168.88.2)
+  hostNetwork: true
+  hostPort:
+    enabled: true
+  dnsPolicy: ClusterFirstWithHostNet
 
-  # Enable additional features  
+  # Service still useful for internal cluster access
+  service:
+    type: ClusterIP
+
+  # Enable additional features
   enableAnnotationValidations: true
-  
+
   # Metrics and monitoring (disabled for now - no Prometheus Operator installed)
   metrics:
     enabled: false
 
-  # Resource limits for single-node cluster
+  # Resource limits
   resources:
     limits:
       cpu: 200m
@@ -23,27 +29,16 @@ controller:
       cpu: 100m
       memory: 128Mi
 
-  # High availability settings
+  # Only 1 replica - port 80/443 conflict with hostNetwork
+  replicaCount: 1
+
+  # PDB disabled with single replica
   podDisruptionBudget:
-    enabled: true
-    minAvailable: 1
+    enabled: false
 
-  # Replica count for availability
-  replicaCount: 2
-
-  # Anti-affinity for better distribution (optional for single node)
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchExpressions:
-            - key: app.kubernetes.io/name
-              operator: In
-              values:
-              - ingress-nginx
-          topologyKey: kubernetes.io/hostname
+  # Pin to macmini node (the one with OrbStack LAN forwarding)
+  nodeSelector:
+    kubernetes.io/hostname: macmini
 
   # Additional configuration
   config:
