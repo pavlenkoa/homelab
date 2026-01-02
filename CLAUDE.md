@@ -1,12 +1,12 @@
 # Homelab Infrastructure
 
-Personal homelab with Kubernetes on Mac Mini M4 (OrbStack) and Raspberry Pi 4 (k3s). External traffic routes through Kyiv router via WireGuard to bypass CGNAT.
+Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4. External traffic routes through Kyiv router via WireGuard to bypass CGNAT.
 
 ## Infrastructure
 
-**Wrocław (all compute):**
-- Mac Mini M4 - Kubernetes (OrbStack), Emby (native)
-- Raspberry Pi 4 - Kubernetes (k3s)
+**Wrocław (compute):**
+- Mac Mini M4 - k3s control plane (OrbStack VM), Emby (native macOS)
+- Raspberry Pi 4 - k3s worker node (8TB disk for media)
 
 **Kyiv:**
 - MikroTik Router - WireGuard gateway to static IP
@@ -15,28 +15,18 @@ Personal homelab with Kubernetes on Mac Mini M4 (OrbStack) and Raspberry Pi 4 (k
 
 ## What Runs Where
 
-**Kubernetes (Mac Mini):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, ingress-nginx, n8n, victoriametrics
+**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Traefik, n8n, victoriametrics
 
-**Kubernetes (Raspberry Pi):** Transmission (with Gluetun VPN sidecar)
+**raspberrypi (tainted):** Transmission (with Gluetun VPN sidecar) - requires toleration to schedule
 
-**Native (Mac Mini):** Emby
+**Native macOS:** Emby
 
-## Raspberry Pi k3s Plan
+## TODO
 
-k3s installed with `--disable traefik --disable servicelb`. Transmission manually deployed for testing.
-
-**TODO:**
-- Rename `values/homelab.yaml` to `values/macmini.yaml`
-- Add RPi as second cluster in ArgoCD (`values/raspberrypi.yaml`)
-- Install Traefik on RPi
-- Configure Vault AppRole for RPi (separate cluster can't use k8s auth)
-- Install ESO on RPi (AppRole auth, Secret ID created manually)
-- Migrate Transmission to ArgoCD-managed deployment
-
-**Notes:**
-- Custom image `kubernia/gluetun-transmission-cli:latest` requires `imagePullPolicy: Never` (local image)
-- Config: `/home/andrii/transmission-config` (hostPath)
-- Media: `/media/emby/*` (hostPath)
+- [ ] Unify infrastructure and platform projects in app-of-apps
+- [ ] Deploy app-of-apps (ArgoCD, Vault, etc.)
+- [ ] Restore Vault data
+- [ ] Add Transmission to app-of-apps with RPi toleration
 
 ## Project Structure
 
@@ -91,6 +81,12 @@ ssh andrii@macmini.local            # Mac Mini M4
 ssh andrii@raspberrypi.local        # Raspberry Pi
 ssh andrii@kyiv-router.local        # Kyiv MikroTik
 ssh andrii@wroclaw-router.local     # Wrocław MikroTik
+```
+
+## OrbStack k3s VM shell
+
+```bash
+orb -m macmini
 ```
 
 ## Git Conventions
