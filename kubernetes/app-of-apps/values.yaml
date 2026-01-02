@@ -42,6 +42,25 @@ system:
       namespace: kube-system
       annotations:
         argocd.argoproj.io/sync-wave: "-3"
+      ignoreDifferences:
+        - group: ""
+          kind: Secret
+          name: cilium-ca
+          namespace: kube-system
+          jsonPointers:
+            - /data
+        - group: ""
+          kind: Secret
+          name: hubble-relay-client-certs
+          namespace: kube-system
+          jsonPointers:
+            - /data
+        - group: ""
+          kind: Secret
+          name: hubble-server-certs
+          namespace: kube-system
+          jsonPointers:
+            - /data
 
     - name: ingress-nginx
       enabled: true
