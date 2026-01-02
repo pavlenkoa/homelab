@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: transmission
+  namespace: transmission
+spec:
+  serviceName: transmission
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transmission
+  template:
+    metadata:
+      labels:
+        app: transmission
+    spec:
+      containers:
+        - name: gluetun
+          image: kubernia/gluetun-transmission-cli:latest
+          imagePullPolicy: Never
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_MODULE
+          env:
+            - name: TZ
+              value: "Europe/Kyiv"
+            - name: VPN_SERVICE_PROVIDER
+              value: "protonvpn"
+            - name: VPN_TYPE
+              value: "wireguard"
+            - name: WIREGUARD_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: gluetun-vpn
+                  key: WIREGUARD_PRIVATE_KEY
+            - name: SERVER_COUNTRIES
+              value: "Germany"
+            - name: SERVER_CITIES
+              value: "Frankfurt"
+            - name: PORT_FORWARD_ONLY
+              value: "on"
+            - name: VPN_PORT_FORWARDING
+              value: "on"
+            - name: VPN_PORT_FORWARDING_PROVIDER
+              value: "protonvpn"
+            - name: VPN_PORT_FORWARDING_UP_COMMAND
+              value: "/bin/sh -c \"until transmission-remote 127.0.0.1:9091 -p {{PORTS}} 2>/dev/null; do echo 'Waiting for Transmission to be ready...'; sleep 5; done && echo 'Port {{PORTS}} set successfully'\""
+            - name: FIREWALL
+              value: "on"
+          volumeMounts:
+            - name: tun-device
+              mountPath: /dev/net/tun
+            - name: lib-modules
+              mountPath: /lib/modules
+              readOnly: true
+            - name: xtables-lock
+              mountPath: /run/xtables.lock
+            - name: gluetun-tmp
+              mountPath: /tmp/gluetun
+          ports:
+            - containerPort: 9091
+              name: web
+          livenessProbe:
+            exec:
+              command:
+                - /gluetun-entrypoint
+                - healthcheck
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+
+        - name: transmission
+          image: lscr.io/linuxserver/transmission:4.0.6
+          env:
+            - name: PUID
+              value: "1000"
+            - name: PGID
+              value: "1000"
+            - name: TZ
+              value: "Europe/Kyiv"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: watch
+              mountPath: /watch
+            - name: downloads-tv
+              mountPath: /downloads/tv
+            - name: downloads-movies
+              mountPath: /downloads/movies
+            - name: downloads-tvanimation
+              mountPath: /downloads/tvanimation
+            - name: downloads-animation
+              mountPath: /downloads/animation
+
+      volumes:
+        - name: tun-device
+          hostPath:
+            path: /dev/net/tun
+            type: CharDevice
+        - name: lib-modules
+          hostPath:
+            path: /lib/modules
+            type: Directory
+        - name: xtables-lock
+          hostPath:
+            path: /run/xtables.lock
+            type: FileOrCreate
+        - name: gluetun-tmp
+          emptyDir: {}
+        - name: config
+          hostPath:
+            path: /home/andrii/transmission-config
+            type: DirectoryOrCreate
+        - name: watch
+          hostPath:
+            path: /media/transmission/watch
+            type: Directory
+        - name: downloads-tv
+          hostPath:
+            path: /media/emby/tv
+            type: Directory
+        - name: downloads-movies
+          hostPath:
+            path: /media/emby/movies
+            type: Directory
+        - name: downloads-tvanimation
+          hostPath:
+            path: /media/emby/tvanimation
+            type: Directory
+        - name: downloads-animation
+          hostPath:
+            path: /media/emby/animation
+            type: Directory
