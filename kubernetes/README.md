@@ -37,11 +37,13 @@ kubernetes/
 
 | Wave | Services | Purpose |
 |------|----------|---------|
-| -3 | argocd | GitOps platform (bootstrap) |
+| -3 | cilium | CNI networking |
 | -2 | ingress-nginx | External traffic routing |
-| -1 | vault, external-secrets | Secret management |
-| 0 | cert-manager, vault-secrets-generator | TLS certificates, secret generation |
-| 1 | All applications | End-user services |
+| 0 | cert-manager, vault, external-secrets | TLS certificates, secret management |
+| 1 | argocd | GitOps platform (after certs/secrets ready) |
+| 2 | vault-secrets-generator, victoriametrics | Secret generation, monitoring |
+| 3 | n8n, authelia | Platform services |
+| 4 | external-services | End-user services |
 
 ## App-of-Apps Features
 
