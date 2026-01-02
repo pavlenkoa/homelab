@@ -32,14 +32,17 @@ global:
   finalizers:
     - "resources-finalizer.argocd.argoproj.io"
 
-# Infrastructure - Core cluster services
-infrastructure:
-  description: "Core cluster infrastructure (CNI, ingress, certificates)"
-  # syncPolicy:
-  #   automated:
-  #     prune: false  # Never auto-prune infrastructure
-  #     selfHeal: true
+# System - Core cluster components (CNI, ingress, certificates)
+system:
+  description: "Core cluster components"
   applications:
+    - name: cilium
+      enabled: true
+      path: kubernetes/charts/cilium
+      namespace: kube-system
+      annotations:
+        argocd.argoproj.io/sync-wave: "-3"
+
     - name: ingress-nginx
       enabled: true
       path: kubernetes/charts/ingress-nginx
@@ -52,7 +55,7 @@ infrastructure:
       path: kubernetes/charts/cert-manager
       namespace: cert-manager
       annotations:
-        argocd.argoproj.io/sync-wave: "0"
+        argocd.argoproj.io/sync-wave: "-1"
 
 # Platform - DevOps and management services
 platform:
@@ -125,7 +128,14 @@ platform:
       path: kubernetes/charts/n8n
       namespace: n8n
       annotations:
-        argocd.argoproj.io/sync-wave: "1"
+        argocd.argoproj.io/sync-wave: "2"
+
+    - name: authelia
+      enabled: true
+      path: kubernetes/charts/authelia
+      namespace: authelia
+      annotations:
+        argocd.argoproj.io/sync-wave: "2"
 
 # Applications - End-user services
 applications:
@@ -136,11 +146,4 @@ applications:
       path: kubernetes/charts/external-services
       namespace: external-services
       annotations:
-        argocd.argoproj.io/sync-wave: "1"
-
-    - name: authelia
-      enabled: true
-      path: kubernetes/charts/authelia
-      namespace: authelia
-      annotations:
-        argocd.argoproj.io/sync-wave: "1"
+        argocd.argoproj.io/sync-wave: "3"
