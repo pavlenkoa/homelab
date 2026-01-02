@@ -83,13 +83,6 @@ platform:
     - "https://github.com/pavlenkoa/homelab.git"
     - "https://github.com/pavlenkoa/vault-secrets-generator.git"
   applications:
-    - name: argocd
-      enabled: true
-      path: kubernetes/charts/argocd
-      namespace: argocd
-      annotations:
-        argocd.argoproj.io/sync-wave: "0"
-
     - name: vault
       enabled: true
       path: kubernetes/charts/vault
@@ -103,6 +96,13 @@ platform:
       namespace: external-secrets
       annotations:
         argocd.argoproj.io/sync-wave: "0"
+
+    - name: argocd
+      enabled: true
+      path: kubernetes/charts/argocd
+      namespace: argocd
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
 
     - name: vault-secrets-generator
       enabled: true
