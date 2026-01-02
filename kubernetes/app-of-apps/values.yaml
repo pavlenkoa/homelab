@@ -89,6 +89,13 @@ platform:
       namespace: vault
       annotations:
         argocd.argoproj.io/sync-wave: "0"
+      ignoreDifferences:
+        - group: apps
+          kind: StatefulSet
+          name: vault
+          namespace: vault
+          jsonPointers:
+            - /spec/volumeClaimTemplates
 
     - name: external-secrets
       enabled: true
