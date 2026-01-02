@@ -18,7 +18,7 @@ extraObjects:
           restartPolicy: Never
           containers:
           - name: create-app-of-apps
-            image: bitnami/kubectl:1.30
+            image: bitnami/kubectl:latest
             command:
             - /bin/sh
             - -c
