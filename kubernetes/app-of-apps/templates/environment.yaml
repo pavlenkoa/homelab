@@ -1,0 +1,92 @@
+{{/*
+Environment resources - rendered at root level (when renderLayer is empty)
+Creates:
+  1. AppProject for the environment (e.g., "homelab")
+  2. ApplicationSet that generates layer apps in that project
+*/}}
+{{- if not .Values.global.renderLayer }}
+{{- $global := .Values.global }}
+{{- $envName := $global.environmentName }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $envName }}
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: "Environment: {{ $envName }}"
+  sourceRepos:
+    - {{ $global.repository.url }}
+  destinations:
+    - namespace: argocd
+      server: {{ $global.destination.server }}
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  roles: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: {{ $envName }}-layers
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  generators:
+    - list:
+        elements:
+          {{- range $layerName, $layerConfig := .Values.layers }}
+          {{- if ne $layerConfig.enabled false }}
+          - layer: {{ $layerName }}
+            wave: {{ (index ($layerConfig.annotations | default dict) "argocd.argoproj.io/sync-wave") | default "0" | quote }}
+            {{- if ($layerConfig.repository).url }}
+            repoURL: {{ $layerConfig.repository.url }}
+            {{- else }}
+            repoURL: {{ $global.repository.url }}
+            {{- end }}
+            {{- if ($layerConfig.repository).targetRevision }}
+            targetRevision: {{ $layerConfig.repository.targetRevision }}
+            {{- else }}
+            targetRevision: {{ $global.repository.targetRevision }}
+            {{- end }}
+            {{- if ($layerConfig.destination).server }}
+            destServer: {{ $layerConfig.destination.server }}
+            {{- else }}
+            destServer: {{ $global.destination.server }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
+  template:
+    metadata:
+      name: '{{ $envName }}-{{`{{layer}}`}}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{`{{wave}}`}}'
+    spec:
+      project: {{ $envName }}
+      source:
+        repoURL: '{{`{{repoURL}}`}}'
+        targetRevision: '{{`{{targetRevision}}`}}'
+        path: kubernetes/app-of-apps
+        helm:
+          valueFiles:
+            - values/{{ $envName }}.yaml
+          parameters:
+            - name: global.renderLayer
+              value: '{{`{{layer}}`}}'
+      destination:
+        server: '{{`{{destServer}}`}}'
+        namespace: argocd
+      syncPolicy:
+        syncOptions:
+          {{- range $global.syncPolicy.syncOptions }}
+          - {{ . }}
+          {{- end }}
+{{- end }}
