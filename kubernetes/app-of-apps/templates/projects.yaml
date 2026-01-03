@@ -1,8 +1,11 @@
 {{/*
-AppProjects - only rendered at root level (when renderProject is empty)
+AppProjects - rendered when renderProject matches the project name
+Each layer app creates its own AppProject
 */}}
-{{- if not .Values.global.renderProject }}
+{{- if .Values.global.renderProject }}
+{{- $renderProject := .Values.global.renderProject }}
 {{- range $projectName, $projectConfig := (omit .Values "global") }}
+{{- if eq $projectName $renderProject }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
@@ -50,5 +53,6 @@ spec:
   {{- else }}
   roles: []
   {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
