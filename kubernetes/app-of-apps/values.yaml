@@ -9,6 +9,10 @@ global:
   # Set to true to prefix project and app names with environmentName
   prefixNames: false
 
+  # Internal: set by parent apps to filter which project to render
+  # Empty = root level (render parent apps), set = render only that project's apps
+  renderProject: ""
+
   repository:
     url: "https://github.com/pavlenkoa/homelab.git"
     targetRevision: "HEAD"
@@ -43,6 +47,8 @@ global:
 # System - Core cluster components (CNI, ingress, certificates)
 system:
   description: "Core cluster components"
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
   applications:
     - name: cilium
       enabled: true
@@ -87,6 +93,8 @@ system:
 # Platform - DevOps and management services
 platform:
   description: "Platform services and DevOps tools"
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
   sourceRepos:
     - "https://github.com/pavlenkoa/homelab.git"
     - "https://github.com/pavlenkoa/vault-secrets-generator.git"
@@ -167,6 +175,8 @@ platform:
 # Applications - End-user services
 applications:
   description: "End-user applications and services"
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
   applications:
     - name: external-services
       enabled: true
