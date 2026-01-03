@@ -1,8 +1,16 @@
+{{/*
+Child Applications - only rendered when renderProject matches the project name
+*/}}
+{{- if .Values.global.renderProject }}
+{{- $renderProject := .Values.global.renderProject }}
 {{- range $projectName, $projectConfig := (omit .Values "global") }}
+{{- if eq $projectName $renderProject }}
 {{- range $projectConfig.applications }}
 {{- if .enabled }}
 ---
 {{- include "app-of-apps.application" (list $ . $projectName $projectConfig) }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

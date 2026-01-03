@@ -1,3 +1,7 @@
+{{/*
+AppProjects - only rendered at root level (when renderProject is empty)
+*/}}
+{{- if not .Values.global.renderProject }}
 {{- range $projectName, $projectConfig := (omit .Values "global") }}
 ---
 apiVersion: argoproj.io/v1alpha1
@@ -46,4 +50,5 @@ spec:
   {{- else }}
   roles: []
   {{- end }}
+{{- end }}
 {{- end }}
