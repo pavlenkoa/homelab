@@ -1,5 +1,4 @@
 # Default values for app-of-apps
-# Application definitions with enabled: true/false
 # Environment-specific files override global.environmentName
 
 global:
@@ -9,9 +8,9 @@ global:
   # Set to true to prefix project and app names with environmentName
   prefixNames: false
 
-  # Internal: set by parent apps to filter which project to render
-  # Empty = root level (render parent apps), set = render only that project's apps
-  renderProject: ""
+  # Internal: set by parent apps to filter which layer to render
+  # Empty = root level (render environment resources), set = render only that layer's apps
+  renderLayer: ""
 
   repository:
     url: "https://github.com/pavlenkoa/homelab.git"
@@ -44,143 +43,145 @@ global:
   finalizers:
     - "resources-finalizer.argocd.argoproj.io"
 
-# System - Core cluster components (CNI, ingress, certificates)
-system:
-  description: "Core cluster components"
-  annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+# Layers define groups of applications
+layers:
+  # System - Core cluster components (CNI, ingress, certificates)
+  system:
+    description: "Core cluster components"
+    annotations:
+      argocd.argoproj.io/sync-wave: "-1"
+    apps:
+      - name: cilium
+        enabled: true
+        path: kubernetes/charts/cilium
+        namespace: kube-system
+        annotations:
+          argocd.argoproj.io/sync-wave: "-3"
+        ignoreDifferences:
+          - group: ""
+            kind: Secret
+            name: cilium-ca
+            namespace: kube-system
+            jsonPointers:
+              - /data
+          - group: ""
+            kind: Secret
+            name: hubble-relay-client-certs
+            namespace: kube-system
+            jsonPointers:
+              - /data
+          - group: ""
+            kind: Secret
+            name: hubble-server-certs
+            namespace: kube-system
+            jsonPointers:
+              - /data
+
+      - name: ingress-nginx
+        enabled: true
+        path: kubernetes/charts/ingress-nginx
+        namespace: ingress-nginx
+        annotations:
+          argocd.argoproj.io/sync-wave: "-2"
+
+      - name: cert-manager
+        enabled: true
+        path: kubernetes/charts/cert-manager
+        namespace: cert-manager
+        annotations:
+          argocd.argoproj.io/sync-wave: "0"
+
+  # Platform - DevOps and management services
+  platform:
+    description: "Platform services and DevOps tools"
+    annotations:
+      argocd.argoproj.io/sync-wave: "0"
+    sourceRepos:
+      - "https://github.com/pavlenkoa/homelab.git"
+      - "https://github.com/pavlenkoa/vault-secrets-generator.git"
+    apps:
+      - name: vault
+        enabled: true
+        path: kubernetes/charts/vault
+        namespace: vault
+        annotations:
+          argocd.argoproj.io/sync-wave: "0"
+
+      - name: external-secrets
+        enabled: true
+        path: kubernetes/charts/external-secrets
+        namespace: external-secrets
+        annotations:
+          argocd.argoproj.io/sync-wave: "0"
+
+      - name: argocd
+        enabled: true
+        path: kubernetes/charts/argocd
+        namespace: argocd
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+
+      - name: vault-secrets-generator
+        enabled: false
+        repository:
+          url: "https://github.com/pavlenkoa/vault-secrets-generator.git"
+          targetRevision: "HEAD"
+        path: helm/vault-secrets-generator
+        namespace: vsg
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+
+      - name: victoriametrics
+        enabled: false
+        path: kubernetes/charts/victoriametrics
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+
+      - name: victorialogs
+        enabled: false
+        path: kubernetes/charts/victorialogs
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+
+      - name: grafana
+        enabled: false
+        path: kubernetes/charts/grafana
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+
+      - name: alloy
+        enabled: false
+        path: kubernetes/charts/alloy
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+
+      - name: n8n
+        enabled: true
+        path: kubernetes/charts/n8n
+        namespace: n8n
+        annotations:
+          argocd.argoproj.io/sync-wave: "3"
+
+      - name: authelia
+        enabled: true
+        path: kubernetes/charts/authelia
+        namespace: authelia
+        annotations:
+          argocd.argoproj.io/sync-wave: "3"
+
+  # Applications - End-user services
   applications:
-    - name: cilium
-      enabled: true
-      path: kubernetes/charts/cilium
-      namespace: kube-system
-      annotations:
-        argocd.argoproj.io/sync-wave: "-3"
-      ignoreDifferences:
-        - group: ""
-          kind: Secret
-          name: cilium-ca
-          namespace: kube-system
-          jsonPointers:
-            - /data
-        - group: ""
-          kind: Secret
-          name: hubble-relay-client-certs
-          namespace: kube-system
-          jsonPointers:
-            - /data
-        - group: ""
-          kind: Secret
-          name: hubble-server-certs
-          namespace: kube-system
-          jsonPointers:
-            - /data
-
-    - name: ingress-nginx
-      enabled: true
-      path: kubernetes/charts/ingress-nginx
-      namespace: ingress-nginx
-      annotations:
-        argocd.argoproj.io/sync-wave: "-2"
-
-    - name: cert-manager
-      enabled: true
-      path: kubernetes/charts/cert-manager
-      namespace: cert-manager
-      annotations:
-        argocd.argoproj.io/sync-wave: "0"
-
-# Platform - DevOps and management services
-platform:
-  description: "Platform services and DevOps tools"
-  annotations:
-    argocd.argoproj.io/sync-wave: "0"
-  sourceRepos:
-    - "https://github.com/pavlenkoa/homelab.git"
-    - "https://github.com/pavlenkoa/vault-secrets-generator.git"
-  applications:
-    - name: vault
-      enabled: true
-      path: kubernetes/charts/vault
-      namespace: vault
-      annotations:
-        argocd.argoproj.io/sync-wave: "0"
-
-    - name: external-secrets
-      enabled: true
-      path: kubernetes/charts/external-secrets
-      namespace: external-secrets
-      annotations:
-        argocd.argoproj.io/sync-wave: "0"
-
-    - name: argocd
-      enabled: true
-      path: kubernetes/charts/argocd
-      namespace: argocd
-      annotations:
-        argocd.argoproj.io/sync-wave: "1"
-
-    - name: vault-secrets-generator
-      enabled: false
-      repository:
-        url: "https://github.com/pavlenkoa/vault-secrets-generator.git"
-        targetRevision: "HEAD"
-      path: helm/vault-secrets-generator
-      namespace: vsg
-      annotations:
-        argocd.argoproj.io/sync-wave: "2"
-
-    - name: victoriametrics
-      enabled: false
-      path: kubernetes/charts/victoriametrics
-      namespace: monitoring
-      annotations:
-        argocd.argoproj.io/sync-wave: "2"
-
-    - name: victorialogs
-      enabled: false
-      path: kubernetes/charts/victorialogs
-      namespace: monitoring
-      annotations:
-        argocd.argoproj.io/sync-wave: "2"
-
-    - name: grafana
-      enabled: false
-      path: kubernetes/charts/grafana
-      namespace: monitoring
-      annotations:
-        argocd.argoproj.io/sync-wave: "2"
-
-    - name: alloy
-      enabled: false
-      path: kubernetes/charts/alloy
-      namespace: monitoring
-      annotations:
-        argocd.argoproj.io/sync-wave: "2"
-
-    - name: n8n
-      enabled: true
-      path: kubernetes/charts/n8n
-      namespace: n8n
-      annotations:
-        argocd.argoproj.io/sync-wave: "3"
-
-    - name: authelia
-      enabled: true
-      path: kubernetes/charts/authelia
-      namespace: authelia
-      annotations:
-        argocd.argoproj.io/sync-wave: "3"
-
-# Applications - End-user services
-applications:
-  description: "End-user applications and services"
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
-  applications:
-    - name: external-services
-      enabled: true
-      path: kubernetes/charts/external-services
-      namespace: external-services
-      annotations:
-        argocd.argoproj.io/sync-wave: "4"
+    description: "End-user applications and services"
+    annotations:
+      argocd.argoproj.io/sync-wave: "1"
+    apps:
+      - name: external-services
+        enabled: true
+        path: kubernetes/charts/external-services
+        namespace: external-services
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"

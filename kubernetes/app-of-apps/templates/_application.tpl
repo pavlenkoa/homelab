@@ -1,25 +1,25 @@
 {{/*
-ArgoCD Application template helper with global and project defaults
+ArgoCD Application template helper with global and layer defaults
 Supports external chart repositories with values from homelab repo using multiple sources
 
 Features:
 - Auto-generated valueFiles: values/{{ .Values.global.environmentName }}.yaml
-- Project name auto-prefixing with environmentName (optional)
+- Layer name auto-prefixing with environmentName (optional)
 - Smart merge for ignoreDifferences (override) and additionalIgnoreDifferences (additive)
 - Smart merge for syncOptions (override) and additionalSyncOptions (additive)
 */}}
 {{- define "app-of-apps.application" -}}
 {{- $root := index . 0 -}}
 {{- $app := index . 1 -}}
-{{- $projectName := index . 2 -}}
-{{- $projectConfig := index . 3 -}}
+{{- $layerName := index . 2 -}}
+{{- $layerConfig := index . 3 -}}
 {{- $global := $root.Values.global -}}
-{{- /* Calculate effective project name - only prefix if prefixNames is true */}}
-{{- $effectiveProjectName := $projectName -}}
-{{- if $projectConfig.projectName }}
-  {{- $effectiveProjectName = $projectConfig.projectName -}}
+{{- /* Calculate effective layer name (used as ArgoCD project) - only prefix if prefixNames is true */}}
+{{- $effectiveLayerName := $layerName -}}
+{{- if $layerConfig.layerName }}
+  {{- $effectiveLayerName = $layerConfig.layerName -}}
 {{- else if and $global.environmentName $global.prefixNames }}
-  {{- $effectiveProjectName = printf "%s-%s" $global.environmentName $projectName -}}
+  {{- $effectiveLayerName = printf "%s-%s" $global.environmentName $layerName -}}
 {{- end }}
 {{- /* Calculate effective application name - only prefix if prefixNames is true */}}
 {{- $effectiveAppName := $app.name -}}
@@ -51,7 +51,7 @@ metadata:
     - {{ . }}
     {{- end }}
 spec:
-  project: {{ $effectiveProjectName }}
+  project: {{ $effectiveLayerName }}
   {{- if $useMultipleSources }}
   {{- /* Multiple sources: chart from external repo, values from homelab repo */}}
   sources:
@@ -126,16 +126,16 @@ spec:
   {{- end }}
   destination:
     server: {{ (($app.destination).server) | default $global.destination.server }}
-    namespace: {{ $app.namespace | default $projectConfig.namespace | default "default" }}
+    namespace: {{ $app.namespace | default $layerConfig.namespace | default "default" }}
   syncPolicy:
-    {{- $syncPolicy := mergeOverwrite (deepCopy $global.syncPolicy) ($projectConfig.syncPolicy | default dict) ($app.syncPolicy | default dict) }}
+    {{- $syncPolicy := mergeOverwrite (deepCopy $global.syncPolicy) ($layerConfig.syncPolicy | default dict) ($app.syncPolicy | default dict) }}
     {{- if $syncPolicy.automated }}
     automated:
       prune: {{ $syncPolicy.automated.prune }}
       selfHeal: {{ $syncPolicy.automated.selfHeal }}
     {{- end }}
     {{- /* Smart merge for syncOptions - support both override and additive */}}
-    {{- if or $syncPolicy.syncOptions $global.additionalSyncOptions $projectConfig.additionalSyncOptions $app.additionalSyncOptions }}
+    {{- if or $syncPolicy.syncOptions $global.additionalSyncOptions $layerConfig.additionalSyncOptions $app.additionalSyncOptions }}
     syncOptions:
       {{- /* Base syncOptions from merged syncPolicy */}}
       {{- range $syncPolicy.syncOptions }}
@@ -145,7 +145,7 @@ spec:
       {{- range $global.additionalSyncOptions }}
       - {{ . }}
       {{- end }}
-      {{- range $projectConfig.additionalSyncOptions }}
+      {{- range $layerConfig.additionalSyncOptions }}
       - {{ . }}
       {{- end }}
       {{- range $app.additionalSyncOptions }}
@@ -167,15 +167,15 @@ spec:
   {{- if $app.ignoreDifferences }}
     {{- $baseIgnoreDifferences = $app.ignoreDifferences }}
     {{- $hasIgnoreDifferences = true }}
-  {{- else if $projectConfig.ignoreDifferences }}
-    {{- $baseIgnoreDifferences = $projectConfig.ignoreDifferences }}
+  {{- else if $layerConfig.ignoreDifferences }}
+    {{- $baseIgnoreDifferences = $layerConfig.ignoreDifferences }}
     {{- $hasIgnoreDifferences = true }}
   {{- else if $global.ignoreDifferences }}
     {{- $baseIgnoreDifferences = $global.ignoreDifferences }}
     {{- $hasIgnoreDifferences = true }}
   {{- end }}
   {{- /* Check if any additionalIgnoreDifferences exist */}}
-  {{- $hasAdditional := or $global.additionalIgnoreDifferences $projectConfig.additionalIgnoreDifferences $app.additionalIgnoreDifferences }}
+  {{- $hasAdditional := or $global.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences $app.additionalIgnoreDifferences }}
   {{- if or $hasIgnoreDifferences $hasAdditional }}
   ignoreDifferences:
     {{- /* Output base ignoreDifferences (override behavior) */}}
@@ -186,7 +186,7 @@ spec:
     {{- range $global.additionalIgnoreDifferences }}
     - {{- toYaml . | nindent 6 }}
     {{- end }}
-    {{- range $projectConfig.additionalIgnoreDifferences }}
+    {{- range $layerConfig.additionalIgnoreDifferences }}
     - {{- toYaml . | nindent 6 }}
     {{- end }}
     {{- range $app.additionalIgnoreDifferences }}
