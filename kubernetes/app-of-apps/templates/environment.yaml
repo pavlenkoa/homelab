@@ -1,48 +1,29 @@
 {{/*
 Environment resources - rendered at root level (when renderLayer is empty)
-Creates:
-  1. AppProject for the environment (e.g., "homelab")
-  2. ApplicationSet that generates layer apps in that project
+Creates ApplicationSet that generates:
+  1. Environment project app (e.g., "homelab-project" with wave -10)
+  2. Layer apps (e.g., "homelab-system", "homelab-platform", "homelab-applications")
 */}}
 {{- if not .Values.global.renderLayer }}
 {{- $global := .Values.global }}
 {{- $envName := $global.environmentName }}
 ---
 apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: {{ $envName }}
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-10"
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  description: "Environment: {{ $envName }}"
-  sourceRepos:
-    - {{ $global.repository.url }}
-  destinations:
-    - namespace: argocd
-      server: {{ $global.destination.server }}
-  clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  roles: []
----
-apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: {{ $envName }}-layers
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-5"
 spec:
   generators:
     - list:
         elements:
+          # Environment project (created first)
+          - layer: _project
+            wave: "-10"
+            repoURL: {{ $global.repository.url }}
+            targetRevision: {{ $global.repository.targetRevision }}
+            destServer: {{ $global.destination.server }}
+          # Layer apps
           {{- range $layerName, $layerConfig := .Values.layers }}
           {{- if ne $layerConfig.enabled false }}
           - layer: {{ $layerName }}
@@ -70,7 +51,7 @@ spec:
       annotations:
         argocd.argoproj.io/sync-wave: '{{`{{wave}}`}}'
     spec:
-      project: {{ $envName }}
+      project: default
       source:
         repoURL: '{{`{{repoURL}}`}}'
         targetRevision: '{{`{{targetRevision}}`}}'
