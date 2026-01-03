@@ -8,8 +8,8 @@ Layer resources - rendered when renderLayer is set
 {{- $global := .Values.global }}
 {{- $envName := $global.environmentName }}
 
-{{- if eq $renderLayer "_project" }}
-{{/* Environment project - created by homelab-_project app */}}
+{{- if eq $renderLayer "project" }}
+{{/* Environment project - created by the "project" app */}}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject

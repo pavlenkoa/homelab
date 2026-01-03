@@ -18,7 +18,7 @@ spec:
     - list:
         elements:
           # Environment project (created first)
-          - layer: _project
+          - layer: project
             wave: "-10"
             repoURL: {{ $global.repository.url }}
             targetRevision: {{ $global.repository.targetRevision }}
