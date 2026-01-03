@@ -4,8 +4,7 @@
 # Bootstrap with:
 #   argocd app create app-of-apps \
 #     --repo https://github.com/pavlenkoa/homelab.git \
-#     --path kubernetes/app-of-apps \
-#     --file environments-appset.yaml \
+#     --path kubernetes/app-of-apps/bootstrap \
 #     --dest-server https://kubernetes.default.svc \
 #     --dest-namespace argocd
 #
@@ -25,7 +24,7 @@ spec:
           - path: "kubernetes/app-of-apps/values/*.yaml"
   template:
     metadata:
-      name: "{{ .path.filenameNormalized }}"
+      name: '{{ trimSuffix ".yaml" .path.filename }}'
       namespace: argocd
     spec:
       project: default
