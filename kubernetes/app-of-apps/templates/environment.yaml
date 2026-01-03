@@ -47,7 +47,11 @@ spec:
           {{- end }}
   template:
     metadata:
+      {{- if $global.prefixNames }}
       name: '{{ $envName }}-{{`{{layer}}`}}'
+      {{- else }}
+      name: '{{`{{layer}}`}}'
+      {{- end }}
       annotations:
         argocd.argoproj.io/sync-wave: '{{`{{wave}}`}}'
     spec:
