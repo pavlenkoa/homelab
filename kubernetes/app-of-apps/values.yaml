@@ -113,7 +113,7 @@ platform:
         argocd.argoproj.io/sync-wave: "1"
 
     - name: vault-secrets-generator
-      enabled: true
+      enabled: false
       repository:
         url: "https://github.com/pavlenkoa/vault-secrets-generator.git"
         targetRevision: "HEAD"
@@ -123,7 +123,7 @@ platform:
         argocd.argoproj.io/sync-wave: "2"
 
     - name: victoriametrics
-      enabled: true
+      enabled: false
       path: kubernetes/charts/victoriametrics
       namespace: monitoring
       annotations:
