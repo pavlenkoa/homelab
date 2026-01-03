@@ -1,40 +1,12 @@
 {{/*
 Layer resources - rendered when renderLayer is set
-- If renderLayer == "_project": Creates only the environment AppProject
-- Otherwise: Creates layer AppProject + child Applications
+Creates:
+  1. AppProject for the layer (wave -10)
+  2. Child Applications (wave from their annotations)
 */}}
 {{- if .Values.global.renderLayer }}
 {{- $renderLayer := .Values.global.renderLayer }}
 {{- $global := .Values.global }}
-{{- $envName := $global.environmentName }}
-
-{{- if eq $renderLayer "project" }}
-{{/* Environment project - created by the "project" app */}}
----
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: {{ $envName }}
-  namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  description: "Environment: {{ $envName }}"
-  sourceRepos:
-    - {{ $global.repository.url }}
-  destinations:
-    - namespace: argocd
-      server: {{ $global.destination.server }}
-  clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  roles: []
-
-{{- else }}
-{{/* Layer resources - AppProject + child apps */}}
 {{- range $layerName, $layerConfig := .Values.layers }}
 {{- if eq $layerName $renderLayer }}
 ---
@@ -91,6 +63,4 @@ spec:
 {{- end }}
 {{- end }}
 {{- end }}
-{{- end }}
-
 {{- end }}
