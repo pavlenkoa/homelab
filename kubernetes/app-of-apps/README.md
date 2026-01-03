@@ -75,12 +75,11 @@ argocd app create homelab \
 ```bash
 argocd app create app-of-apps \
   --repo https://github.com/pavlenkoa/homelab.git \
-  --path kubernetes/app-of-apps \
-  --file environments-appset.yaml \
+  --path kubernetes/app-of-apps/bootstrap \
   --dest-server https://kubernetes.default.svc \
   --dest-namespace argocd
 ```
-Discovers `values/*.yaml` and generates one Application per environment.
+Syncs `bootstrap/environments-appset.yaml` which discovers `values/*.yaml` and generates one Application per environment.
 
 ## Adding New Environment
 
