@@ -18,6 +18,14 @@ global:
 
   annotations: {}
 
+  # Global ignoreDifferences applied to all apps (additive)
+  # StatefulSet volumeClaimTemplates get creationTimestamp: null added by API server
+  additionalIgnoreDifferences:
+    - group: apps
+      kind: StatefulSet
+      jqPathExpressions:
+        - .spec.volumeClaimTemplates[].metadata.creationTimestamp
+
   syncPolicy:
     # automated:
     #   prune: true
@@ -89,13 +97,6 @@ platform:
       namespace: vault
       annotations:
         argocd.argoproj.io/sync-wave: "0"
-      ignoreDifferences:
-        - group: apps
-          kind: StatefulSet
-          name: vault
-          namespace: vault
-          jsonPointers:
-            - /spec/volumeClaimTemplates
 
     - name: external-secrets
       enabled: true
