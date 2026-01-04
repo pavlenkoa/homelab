@@ -1,63 +1,131 @@
-# Default values for app-of-apps
-# Environment-specific files override global.environmentName
+# =============================================================================
+# APP-OF-APPS CHART VALUES
+# =============================================================================
+#
+# Hierarchy:
+#   environment Application (e.g., "homelab")
+#   ├── creates: environment AppProject
+#   └── creates: layer Applications (system, platform, applications)
+#       ├── creates: layer AppProject
+#       └── creates: child Applications (cilium, vault, n8n, etc.)
+#           └── creates: actual Kubernetes workloads
+#
+# Merge/Override rules:
+#   - syncPolicy:                 Override (child replaces parent)
+#   - ignoreDifferences:          Override (child replaces parent)
+#   - additionalIgnoreDifferences: Merge (child adds to parent)
+#   - additionalSyncOptions:      Merge (child adds to parent)
+#   - annotations:                Merge (child adds to parent)
+#   - finalizers:                 Override (first non-empty wins)
+#
+# Smart defaults:
+#   - path:      kubernetes/charts/<name>
+#   - namespace: <name>
+#   - enabled:   true
+#
+# =============================================================================
 
-global:
-  # Environment name - used for auto-generating valueFiles path: values/<environmentName>.yaml
-  environmentName: ""
+# =============================================================================
+# INFRASTRUCTURE - used by all Applications
+# =============================================================================
+repository:
+  url: "https://github.com/pavlenkoa/homelab.git"
+  targetRevision: "HEAD"
 
-  # Set to true to prefix project and app names with environmentName
+destination:
+  server: "https://kubernetes.default.svc"
+
+# Internal - set by parent Applications via helm parameters, don't modify
+renderLayer: ""
+
+# =============================================================================
+# ENVIRONMENT - settings for the environment Application
+# This Application creates: environment AppProject + layer Applications
+# =============================================================================
+environment:
+  # Required - typically set via values/<name>.yaml
+  name: ""
+
+  # Prefix project and app names with environment name (e.g., homelab-system)
   prefixNames: false
-
-  # Internal: set by parent apps to filter which layer to render
-  # Empty = root level (render environment resources), set = render only that layer's apps
-  renderLayer: ""
-
-  repository:
-    url: "https://github.com/pavlenkoa/homelab.git"
-    targetRevision: "HEAD"
-
-  destination:
-    server: "https://kubernetes.default.svc"
 
   annotations: {}
 
-  # Global ignoreDifferences applied to all apps (additive)
-  # StatefulSet volumeClaimTemplates get creationTimestamp: null added by API server
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+# =============================================================================
+# LAYER DEFAULTS - default settings for layer Applications
+# (system, platform, applications)
+# These Applications create: layer AppProject + child Applications
+# =============================================================================
+layerDefaults:
+  annotations: {}
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+# =============================================================================
+# CHILD DEFAULTS - default settings for child Applications
+# (cilium, vault, n8n, etc.)
+# These Applications create: actual Kubernetes workloads
+# =============================================================================
+childDefaults:
+  annotations: {}
+
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ServerSideApply=true
+      - ServerSideDiff=true
+
+  # Applied to ALL child apps (additive)
   additionalIgnoreDifferences:
     - group: apps
       kind: StatefulSet
       jqPathExpressions:
         - .spec.volumeClaimTemplates[].metadata.creationTimestamp
 
-  syncPolicy:
-    # automated:
-    #   prune: true
-    #   selfHeal: true
-    syncOptions:
-      - "CreateNamespace=true"
-      - "PrunePropagationPolicy=foreground"
-      - "PruneLast=true"
-      - "ServerSideApply=true"
-      - "ServerSideDiff=true"
-
   finalizers:
-    - "resources-finalizer.argocd.argoproj.io"
+    - resources-finalizer.argocd.argoproj.io
 
-# Layers define groups of applications
+# =============================================================================
+# LAYERS
+# =============================================================================
 layers:
-  # System - Core cluster components (CNI, ingress, certificates)
+  # ---------------------------------------------------------------------------
+  # SYSTEM - Core cluster components (CNI, ingress, certificates)
+  # ---------------------------------------------------------------------------
   system:
     description: "Core cluster components"
     annotations:
       argocd.argoproj.io/sync-wave: "-1"
+
+    # Override layerDefaults.syncPolicy
     syncPolicy:
       automated:
         prune: true
         selfHeal: true
-    apps:
+      syncOptions:
+        - CreateNamespace=true
+        - ServerSideApply=true
+
+    children:
       - name: cilium
-        enabled: true
-        path: kubernetes/charts/cilium
         namespace: kube-system
         annotations:
           argocd.argoproj.io/sync-wave: "-3"
@@ -82,110 +150,90 @@ layers:
               - /data
 
       - name: ingress-nginx
-        enabled: true
-        path: kubernetes/charts/ingress-nginx
-        namespace: ingress-nginx
         annotations:
           argocd.argoproj.io/sync-wave: "-2"
 
       - name: cert-manager
-        enabled: true
-        path: kubernetes/charts/cert-manager
-        namespace: cert-manager
         annotations:
           argocd.argoproj.io/sync-wave: "0"
 
-  # Platform - DevOps and management services
+  # ---------------------------------------------------------------------------
+  # PLATFORM - DevOps and management services
+  # ---------------------------------------------------------------------------
   platform:
     description: "Platform services and DevOps tools"
     annotations:
       argocd.argoproj.io/sync-wave: "0"
+
+    # Source repos for this layer's AppProject
     sourceRepos:
       - "https://github.com/pavlenkoa/homelab.git"
       - "https://github.com/pavlenkoa/vault-secrets-generator.git"
-    apps:
+
+    children:
       - name: vault
-        enabled: true
-        path: kubernetes/charts/vault
-        namespace: vault
         annotations:
           argocd.argoproj.io/sync-wave: "0"
 
       - name: external-secrets
-        enabled: true
-        path: kubernetes/charts/external-secrets
-        namespace: external-secrets
         annotations:
           argocd.argoproj.io/sync-wave: "0"
 
       - name: argocd
-        enabled: true
-        path: kubernetes/charts/argocd
-        namespace: argocd
         annotations:
           argocd.argoproj.io/sync-wave: "1"
 
       - name: vault-secrets-generator
         enabled: false
+        namespace: vsg
+        path: helm/vault-secrets-generator
         repository:
           url: "https://github.com/pavlenkoa/vault-secrets-generator.git"
           targetRevision: "HEAD"
-        path: helm/vault-secrets-generator
-        namespace: vsg
         annotations:
           argocd.argoproj.io/sync-wave: "2"
 
       - name: victoriametrics
         enabled: false
-        path: kubernetes/charts/victoriametrics
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
 
       - name: victorialogs
         enabled: false
-        path: kubernetes/charts/victorialogs
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
 
       - name: grafana
         enabled: false
-        path: kubernetes/charts/grafana
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
 
       - name: alloy
         enabled: false
-        path: kubernetes/charts/alloy
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
 
       - name: n8n
-        enabled: true
-        path: kubernetes/charts/n8n
-        namespace: n8n
         annotations:
           argocd.argoproj.io/sync-wave: "3"
 
       - name: authelia
-        enabled: true
-        path: kubernetes/charts/authelia
-        namespace: authelia
         annotations:
           argocd.argoproj.io/sync-wave: "3"
 
-  # Applications - End-user services
+  # ---------------------------------------------------------------------------
+  # APPLICATIONS - End-user services
+  # ---------------------------------------------------------------------------
   applications:
     description: "End-user applications and services"
     annotations:
       argocd.argoproj.io/sync-wave: "1"
-    apps:
+
+    children:
       - name: external-services
-        enabled: true
-        path: kubernetes/charts/external-services
-        namespace: external-services
         annotations:
           argocd.argoproj.io/sync-wave: "4"

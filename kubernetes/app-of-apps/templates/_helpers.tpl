@@ -5,17 +5,17 @@ Decomposed for reuse in environment.yaml, layer.yaml, and child applications.
 
 {{/*
 app-of-apps.appProject - Renders an ArgoCD AppProject
-Arguments: list($name, $description, $config, $global)
+Arguments: list($name, $description, $config, $root)
   $name - project name
   $description - project description
   $config - layer/environment config (for sourceRepos, destinations, etc.)
-  $global - global values
+  $root - root Values object (for repository, destination)
 */}}
 {{- define "app-of-apps.appProject" -}}
 {{- $name := index . 0 -}}
 {{- $description := index . 1 -}}
 {{- $config := index . 2 -}}
-{{- $global := index . 3 -}}
+{{- $root := index . 3 -}}
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
@@ -28,12 +28,12 @@ metadata:
 spec:
   description: {{ $description | quote }}
   sourceRepos:
-    {{- $defaultRepos := list $global.repository.url -}}
+    {{- $defaultRepos := list $root.repository.url -}}
     {{- range (($config).sourceRepos | default $defaultRepos) }}
     - {{ . }}
     {{- end }}
   destinations:
-    {{- $defaultDest := list (dict "namespace" "*" "server" $global.destination.server) -}}
+    {{- $defaultDest := list (dict "namespace" "*" "server" $root.destination.server) -}}
     {{- range (($config).destinations | default $defaultDest) }}
     - namespace: {{ .namespace | quote }}
       server: {{ .server }}
@@ -60,10 +60,9 @@ spec:
 
 {{/*
 app-of-apps.syncPolicy - Renders syncPolicy block
-Arguments: list($configs..., $additionalConfigs)
-  $configs - list of syncPolicy objects to merge (global -> layer -> app)
-  Each config can have: automated, syncOptions, retry
-  Also handles additionalSyncOptions from each level
+Arguments: list($configs, $additionalSyncOptionsList)
+  $configs - list of syncPolicy objects to merge (later overrides earlier)
+  $additionalSyncOptionsList - list of additionalSyncOptions arrays (all merged)
 */}}
 {{- define "app-of-apps.syncPolicy" -}}
 {{- $args := . -}}
