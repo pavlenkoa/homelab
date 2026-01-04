@@ -45,8 +45,8 @@ childDefaults:
   additionalIgnoreDifferences:
     - group: apps
       kind: StatefulSet
-      jqPathExpressions:
-        - .spec.volumeClaimTemplates[].metadata.creationTimestamp
+      jsonPointers:
+        - /spec/volumeClaimTemplates/0/metadata/creationTimestamp
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 
