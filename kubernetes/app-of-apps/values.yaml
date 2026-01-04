@@ -1,8 +1,8 @@
 # App-of-Apps Chart
 #
 # Hierarchy:
-#   layers.yaml   → layerDefaults + layers.<name>
-#   children.yaml → childDefaults + layers.<name>.childDefaults + layers.<name>.children
+#   layers.yaml   → projectDefaults, layerDefaults + layers.<name>
+#   children.yaml → projectDefaults + layers.<name>.projectDefaults, childDefaults + layers.<name>.childDefaults
 #
 # Merge rules:
 #   - syncPolicy, ignoreDifferences, finalizers: Override (child wins)
@@ -49,6 +49,21 @@ childDefaults:
         - .spec.volumeClaimTemplates[].metadata.creationTimestamp
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+
+# Defaults for AppProjects (environment + layer projects)
+projectDefaults:
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  destinations:
+    - namespace: "*"
 
 # Layers
 layers:
