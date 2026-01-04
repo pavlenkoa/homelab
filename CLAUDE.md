@@ -15,18 +15,37 @@ Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4
 
 ## What Runs Where
 
-**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Traefik, n8n, victoriametrics
+**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Traefik, n8n
 
 **raspberrypi (tainted):** Transmission (with Gluetun VPN sidecar) - requires toleration to schedule
 
-**Native macOS:** Emby
+**Both nodes:** Alloy DaemonSet
+
+**Native macOS:** Emby, Alloy
+
+## Monitoring
+
+Metrics and logs ship to Grafana Cloud.
+
+**macOS (native, outside GitOps):**
+- Alloy - host metrics, process metrics (Emby visibility), Emby logs
+- Exposes endpoint at `host.internal` for in-cluster Alloy to scrape
+
+**k3s cluster (ArgoCD-managed):**
+- Alloy DaemonSet on both nodes
+- Collects: node metrics, K8s metrics (cAdvisor, kubelet, kube-state-metrics)
+- Scrapes macOS Alloy, remote writes to Grafana Cloud
+
+**Secrets:** Vault path `grafana` contains Grafana Cloud credentials
 
 ## TODO
 
-- [x] Reorganize app-of-apps projects (infrastructure→system, add cilium, move authelia to platform)
-- [x] Deploy app-of-apps (ArgoCD, Vault, etc.)
-- [x] Restore Vault data
-- [x] Add Transmission to app-of-apps with RPi toleration
+- [ ] Update Alloy chart to latest (replace existing)
+- [ ] Deploy Alloy DaemonSet (ArgoCD)
+- [ ] Install Alloy on macOS (Homebrew)
+- [ ] Configure Grafana Cloud remote write
+- [ ] GitHub Action to build images from images/ dir
+- [ ] Add Renovate bot for dependency updates
 
 ## Project Structure
 
@@ -44,7 +63,9 @@ homelab/
 │   └── vault-tools/
 ├── docs/
 │   └── setup/
-│       └── mikrotik-wireguard.md
+│       ├── k3s-cluster.md
+│       ├── mikrotik-wireguard.md
+│       └── orbstack-networking.md
 └── kubernetes/
     ├── manifests/              # Raw manifests for RPi k3s
     │   └── transmission/
