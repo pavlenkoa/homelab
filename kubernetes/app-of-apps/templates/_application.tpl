@@ -3,49 +3,58 @@ ArgoCD Application template helper for child applications
 Supports external chart repositories with values from homelab repo using multiple sources
 
 Features:
-- Auto-generated valueFiles: values/{{ .Values.global.environmentName }}.yaml
-- Layer name auto-prefixing with environmentName (optional)
+- Auto-generated path: kubernetes/charts/<name> (if not specified)
+- Auto-generated namespace: <name> (if not specified)
+- Auto-generated valueFiles: values/<environment.name>.yaml
+- Name prefixing with environment name (optional via environment.prefixNames)
 - Uses shared helpers for syncPolicy, ignoreDifferences, annotations, finalizers
+
+Merge order: childDefaults → layerConfig.childDefaults → app
 */}}
 {{- define "app-of-apps.application" -}}
 {{- $root := index . 0 -}}
 {{- $app := index . 1 -}}
 {{- $layerName := index . 2 -}}
 {{- $layerConfig := index . 3 -}}
-{{- $global := $root.Values.global -}}
-{{- /* Calculate effective layer name (used as ArgoCD project) - only prefix if prefixNames is true */}}
+{{- $env := $root.Values.environment -}}
+{{- $childDefaults := $root.Values.childDefaults -}}
+{{- $layerChildDefaults := $layerConfig.childDefaults | default dict -}}
+{{- /* Calculate effective layer name (used as ArgoCD project) */ -}}
 {{- $effectiveLayerName := $layerName -}}
 {{- if $layerConfig.layerName }}
   {{- $effectiveLayerName = $layerConfig.layerName -}}
-{{- else if and $global.environmentName $global.prefixNames }}
-  {{- $effectiveLayerName = printf "%s-%s" $global.environmentName $layerName -}}
+{{- else if and $env.name $env.prefixNames }}
+  {{- $effectiveLayerName = printf "%s-%s" $env.name $layerName -}}
 {{- end }}
-{{- /* Calculate effective application name - only prefix if prefixNames is true */}}
+{{- /* Calculate effective application name */ -}}
 {{- $effectiveAppName := $app.name -}}
-{{- if and $global.environmentName $global.prefixNames }}
-  {{- $effectiveAppName = printf "%s-%s" $global.environmentName $app.name -}}
+{{- if and $env.name $env.prefixNames }}
+  {{- $effectiveAppName = printf "%s-%s" $env.name $app.name -}}
 {{- end }}
-{{- $appRepoURL := (($app.repository).url) | default $global.repository.url -}}
-{{- $useMultipleSources := and ($app.repository).url (ne $appRepoURL $global.repository.url) -}}
-{{- /* Auto-generate valueFiles if not specified */}}
-{{- $autoValueFile := printf "values/%s.yaml" $global.environmentName -}}
-{{- /* For external repos, use full path from homelab repo */}}
-{{- $autoValueFileExternal := printf "kubernetes/charts/%s/values/%s.yaml" $app.name $global.environmentName -}}
+{{- /* Smart defaults */ -}}
+{{- $appPath := $app.path | default (printf "kubernetes/charts/%s" $app.name) -}}
+{{- $appNamespace := $app.namespace | default $app.name -}}
+{{- $appRepoURL := (($app.repository).url) | default $root.Values.repository.url -}}
+{{- $useMultipleSources := and ($app.repository).url (ne $appRepoURL $root.Values.repository.url) -}}
+{{- /* Auto-generate valueFiles if not specified */ -}}
+{{- $autoValueFile := printf "values/%s.yaml" $env.name -}}
+{{- /* For external repos, use full path from homelab repo */ -}}
+{{- $autoValueFileExternal := printf "kubernetes/charts/%s/values/%s.yaml" $app.name $env.name -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: {{ $effectiveAppName }}
   namespace: argocd
-  {{- include "app-of-apps.annotations" (list $global.annotations $app.annotations) | nindent 2 }}
-  {{- include "app-of-apps.finalizers" (list $app.finalizers $global.finalizers) | nindent 2 }}
+  {{- include "app-of-apps.annotations" (list $childDefaults.annotations $layerChildDefaults.annotations $app.annotations) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $app.finalizers $layerChildDefaults.finalizers $childDefaults.finalizers) | nindent 2 }}
 spec:
   project: {{ $effectiveLayerName }}
   {{- if $useMultipleSources }}
-  {{- /* Multiple sources: chart from external repo, values from homelab repo */}}
+  {{- /* Multiple sources: chart from external repo, values from homelab repo */ -}}
   sources:
     - repoURL: {{ $appRepoURL }}
-      targetRevision: {{ (($app.repository).targetRevision) | default $global.repository.targetRevision }}
-      path: {{ $app.path }}
+      targetRevision: {{ (($app.repository).targetRevision) | default $root.Values.repository.targetRevision }}
+      path: {{ $appPath }}
       helm:
         valueFiles:
           {{- if $app.helm }}
@@ -74,15 +83,15 @@ spec:
             value: {{ .value | quote }}
           {{- end }}
         {{- end }}
-    - repoURL: {{ $global.repository.url }}
-      targetRevision: {{ $global.repository.targetRevision }}
+    - repoURL: {{ $root.Values.repository.url }}
+      targetRevision: {{ $root.Values.repository.targetRevision }}
       ref: values
   {{- else }}
-  {{- /* Single source: chart and values from same repo */}}
+  {{/* Single source: chart and values from same repo */}}
   source:
     repoURL: {{ $appRepoURL }}
-    targetRevision: {{ (($app.repository).targetRevision) | default $global.repository.targetRevision }}
-    path: {{ $app.path }}
+    targetRevision: {{ (($app.repository).targetRevision) | default $root.Values.repository.targetRevision }}
+    path: {{ $appPath }}
     helm:
       valueFiles:
         {{- if $app.helm }}
@@ -113,14 +122,14 @@ spec:
       {{- end }}
   {{- end }}
   destination:
-    server: {{ (($app.destination).server) | default $global.destination.server }}
-    namespace: {{ $app.namespace | default $layerConfig.namespace | default "default" }}
+    server: {{ (($app.destination).server) | default $root.Values.destination.server }}
+    namespace: {{ $appNamespace }}
   {{- include "app-of-apps.syncPolicy" (list
-        (list $global.syncPolicy $layerConfig.syncPolicy $app.syncPolicy)
-        (list $global.additionalSyncOptions $layerConfig.additionalSyncOptions $app.additionalSyncOptions)
+        (list $childDefaults.syncPolicy $layerChildDefaults.syncPolicy $app.syncPolicy)
+        (list $childDefaults.additionalSyncOptions $layerChildDefaults.additionalSyncOptions $app.additionalSyncOptions)
       ) | nindent 2 }}
   {{- include "app-of-apps.ignoreDifferences" (list
-        (list $app.ignoreDifferences $layerConfig.ignoreDifferences $global.ignoreDifferences)
-        (list $global.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences $app.additionalIgnoreDifferences)
+        (list $app.ignoreDifferences $layerChildDefaults.ignoreDifferences $childDefaults.ignoreDifferences)
+        (list $childDefaults.additionalIgnoreDifferences $layerChildDefaults.additionalIgnoreDifferences $app.additionalIgnoreDifferences)
       ) | nindent 2 }}
 {{- end }}

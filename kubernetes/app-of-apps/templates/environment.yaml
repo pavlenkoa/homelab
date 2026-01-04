@@ -4,11 +4,12 @@ Creates:
   1. AppProject for the environment (wave -10)
   2. Layer Applications (system, platform, applications)
 */}}
-{{- if not .Values.global.renderLayer }}
-{{- $global := .Values.global }}
-{{- $envName := $global.environmentName }}
+{{- if not .Values.renderLayer }}
+{{- $env := .Values.environment }}
+{{- $envName := $env.name }}
+{{- $layerDefaults := .Values.layerDefaults }}
 {{- /* Collect all sourceRepos from layers for the environment project */ -}}
-{{- $envSourceRepos := list $global.repository.url -}}
+{{- $envSourceRepos := list .Values.repository.url -}}
 {{- range $layerName, $layerConfig := .Values.layers -}}
   {{- range ($layerConfig.sourceRepos | default list) -}}
     {{- $envSourceRepos = append $envSourceRepos . -}}
@@ -16,7 +17,7 @@ Creates:
 {{- end -}}
 {{- $envConfig := dict "sourceRepos" $envSourceRepos }}
 ---
-{{- include "app-of-apps.appProject" (list $envName (printf "Environment: %s" $envName) $envConfig $global) }}
+{{- include "app-of-apps.appProject" (list $envName (printf "Environment: %s" $envName) $envConfig .Values) }}
 {{- range $layerName, $layerConfig := .Values.layers }}
 {{- if ne $layerConfig.enabled false }}
 ---
@@ -25,30 +26,30 @@ kind: Application
 metadata:
   name: {{ $layerName }}
   namespace: argocd
-  {{- include "app-of-apps.annotations" (list $global.annotations $layerConfig.annotations) | nindent 2 }}
-  {{- include "app-of-apps.finalizers" (list $layerConfig.finalizers $global.finalizers) | nindent 2 }}
+  {{- include "app-of-apps.annotations" (list $layerDefaults.annotations $layerConfig.annotations) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $layerConfig.finalizers $layerDefaults.finalizers $env.finalizers) | nindent 2 }}
 spec:
   project: {{ $envName }}
   source:
-    repoURL: {{ ($layerConfig.repository).url | default $global.repository.url }}
-    targetRevision: {{ ($layerConfig.repository).targetRevision | default $global.repository.targetRevision }}
+    repoURL: {{ ($layerConfig.repository).url | default $.Values.repository.url }}
+    targetRevision: {{ ($layerConfig.repository).targetRevision | default $.Values.repository.targetRevision }}
     path: kubernetes/app-of-apps
     helm:
       valueFiles:
         - values/{{ $envName }}.yaml
       parameters:
-        - name: global.renderLayer
+        - name: renderLayer
           value: {{ $layerName }}
   destination:
-    server: {{ ($layerConfig.destination).server | default $global.destination.server }}
+    server: {{ ($layerConfig.destination).server | default $.Values.destination.server }}
     namespace: argocd
   {{- include "app-of-apps.syncPolicy" (list
-        (list $global.syncPolicy $layerConfig.syncPolicy)
-        (list $global.additionalSyncOptions $layerConfig.additionalSyncOptions)
+        (list $layerDefaults.syncPolicy $layerConfig.syncPolicy)
+        (list $layerDefaults.additionalSyncOptions $layerConfig.additionalSyncOptions)
       ) | nindent 2 }}
   {{- include "app-of-apps.ignoreDifferences" (list
-        (list $layerConfig.ignoreDifferences $global.ignoreDifferences)
-        (list $global.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences)
+        (list $layerConfig.ignoreDifferences $layerDefaults.ignoreDifferences)
+        (list $layerDefaults.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences)
       ) | nindent 2 }}
 {{- end }}
 {{- end }}

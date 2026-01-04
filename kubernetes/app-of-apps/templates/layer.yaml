@@ -4,17 +4,16 @@ Creates:
   1. AppProject for the layer (wave -10)
   2. Child Applications (wave from their annotations)
 */}}
-{{- if .Values.global.renderLayer }}
-{{- $renderLayer := .Values.global.renderLayer }}
-{{- $global := .Values.global }}
+{{- if .Values.renderLayer }}
+{{- $renderLayer := .Values.renderLayer }}
 {{- range $layerName, $layerConfig := .Values.layers }}
 {{- if eq $layerName $renderLayer }}
 ---
-{{- include "app-of-apps.appProject" (list $layerName ($layerConfig.description | default $layerName) $layerConfig $global) }}
-{{- range $layerConfig.apps }}
-{{- if .enabled }}
+{{ include "app-of-apps.appProject" (list $layerName ($layerConfig.description | default $layerName) $layerConfig $.Values) }}
+{{- range $layerConfig.children }}
+{{- if ne .enabled false }}
 ---
-{{- include "app-of-apps.application" (list $ . $layerName $layerConfig) }}
+{{ include "app-of-apps.application" (list $ . $layerName $layerConfig) }}
 {{- end }}
 {{- end }}
 {{- end }}
