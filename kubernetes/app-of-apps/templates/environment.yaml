@@ -72,6 +72,13 @@ spec:
     server: {{ ($layerConfig.destination).server | default $global.destination.server }}
     namespace: argocd
   syncPolicy:
+    {{- if $layerConfig.syncPolicy }}
+    {{- if $layerConfig.syncPolicy.automated }}
+    automated:
+      prune: {{ $layerConfig.syncPolicy.automated.prune | default false }}
+      selfHeal: {{ $layerConfig.syncPolicy.automated.selfHeal | default false }}
+    {{- end }}
+    {{- end }}
     syncOptions:
       {{- range $global.syncPolicy.syncOptions }}
       - {{ . }}
