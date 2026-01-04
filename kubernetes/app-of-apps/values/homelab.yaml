@@ -1,5 +1,1 @@
-# Homelab environment configuration
-# environment.name is used by ApplicationSet to name the "homelab" Application
-
-environment:
-  name: "homelab"
+environment: "homelab"

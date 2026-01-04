@@ -1,12 +1,13 @@
 {{/*
-Environment resources - rendered at root level (when renderLayer is empty)
+Layers - rendered when renderLayer is empty
 Creates:
-  1. AppProject for the environment (wave -10)
+  1. AppProject for the environment
   2. Layer Applications (system, platform, applications)
+
+Controlled by: layerDefaults + layers.<name>
 */}}
 {{- if not .Values.renderLayer }}
-{{- $env := .Values.environment }}
-{{- $envName := $env.name }}
+{{- $envName := .Values.environment }}
 {{- $layerDefaults := .Values.layerDefaults }}
 {{- /* Collect all sourceRepos from layers for the environment project */ -}}
 {{- $envSourceRepos := list .Values.repository.url -}}
@@ -20,14 +21,19 @@ Creates:
 {{- include "app-of-apps.appProject" (list $envName (printf "Environment: %s" $envName) $envConfig .Values) }}
 {{- range $layerName, $layerConfig := .Values.layers }}
 {{- if ne $layerConfig.enabled false }}
+{{- $prefixNames := $layerConfig.prefixNames | default $layerDefaults.prefixNames }}
+{{- $effectiveLayerName := $layerName }}
+{{- if $prefixNames }}
+  {{- $effectiveLayerName = printf "%s-%s" $envName $layerName }}
+{{- end }}
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ $layerName }}
+  name: {{ $effectiveLayerName }}
   namespace: argocd
   {{- include "app-of-apps.annotations" (list $layerDefaults.annotations $layerConfig.annotations) | nindent 2 }}
-  {{- include "app-of-apps.finalizers" (list $layerConfig.finalizers $layerDefaults.finalizers $env.finalizers) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $layerConfig.finalizers $layerDefaults.finalizers) | nindent 2 }}
 spec:
   project: {{ $envName }}
   source:
