@@ -27,7 +27,6 @@ authelia:
     tls:
       enabled: true
       secret: 'authelia-tls'
-      hostNameOverride: 'auth.pavlenko.io'
 
   # Main configuration overrides  
   configMap:
