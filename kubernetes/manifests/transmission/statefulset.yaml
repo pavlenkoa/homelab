@@ -55,6 +55,8 @@ spec:
               value: "/bin/sh -c \"until transmission-remote 127.0.0.1:9091 -p {{PORTS}} 2>/dev/null; do echo 'Waiting for Transmission to be ready...'; sleep 5; done && echo 'Port {{PORTS}} set successfully'\""
             - name: FIREWALL
               value: "on"
+            - name: FIREWALL_INPUT_PORTS
+              value: "9091,19091"
           volumeMounts:
             - name: tun-device
               mountPath: /dev/net/tun
