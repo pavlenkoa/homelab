@@ -50,6 +50,10 @@ layers:
     description: "Core cluster components"
     annotations:
       argocd.argoproj.io/sync-wave: "-1"
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
     apps:
       - name: cilium
         enabled: true

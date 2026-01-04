@@ -16,6 +16,8 @@ metadata:
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
   generators:
     - git:
         repoURL: https://github.com/pavlenkoa/homelab.git
@@ -39,5 +41,8 @@ spec:
         server: https://kubernetes.default.svc
         namespace: argocd
       syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
         syncOptions:
           - CreateNamespace=true
