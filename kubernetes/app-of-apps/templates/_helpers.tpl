@@ -8,23 +8,35 @@ app-of-apps.appProject - Renders an ArgoCD AppProject
 Arguments: list($name, $description, $config, $root)
   $name - project name
   $description - project description
-  $config - layer/environment config (for sourceRepos, destinations, etc.)
-  $root - root Values object (for repository, destination)
+  $config - layer config (for sourceRepos, projectDefaults override)
+  $root - root Values object (for projectDefaults, repository, destination)
 */}}
 {{- define "app-of-apps.appProject" -}}
 {{- $name := index . 0 -}}
 {{- $description := index . 1 -}}
 {{- $config := index . 2 -}}
 {{- $root := index . 3 -}}
+{{- $defaults := $root.projectDefaults -}}
+{{- $override := ($config).projectDefaults | default dict -}}
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
   name: {{ $name }}
   namespace: argocd
+  {{- $annotations := mergeOverwrite (deepCopy ($defaults.annotations | default dict)) ($override.annotations | default dict) -}}
+  {{- if $annotations }}
   annotations:
-    argocd.argoproj.io/sync-wave: "-10"
+    {{- range $key, $value := $annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+  {{- $finalizers := ($override.finalizers | default $defaults.finalizers) -}}
+  {{- if $finalizers }}
   finalizers:
-    - resources-finalizer.argocd.argoproj.io
+    {{- range $finalizers }}
+    - {{ . }}
+    {{- end }}
+  {{- end }}
 spec:
   description: {{ $description | quote }}
   sourceRepos:
@@ -33,26 +45,27 @@ spec:
     - {{ . }}
     {{- end }}
   destinations:
-    {{- $defaultDest := list (dict "namespace" "*" "server" $root.destination.server) -}}
-    {{- range (($config).destinations | default $defaultDest) }}
+    {{- $destinations := ($override.destinations | default $defaults.destinations) -}}
+    {{- range $destinations }}
     - namespace: {{ .namespace | quote }}
-      server: {{ .server }}
+      server: {{ .server | default $root.destination.server }}
     {{- end }}
   clusterResourceWhitelist:
-    {{- $defaultCluster := list (dict "group" "*" "kind" "*") -}}
-    {{- range (($config).clusterResourceWhitelist | default $defaultCluster) }}
+    {{- $clusterWhitelist := ($override.clusterResourceWhitelist | default $defaults.clusterResourceWhitelist) -}}
+    {{- range $clusterWhitelist }}
     - group: {{ .group | quote }}
       kind: {{ .kind | quote }}
     {{- end }}
   namespaceResourceWhitelist:
-    {{- $defaultNs := list (dict "group" "*" "kind" "*") -}}
-    {{- range (($config).namespaceResourceWhitelist | default $defaultNs) }}
+    {{- $nsWhitelist := ($override.namespaceResourceWhitelist | default $defaults.namespaceResourceWhitelist) -}}
+    {{- range $nsWhitelist }}
     - group: {{ .group | quote }}
       kind: {{ .kind | quote }}
     {{- end }}
-  {{- if ($config).roles }}
+  {{- $roles := ($override.roles | default ($config).roles) -}}
+  {{- if $roles }}
   roles:
-    {{- toYaml ($config).roles | nindent 4 }}
+    {{- toYaml $roles | nindent 4 }}
   {{- else }}
   roles: []
   {{- end }}
