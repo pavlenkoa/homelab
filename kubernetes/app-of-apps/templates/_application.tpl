@@ -18,11 +18,8 @@ Merge order: childDefaults → layerConfig.childDefaults → app
 {{- $layerDefaults := $root.Values.layerDefaults -}}
 {{- $layerChildDefaults := $layerConfig.childDefaults | default dict -}}
 {{- $prefixNames := $layerConfig.prefixNames | default $layerDefaults.prefixNames -}}
-{{- /* Calculate effective layer name (used as ArgoCD project) */ -}}
 {{- $effectiveLayerName := $layerName -}}
-{{- if $layerConfig.layerName }}
-  {{- $effectiveLayerName = $layerConfig.layerName -}}
-{{- else if $prefixNames }}
+{{- if $prefixNames }}
   {{- $effectiveLayerName = printf "%s-%s" $envName $layerName -}}
 {{- end }}
 {{- /* Calculate effective application name */ -}}

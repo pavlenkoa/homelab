@@ -9,14 +9,14 @@ Controlled by: layerDefaults + layers.<name>
 {{- if not .Values.renderLayer }}
 {{- $envName := .Values.environment }}
 {{- $layerDefaults := .Values.layerDefaults }}
-{{- /* Collect all sourceRepos from layers for the environment project */ -}}
-{{- $envSourceRepos := list .Values.repository.url -}}
+{{- /* Collect unique sourceRepos from layers for the environment project */ -}}
+{{- $repoSet := dict .Values.repository.url true -}}
 {{- range $layerName, $layerConfig := .Values.layers -}}
   {{- range ($layerConfig.sourceRepos | default list) -}}
-    {{- $envSourceRepos = append $envSourceRepos . -}}
+    {{- $repoSet = set $repoSet . true -}}
   {{- end -}}
 {{- end -}}
-{{- $envConfig := dict "sourceRepos" $envSourceRepos }}
+{{- $envConfig := dict "sourceRepos" (keys $repoSet) }}
 ---
 {{- include "app-of-apps.appProject" (list $envName (printf "Environment: %s" $envName) $envConfig .Values) }}
 {{- range $layerName, $layerConfig := .Values.layers }}
