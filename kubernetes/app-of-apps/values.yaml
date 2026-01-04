@@ -1,33 +1,13 @@
-# =============================================================================
-# APP-OF-APPS CHART VALUES
-# =============================================================================
+# App-of-Apps Chart
 #
 # Hierarchy:
-#   environment Application (e.g., "homelab")
-#   ├── creates: environment AppProject
-#   └── creates: layer Applications (system, platform, applications)
-#       ├── creates: layer AppProject
-#       └── creates: child Applications (cilium, vault, n8n, etc.)
-#           └── creates: actual Kubernetes workloads
+#   layers.yaml   → layerDefaults + layers.<name>
+#   children.yaml → childDefaults + layers.<name>.childDefaults + layers.<name>.children
 #
-# Merge/Override rules:
-#   - syncPolicy:                 Override (child replaces parent)
-#   - ignoreDifferences:          Override (child replaces parent)
-#   - additionalIgnoreDifferences: Merge (child adds to parent)
-#   - additionalSyncOptions:      Merge (child adds to parent)
-#   - annotations:                Merge (child adds to parent)
-#   - finalizers:                 Override (first non-empty wins)
-#
-# Smart defaults:
-#   - path:      kubernetes/charts/<name>
-#   - namespace: <name>
-#   - enabled:   true
-#
-# =============================================================================
+# Merge rules:
+#   - syncPolicy, ignoreDifferences, finalizers: Override (child wins)
+#   - additionalSyncOptions, additionalIgnoreDifferences, annotations: Merge
 
-# =============================================================================
-# INFRASTRUCTURE - used by all Applications
-# =============================================================================
 repository:
   url: "https://github.com/pavlenkoa/homelab.git"
   targetRevision: "HEAD"
@@ -35,56 +15,26 @@ repository:
 destination:
   server: "https://kubernetes.default.svc"
 
-# Internal - set by parent Applications via helm parameters, don't modify
+# Used by ApplicationSet for app name, and templates for AppProject/valueFiles
+environment: ""
+
+# Internal - set via helm parameters by parent Applications
 renderLayer: ""
 
-# =============================================================================
-# ENVIRONMENT - settings for the environment Application
-# This Application creates: environment AppProject + layer Applications
-# =============================================================================
-environment:
-  # Required - typically set via values/<name>.yaml
-  name: ""
-
-  # Prefix project and app names with environment name (e.g., homelab-system)
-  prefixNames: false
-
-  annotations: {}
-
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-
-# =============================================================================
-# LAYER DEFAULTS - default settings for layer Applications
-# (system, platform, applications)
-# These Applications create: layer AppProject + child Applications
-# =============================================================================
+# Defaults for layer Applications (system, platform, applications)
 layerDefaults:
+  prefixNames: false
   annotations: {}
-
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
-
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 
-# =============================================================================
-# CHILD DEFAULTS - default settings for child Applications
-# (cilium, vault, n8n, etc.)
-# These Applications create: actual Kubernetes workloads
-# =============================================================================
+# Defaults for child Applications (cilium, vault, etc.)
 childDefaults:
   annotations: {}
-
   syncPolicy:
     syncOptions:
       - CreateNamespace=true
@@ -92,30 +42,20 @@ childDefaults:
       - PruneLast=true
       - ServerSideApply=true
       - ServerSideDiff=true
-
-  # Applied to ALL child apps (additive)
   additionalIgnoreDifferences:
     - group: apps
       kind: StatefulSet
       jqPathExpressions:
         - .spec.volumeClaimTemplates[].metadata.creationTimestamp
-
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 
-# =============================================================================
-# LAYERS
-# =============================================================================
+# Layers
 layers:
-  # ---------------------------------------------------------------------------
-  # SYSTEM - Core cluster components (CNI, ingress, certificates)
-  # ---------------------------------------------------------------------------
   system:
     description: "Core cluster components"
     annotations:
       argocd.argoproj.io/sync-wave: "-1"
-
-    # Override layerDefaults.syncPolicy
     syncPolicy:
       automated:
         prune: true
@@ -123,7 +63,6 @@ layers:
       syncOptions:
         - CreateNamespace=true
         - ServerSideApply=true
-
     children:
       - name: cilium
         namespace: kube-system
@@ -148,41 +87,30 @@ layers:
             namespace: kube-system
             jsonPointers:
               - /data
-
       - name: ingress-nginx
         annotations:
           argocd.argoproj.io/sync-wave: "-2"
-
       - name: cert-manager
         annotations:
           argocd.argoproj.io/sync-wave: "0"
 
-  # ---------------------------------------------------------------------------
-  # PLATFORM - DevOps and management services
-  # ---------------------------------------------------------------------------
   platform:
     description: "Platform services and DevOps tools"
     annotations:
       argocd.argoproj.io/sync-wave: "0"
-
-    # Source repos for this layer's AppProject
     sourceRepos:
       - "https://github.com/pavlenkoa/homelab.git"
       - "https://github.com/pavlenkoa/vault-secrets-generator.git"
-
     children:
       - name: vault
         annotations:
           argocd.argoproj.io/sync-wave: "0"
-
       - name: external-secrets
         annotations:
           argocd.argoproj.io/sync-wave: "0"
-
       - name: argocd
         annotations:
           argocd.argoproj.io/sync-wave: "1"
-
       - name: vault-secrets-generator
         enabled: false
         namespace: vsg
@@ -192,47 +120,37 @@ layers:
           targetRevision: "HEAD"
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-
       - name: victoriametrics
         enabled: false
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-
       - name: victorialogs
         enabled: false
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-
       - name: grafana
         enabled: false
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-
       - name: alloy
         enabled: false
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-
       - name: n8n
         annotations:
           argocd.argoproj.io/sync-wave: "3"
-
       - name: authelia
         annotations:
           argocd.argoproj.io/sync-wave: "3"
 
-  # ---------------------------------------------------------------------------
-  # APPLICATIONS - End-user services
-  # ---------------------------------------------------------------------------
   applications:
     description: "End-user applications and services"
     annotations:
       argocd.argoproj.io/sync-wave: "1"
-
     children:
       - name: external-services
         annotations:

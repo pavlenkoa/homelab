@@ -1,0 +1,30 @@
+{{/*
+Children - rendered when renderLayer is set
+Creates:
+  1. AppProject for the layer
+  2. Child Applications (cilium, vault, etc.)
+
+Controlled by: childDefaults + layers.<name>.childDefaults + layers.<name>.children
+*/}}
+{{- if .Values.renderLayer }}
+{{- $renderLayer := .Values.renderLayer }}
+{{- $envName := .Values.environment }}
+{{- $layerDefaults := .Values.layerDefaults }}
+{{- range $layerName, $layerConfig := .Values.layers }}
+{{- if eq $layerName $renderLayer }}
+{{- $prefixNames := $layerConfig.prefixNames | default $layerDefaults.prefixNames }}
+{{- $effectiveLayerName := $layerName }}
+{{- if $prefixNames }}
+  {{- $effectiveLayerName = printf "%s-%s" $envName $layerName }}
+{{- end }}
+---
+{{ include "app-of-apps.appProject" (list $effectiveLayerName ($layerConfig.description | default $layerName) $layerConfig $.Values) }}
+{{- range $layerConfig.children }}
+{{- if ne .enabled false }}
+---
+{{ include "app-of-apps.application" (list $ . $layerName $layerConfig) }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

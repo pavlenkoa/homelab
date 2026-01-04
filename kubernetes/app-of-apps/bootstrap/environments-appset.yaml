@@ -36,7 +36,7 @@ spec:
           - path: "kubernetes/app-of-apps/values/*.yaml"
   template:
     metadata:
-      name: '{{ .environment.name }}'
+      name: '{{ .environment }}'
       namespace: argocd
     spec:
       project: default

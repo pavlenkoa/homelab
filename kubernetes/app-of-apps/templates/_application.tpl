@@ -1,13 +1,10 @@
 {{/*
 ArgoCD Application template helper for child applications
-Supports external chart repositories with values from homelab repo using multiple sources
 
 Features:
-- Auto-generated path: kubernetes/charts/<name> (if not specified)
-- Auto-generated namespace: <name> (if not specified)
-- Auto-generated valueFiles: values/<environment.name>.yaml
-- Name prefixing with environment name (optional via environment.prefixNames)
-- Uses shared helpers for syncPolicy, ignoreDifferences, annotations, finalizers
+- Auto path: kubernetes/charts/<name>, Auto namespace: <name>
+- Auto valueFiles: values/<environment>.yaml
+- Name prefixing via layer's prefixNames setting
 
 Merge order: childDefaults → layerConfig.childDefaults → app
 */}}
@@ -16,20 +13,22 @@ Merge order: childDefaults → layerConfig.childDefaults → app
 {{- $app := index . 1 -}}
 {{- $layerName := index . 2 -}}
 {{- $layerConfig := index . 3 -}}
-{{- $env := $root.Values.environment -}}
+{{- $envName := $root.Values.environment -}}
 {{- $childDefaults := $root.Values.childDefaults -}}
+{{- $layerDefaults := $root.Values.layerDefaults -}}
 {{- $layerChildDefaults := $layerConfig.childDefaults | default dict -}}
+{{- $prefixNames := $layerConfig.prefixNames | default $layerDefaults.prefixNames -}}
 {{- /* Calculate effective layer name (used as ArgoCD project) */ -}}
 {{- $effectiveLayerName := $layerName -}}
 {{- if $layerConfig.layerName }}
   {{- $effectiveLayerName = $layerConfig.layerName -}}
-{{- else if and $env.name $env.prefixNames }}
-  {{- $effectiveLayerName = printf "%s-%s" $env.name $layerName -}}
+{{- else if $prefixNames }}
+  {{- $effectiveLayerName = printf "%s-%s" $envName $layerName -}}
 {{- end }}
 {{- /* Calculate effective application name */ -}}
 {{- $effectiveAppName := $app.name -}}
-{{- if and $env.name $env.prefixNames }}
-  {{- $effectiveAppName = printf "%s-%s" $env.name $app.name -}}
+{{- if $prefixNames }}
+  {{- $effectiveAppName = printf "%s-%s" $envName $app.name -}}
 {{- end }}
 {{- /* Smart defaults */ -}}
 {{- $appPath := $app.path | default (printf "kubernetes/charts/%s" $app.name) -}}
@@ -37,9 +36,9 @@ Merge order: childDefaults → layerConfig.childDefaults → app
 {{- $appRepoURL := (($app.repository).url) | default $root.Values.repository.url -}}
 {{- $useMultipleSources := and ($app.repository).url (ne $appRepoURL $root.Values.repository.url) -}}
 {{- /* Auto-generate valueFiles if not specified */ -}}
-{{- $autoValueFile := printf "values/%s.yaml" $env.name -}}
+{{- $autoValueFile := printf "values/%s.yaml" $envName -}}
 {{- /* For external repos, use full path from homelab repo */ -}}
-{{- $autoValueFileExternal := printf "kubernetes/charts/%s/values/%s.yaml" $app.name $env.name -}}
+{{- $autoValueFileExternal := printf "kubernetes/charts/%s/values/%s.yaml" $app.name $envName -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

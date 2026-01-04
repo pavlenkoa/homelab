@@ -1,6 +1,6 @@
 {{/*
 Shared helper functions for app-of-apps templates.
-Decomposed for reuse in environment.yaml, layer.yaml, and child applications.
+Used by layers.yaml, children.yaml, and _application.tpl.
 */}}
 
 {{/*
