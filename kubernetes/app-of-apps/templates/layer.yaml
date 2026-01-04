@@ -10,51 +10,7 @@ Creates:
 {{- range $layerName, $layerConfig := .Values.layers }}
 {{- if eq $layerName $renderLayer }}
 ---
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: {{ $layerName }}
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-10"
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  description: {{ $layerConfig.description | default $layerName | quote }}
-
-  # Source repositories
-  sourceRepos:
-    {{- range ($layerConfig.sourceRepos | default (list $global.repository.url)) }}
-    - {{ . }}
-    {{- end }}
-
-  # Destination clusters and namespaces
-  destinations:
-    {{- range ($layerConfig.destinations | default (list (dict "namespace" "*" "server" $global.destination.server))) }}
-    - namespace: {{ .namespace | quote }}
-      server: {{ .server }}
-    {{- end }}
-
-  # Cluster resource allow list
-  clusterResourceWhitelist:
-    {{- range ($layerConfig.clusterResourceWhitelist | default (list (dict "group" "*" "kind" "*"))) }}
-    - group: {{ .group | quote }}
-      kind: {{ .kind | quote }}
-    {{- end }}
-
-  # Namespace resource allow list
-  namespaceResourceWhitelist:
-    {{- range ($layerConfig.namespaceResourceWhitelist | default (list (dict "group" "*" "kind" "*"))) }}
-    - group: {{ .group | quote }}
-      kind: {{ .kind | quote }}
-    {{- end }}
-
-  {{- if $layerConfig.roles }}
-  roles:
-    {{- toYaml $layerConfig.roles | nindent 4 }}
-  {{- else }}
-  roles: []
-  {{- end }}
+{{- include "app-of-apps.appProject" (list $layerName ($layerConfig.description | default $layerName) $layerConfig $global) }}
 {{- range $layerConfig.apps }}
 {{- if .enabled }}
 ---
