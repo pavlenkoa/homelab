@@ -33,6 +33,7 @@ curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="\
   --disable-kube-proxy \
   --flannel-backend=none \
   --disable-network-policy \
+  --node-external-ip 192.168.88.2 \
   --tls-san 192.168.88.2" sh -
 ```
 
@@ -96,3 +97,9 @@ tolerations:
 ## Important: Mac LAN IP
 
 Both `--tls-san` (k3s) and `k8sServiceHost` (Cilium) must use Mac's LAN IP (192.168.88.2), not the VM's internal IP. This ensures all nodes can reach the API server.
+
+## Cross-Node Networking
+
+OrbStack VM has an internal IP (192.168.139.x) that Cilium uses for VXLAN tunneling. Raspberry Pi can't reach this IP directly, so MikroTik router NAT rules are required.
+
+See [orbstack-networking.md](orbstack-networking.md) for details on the NAT configuration.
