@@ -44,7 +44,7 @@ Metrics and logs ship to Grafana Cloud.
 - [x] Configure Grafana Cloud remote write
 - [x] Add transmission-exporter for torrent metrics
 - [ ] Add mikrotik-exporter (mktxp) for router metrics
-- [ ] Evaluate Grafana Cloud usage (logs/metrics volume)
+- [ ] Deploy local monitoring stack (VictoriaMetrics, Loki, Grafana) with local storage
 - [ ] Install Alloy on macOS (Homebrew)
 - [x] GitHub Action to build images from images/ dir
 - [ ] Add Renovate bot for dependency updates
