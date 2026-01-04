@@ -3,43 +3,20 @@ Environment resources - rendered at root level (when renderLayer is empty)
 Creates:
   1. AppProject for the environment (wave -10)
   2. Layer Applications (system, platform, applications)
-
-Same pattern as layer.yaml which creates:
-  1. AppProject for the layer
-  2. Child Applications
 */}}
 {{- if not .Values.global.renderLayer }}
 {{- $global := .Values.global }}
 {{- $envName := $global.environmentName }}
+{{- /* Collect all sourceRepos from layers for the environment project */ -}}
+{{- $envSourceRepos := list $global.repository.url -}}
+{{- range $layerName, $layerConfig := .Values.layers -}}
+  {{- range ($layerConfig.sourceRepos | default list) -}}
+    {{- $envSourceRepos = append $envSourceRepos . -}}
+  {{- end -}}
+{{- end -}}
+{{- $envConfig := dict "sourceRepos" $envSourceRepos }}
 ---
-apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata:
-  name: {{ $envName }}
-  namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "-10"
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
-spec:
-  description: "Environment: {{ $envName }}"
-  sourceRepos:
-    - {{ $global.repository.url }}
-    {{- range $layerName, $layerConfig := .Values.layers }}
-    {{- range ($layerConfig.sourceRepos | default list) }}
-    - {{ . }}
-    {{- end }}
-    {{- end }}
-  destinations:
-    - namespace: "*"
-      server: {{ $global.destination.server }}
-  clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  namespaceResourceWhitelist:
-    - group: "*"
-      kind: "*"
-  roles: []
+{{- include "app-of-apps.appProject" (list $envName (printf "Environment: %s" $envName) $envConfig $global) }}
 {{- range $layerName, $layerConfig := .Values.layers }}
 {{- if ne $layerConfig.enabled false }}
 ---
@@ -48,14 +25,8 @@ kind: Application
 metadata:
   name: {{ $layerName }}
   namespace: argocd
-  {{- if $layerConfig.annotations }}
-  annotations:
-    {{- toYaml $layerConfig.annotations | nindent 4 }}
-  {{- end }}
-  finalizers:
-    {{- range ($global.finalizers) }}
-    - {{ . }}
-    {{- end }}
+  {{- include "app-of-apps.annotations" (list $global.annotations $layerConfig.annotations) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $layerConfig.finalizers $global.finalizers) | nindent 2 }}
 spec:
   project: {{ $envName }}
   source:
@@ -71,18 +42,14 @@ spec:
   destination:
     server: {{ ($layerConfig.destination).server | default $global.destination.server }}
     namespace: argocd
-  syncPolicy:
-    {{- if $layerConfig.syncPolicy }}
-    {{- if $layerConfig.syncPolicy.automated }}
-    automated:
-      prune: {{ $layerConfig.syncPolicy.automated.prune | default false }}
-      selfHeal: {{ $layerConfig.syncPolicy.automated.selfHeal | default false }}
-    {{- end }}
-    {{- end }}
-    syncOptions:
-      {{- range $global.syncPolicy.syncOptions }}
-      - {{ . }}
-      {{- end }}
+  {{- include "app-of-apps.syncPolicy" (list
+        (list $global.syncPolicy $layerConfig.syncPolicy)
+        (list $global.additionalSyncOptions $layerConfig.additionalSyncOptions)
+      ) | nindent 2 }}
+  {{- include "app-of-apps.ignoreDifferences" (list
+        (list $layerConfig.ignoreDifferences $global.ignoreDifferences)
+        (list $global.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences)
+      ) | nindent 2 }}
 {{- end }}
 {{- end }}
 {{- end }}

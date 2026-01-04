@@ -1,12 +1,11 @@
 {{/*
-ArgoCD Application template helper with global and layer defaults
+ArgoCD Application template helper for child applications
 Supports external chart repositories with values from homelab repo using multiple sources
 
 Features:
 - Auto-generated valueFiles: values/{{ .Values.global.environmentName }}.yaml
 - Layer name auto-prefixing with environmentName (optional)
-- Smart merge for ignoreDifferences (override) and additionalIgnoreDifferences (additive)
-- Smart merge for syncOptions (override) and additionalSyncOptions (additive)
+- Uses shared helpers for syncPolicy, ignoreDifferences, annotations, finalizers
 */}}
 {{- define "app-of-apps.application" -}}
 {{- $root := index . 0 -}}
@@ -37,19 +36,8 @@ kind: Application
 metadata:
   name: {{ $effectiveAppName }}
   namespace: argocd
-  {{- if or $app.annotations $global.annotations }}
-  annotations:
-    {{- with $global.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-    {{- with $app.annotations }}
-    {{- toYaml . | nindent 4 }}
-    {{- end }}
-  {{- end }}
-  finalizers:
-    {{- range ($app.finalizers | default $global.finalizers) }}
-    - {{ . }}
-    {{- end }}
+  {{- include "app-of-apps.annotations" (list $global.annotations $app.annotations) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $app.finalizers $global.finalizers) | nindent 2 }}
 spec:
   project: {{ $effectiveLayerName }}
   {{- if $useMultipleSources }}
@@ -127,70 +115,12 @@ spec:
   destination:
     server: {{ (($app.destination).server) | default $global.destination.server }}
     namespace: {{ $app.namespace | default $layerConfig.namespace | default "default" }}
-  syncPolicy:
-    {{- $syncPolicy := mergeOverwrite (deepCopy $global.syncPolicy) ($layerConfig.syncPolicy | default dict) ($app.syncPolicy | default dict) }}
-    {{- if $syncPolicy.automated }}
-    automated:
-      prune: {{ $syncPolicy.automated.prune }}
-      selfHeal: {{ $syncPolicy.automated.selfHeal }}
-    {{- end }}
-    {{- /* Smart merge for syncOptions - support both override and additive */}}
-    {{- if or $syncPolicy.syncOptions $global.additionalSyncOptions $layerConfig.additionalSyncOptions $app.additionalSyncOptions }}
-    syncOptions:
-      {{- /* Base syncOptions from merged syncPolicy */}}
-      {{- range $syncPolicy.syncOptions }}
-      - {{ . }}
-      {{- end }}
-      {{- /* Add additionalSyncOptions from all levels (additive) */}}
-      {{- range $global.additionalSyncOptions }}
-      - {{ . }}
-      {{- end }}
-      {{- range $layerConfig.additionalSyncOptions }}
-      - {{ . }}
-      {{- end }}
-      {{- range $app.additionalSyncOptions }}
-      - {{ . }}
-      {{- end }}
-    {{- end }}
-    {{- if $syncPolicy.retry }}
-    retry:
-      limit: {{ $syncPolicy.retry.limit }}
-      backoff:
-        duration: {{ $syncPolicy.retry.backoff.duration }}
-        factor: {{ $syncPolicy.retry.backoff.factor }}
-        maxDuration: {{ $syncPolicy.retry.backoff.maxDuration }}
-    {{- end }}
-  {{- /* Smart merge ignoreDifferences with override and additive behavior */}}
-  {{- $hasIgnoreDifferences := false }}
-  {{- $baseIgnoreDifferences := list }}
-  {{- /* Determine base ignoreDifferences (with override logic) */}}
-  {{- if $app.ignoreDifferences }}
-    {{- $baseIgnoreDifferences = $app.ignoreDifferences }}
-    {{- $hasIgnoreDifferences = true }}
-  {{- else if $layerConfig.ignoreDifferences }}
-    {{- $baseIgnoreDifferences = $layerConfig.ignoreDifferences }}
-    {{- $hasIgnoreDifferences = true }}
-  {{- else if $global.ignoreDifferences }}
-    {{- $baseIgnoreDifferences = $global.ignoreDifferences }}
-    {{- $hasIgnoreDifferences = true }}
-  {{- end }}
-  {{- /* Check if any additionalIgnoreDifferences exist */}}
-  {{- $hasAdditional := or $global.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences $app.additionalIgnoreDifferences }}
-  {{- if or $hasIgnoreDifferences $hasAdditional }}
-  ignoreDifferences:
-    {{- /* Output base ignoreDifferences (override behavior) */}}
-    {{- range $baseIgnoreDifferences }}
-    - {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- /* Merge all additionalIgnoreDifferences (additive behavior) */}}
-    {{- range $global.additionalIgnoreDifferences }}
-    - {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- range $layerConfig.additionalIgnoreDifferences }}
-    - {{- toYaml . | nindent 6 }}
-    {{- end }}
-    {{- range $app.additionalIgnoreDifferences }}
-    - {{- toYaml . | nindent 6 }}
-    {{- end }}
-  {{- end }}
+  {{- include "app-of-apps.syncPolicy" (list
+        (list $global.syncPolicy $layerConfig.syncPolicy $app.syncPolicy)
+        (list $global.additionalSyncOptions $layerConfig.additionalSyncOptions $app.additionalSyncOptions)
+      ) | nindent 2 }}
+  {{- include "app-of-apps.ignoreDifferences" (list
+        (list $app.ignoreDifferences $layerConfig.ignoreDifferences $global.ignoreDifferences)
+        (list $global.additionalIgnoreDifferences $layerConfig.additionalIgnoreDifferences $app.additionalIgnoreDifferences)
+      ) | nindent 2 }}
 {{- end }}
