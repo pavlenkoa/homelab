@@ -108,22 +108,31 @@ spec:
 {{- end }}
 {{- end }}
 {{- else }}
+    {{- /* Determine what helm options we have */ -}}
+    {{- $hasExplicitValueFiles := false -}}
+    {{- $emptyValueFiles := false -}}
+    {{- if $app.helm -}}
+      {{- if hasKey $app.helm "valueFiles" -}}
+        {{- if kindIs "slice" $app.helm.valueFiles -}}
+          {{- if gt (len $app.helm.valueFiles) 0 -}}
+            {{- $hasExplicitValueFiles = true -}}
+          {{- else -}}
+            {{- $emptyValueFiles = true -}}
+          {{- end -}}
+        {{- else -}}
+          {{- $hasExplicitValueFiles = true -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+    {{- $hasValues := and $app.helm $app.helm.values -}}
+    {{- $hasParameters := and $app.helm $app.helm.parameters -}}
+    {{- $useDefaultValueFile := and (not $hasExplicitValueFiles) (not $emptyValueFiles) -}}
+    {{- $hasHelmContent := or $hasExplicitValueFiles $useDefaultValueFile $hasValues $hasParameters -}}
+    {{- if $hasHelmContent }}
     helm:
-      {{- $hasValueFiles := false }}
-      {{- if $app.helm }}
-      {{- if $app.helm.valueFiles }}
-      {{- if kindIs "slice" $app.helm.valueFiles }}
-      {{- if gt (len $app.helm.valueFiles) 0 }}
-      {{- $hasValueFiles = true }}
-      {{- end }}
-      {{- else }}
-      {{- $hasValueFiles = true }}
-      {{- end }}
-      {{- end }}
-      {{- end }}
-      {{- if or $hasValueFiles (not $app.helm) (not (hasKey ($app.helm | default dict) "valueFiles")) }}
+      {{- if or $hasExplicitValueFiles $useDefaultValueFile }}
       valueFiles:
-        {{- if $hasValueFiles }}
+        {{- if $hasExplicitValueFiles }}
         {{- if kindIs "slice" $app.helm.valueFiles }}
         {{- range $app.helm.valueFiles }}
         - {{ . }}
@@ -135,17 +144,18 @@ spec:
         - {{ $autoValueFile }}
         {{- end }}
       {{- end }}
-      {{- if ($app.helm).values }}
+      {{- if $hasValues }}
       values: |
         {{- $app.helm.values | nindent 8 }}
       {{- end }}
-      {{- if ($app.helm).parameters }}
+      {{- if $hasParameters }}
       parameters:
         {{- range $app.helm.parameters }}
         - name: {{ .name }}
           value: {{ .value | quote }}
         {{- end }}
       {{- end }}
+    {{- end }}
 {{- end }}
 {{- end }}
   destination:
