@@ -49,6 +49,13 @@ childDefaults:
         - /spec/volumeClaimTemplates/0/metadata/creationTimestamp
         - /spec/volumeClaimTemplates/0/spec/volumeMode
         - /spec/volumeClaimTemplates/0/status
+    - group: external-secrets.io
+      kind: ExternalSecret
+      jqPathExpressions:
+        - .spec.data[].remoteRef.conversionStrategy
+        - .spec.data[].remoteRef.decodingStrategy
+        - .spec.data[].remoteRef.metadataPolicy
+        - .spec.target.deletionPolicy
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 
