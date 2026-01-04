@@ -42,7 +42,7 @@ Metrics and logs ship to Grafana Cloud.
 
 - [x] Deploy Alloy DaemonSet (ArgoCD)
 - [x] Configure Grafana Cloud remote write
-- [ ] Add transmission-exporter for torrent metrics
+- [x] Add transmission-exporter for torrent metrics
 - [ ] Add mikrotik-exporter (mktxp) for router metrics
 - [ ] Evaluate Grafana Cloud usage (logs/metrics volume)
 - [ ] Install Alloy on macOS (Homebrew)
@@ -60,7 +60,7 @@ homelab/
 │       ├── docker-compose.yaml
 │       └── .env.example
 ├── images/
-│   ├── transmission/
+│   ├── gluetun-transmission-cli/
 │   ├── transmission-exporter/
 │   └── vault-tools/
 ├── docs/
