@@ -170,5 +170,11 @@ layers:
       argocd.argoproj.io/sync-wave: "1"
     children:
       - name: external-services
+        helm:
+          valueFiles: []
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+      - name: transmission
+        directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "4"

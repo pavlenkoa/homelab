@@ -24,9 +24,9 @@ Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4
 ## TODO
 
 - [x] Reorganize app-of-apps projects (infrastructure→system, add cilium, move authelia to platform)
-- [ ] Deploy app-of-apps (ArgoCD, Vault, etc.)
-- [ ] Restore Vault data
-- [ ] Add Transmission to app-of-apps with RPi toleration
+- [x] Deploy app-of-apps (ArgoCD, Vault, etc.)
+- [x] Restore Vault data
+- [x] Add Transmission to app-of-apps with RPi toleration
 
 ## Project Structure
 

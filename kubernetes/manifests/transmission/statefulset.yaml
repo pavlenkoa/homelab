@@ -14,6 +14,13 @@ spec:
       labels:
         app: transmission
     spec:
+      nodeSelector:
+        kubernetes.io/hostname: raspberrypi
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: media
+          effect: NoSchedule
       containers:
         - name: gluetun
           image: kubernia/gluetun-transmission-cli:latest
