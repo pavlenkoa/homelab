@@ -207,6 +207,8 @@ authelia:
   # Redis subchart configuration
   redis:
     enabled: true
+    image:
+      tag: latest  # Override stale tag from bundled chart
     auth:
       enabled: false
     master:
