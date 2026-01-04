@@ -2,9 +2,11 @@
 ArgoCD Application template helper for child applications
 
 Features:
-- Auto path: kubernetes/charts/<name>, Auto namespace: <name>
-- Auto valueFiles: values/<environment>.yaml
+- Auto path: kubernetes/charts/<name> (helm) or kubernetes/manifests/<name> (directory)
+- Auto namespace: <name>
+- Auto valueFiles: values/<environment>.yaml (helm only)
 - Name prefixing via layer's prefixNames setting
+- Directory source support for plain manifests
 
 Merge order: childDefaults → layerConfig.childDefaults → app
 */}}
@@ -27,11 +29,14 @@ Merge order: childDefaults → layerConfig.childDefaults → app
 {{- if $prefixNames }}
   {{- $effectiveAppName = printf "%s-%s" $envName $app.name -}}
 {{- end }}
-{{- /* Smart defaults */ -}}
-{{- $appPath := $app.path | default (printf "kubernetes/charts/%s" $app.name) -}}
+{{- /* Determine source type: directory (plain manifests) or helm (default) */ -}}
+{{- $isDirectory := hasKey $app "directory" -}}
+{{- /* Smart defaults - path depends on source type */ -}}
+{{- $defaultPath := ternary (printf "kubernetes/manifests/%s" $app.name) (printf "kubernetes/charts/%s" $app.name) $isDirectory -}}
+{{- $appPath := $app.path | default $defaultPath -}}
 {{- $appNamespace := $app.namespace | default $app.name -}}
 {{- $appRepoURL := (($app.repository).url) | default $root.Values.repository.url -}}
-{{- $useMultipleSources := and ($app.repository).url (ne $appRepoURL $root.Values.repository.url) -}}
+{{- $useMultipleSources := and ($app.repository).url (ne $appRepoURL $root.Values.repository.url) (not $isDirectory) -}}
 {{- /* Auto-generate valueFiles if not specified */ -}}
 {{- $autoValueFile := printf "values/%s.yaml" $envName -}}
 {{- /* For external repos, use full path from homelab repo */ -}}
@@ -45,7 +50,7 @@ metadata:
   {{- include "app-of-apps.finalizers" (list $app.finalizers $layerChildDefaults.finalizers $childDefaults.finalizers) | nindent 2 }}
 spec:
   project: {{ $effectiveLayerName }}
-  {{- if $useMultipleSources }}
+{{- if $useMultipleSources }}
   {{- /* Multiple sources: chart from external repo, values from homelab repo */ -}}
   sources:
     - repoURL: {{ $appRepoURL }}
@@ -82,16 +87,43 @@ spec:
     - repoURL: {{ $root.Values.repository.url }}
       targetRevision: {{ $root.Values.repository.targetRevision }}
       ref: values
-  {{- else }}
-  {{/* Single source: chart and values from same repo */}}
+{{- else }}
   source:
     repoURL: {{ $appRepoURL }}
     targetRevision: {{ (($app.repository).targetRevision) | default $root.Values.repository.targetRevision }}
     path: {{ $appPath }}
+{{- if $isDirectory }}
+{{- with $app.directory }}
+{{- if or .recurse .include .exclude }}
+    directory:
+      {{- if .recurse }}
+      recurse: {{ .recurse }}
+      {{- end }}
+      {{- if .include }}
+      include: {{ .include | quote }}
+      {{- end }}
+      {{- if .exclude }}
+      exclude: {{ .exclude | quote }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- else }}
     helm:
+      {{- $hasValueFiles := false }}
+      {{- if $app.helm }}
+      {{- if $app.helm.valueFiles }}
+      {{- if kindIs "slice" $app.helm.valueFiles }}
+      {{- if gt (len $app.helm.valueFiles) 0 }}
+      {{- $hasValueFiles = true }}
+      {{- end }}
+      {{- else }}
+      {{- $hasValueFiles = true }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      {{- if or $hasValueFiles (not $app.helm) (not (hasKey ($app.helm | default dict) "valueFiles")) }}
       valueFiles:
-        {{- if $app.helm }}
-        {{- if $app.helm.valueFiles }}
+        {{- if $hasValueFiles }}
         {{- if kindIs "slice" $app.helm.valueFiles }}
         {{- range $app.helm.valueFiles }}
         - {{ . }}
@@ -102,9 +134,7 @@ spec:
         {{- else }}
         - {{ $autoValueFile }}
         {{- end }}
-        {{- else }}
-        - {{ $autoValueFile }}
-        {{- end }}
+      {{- end }}
       {{- if ($app.helm).values }}
       values: |
         {{- $app.helm.values | nindent 8 }}
@@ -116,7 +146,8 @@ spec:
           value: {{ .value | quote }}
         {{- end }}
       {{- end }}
-  {{- end }}
+{{- end }}
+{{- end }}
   destination:
     server: {{ (($app.destination).server) | default $root.Values.destination.server }}
     namespace: {{ $appNamespace }}

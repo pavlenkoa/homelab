@@ -1,42 +1,35 @@
-# Default values for external-services
-# This chart creates Services and Ingresses for external endpoints
+# External services configuration
+# Proxies to services running outside the cluster
 
 # Global configuration
 global:
-  # Default ingress class
   ingressClassName: nginx
-  # Default cluster issuer for TLS certificates
   clusterIssuer: letsencrypt-prod
-  # Default TLS secret naming pattern
   tlsSecretSuffix: "-tls"
 
 # Services configuration
-# Each service creates a Service + Ingress pointing to an external endpoint
-services: {}
-  # Example service configuration:
-  # emby:
-  #   # External endpoint configuration
-  #   endpoint:
-  #     host: "192.168.88.2"
-  #     port: 8096
-  #     protocol: http
-  #   # Ingress configuration
-  #   ingress:
-  #     host: "emby.pavlenko.io"
-  #     path: "/"
-  #     pathType: "Prefix"
-  #     tls:
-  #       enabled: true
-  #       secretName: "" # If empty, uses service name + global.tlsSecretSuffix
-  #   # Service configuration
-  #   service:
-  #     port: 80
-  #     targetPort: 8096
-  #   # Authentication (optional)
-  #   auth:
-  #     enabled: false
-  #     # Authelia forward-auth configuration
-  #     authelia:
-  #       enabled: false
-  #       # URL of Authelia forward-auth endpoint
-  #       authUrl: "https://auth.pavlenko.io/api/verify?rd=$scheme://$http_host$request_uri"
+services:
+  # Emby Media Server - proxy to native macOS instance
+  emby:
+    endpoint:
+      host: "192.168.88.2"
+      port: 8096
+      protocol: http
+
+    service:
+      port: 8096
+
+    ingress:
+      host: "emby.pavlenko.io"
+      path: "/"
+      pathType: "Prefix"
+      tls:
+        enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+        nginx.ingress.kubernetes.io/proxy-buffering: "off"
+        nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+        nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+    auth:
+      enabled: false
