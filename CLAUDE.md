@@ -46,7 +46,7 @@ Metrics and logs ship to Grafana Cloud.
 - [ ] Add mikrotik-exporter (mktxp) for router metrics
 - [ ] Evaluate Grafana Cloud usage (logs/metrics volume)
 - [ ] Install Alloy on macOS (Homebrew)
-- [ ] GitHub Action to build images from images/ dir
+- [x] GitHub Action to build images from images/ dir
 - [ ] Add Renovate bot for dependency updates
 
 ## Project Structure
