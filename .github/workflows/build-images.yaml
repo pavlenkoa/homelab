@@ -29,10 +29,16 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Build all images on manual trigger
-            images=$(ls -d images/*/ 2>/dev/null | xargs -I {} basename {} | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            images=$(find images -maxdepth 2 -name Dockerfile | xargs -I {} dirname {} | xargs -I {} basename {} | jq -R -s -c 'split("\n") | map(select(length > 0))')
           else
-            # Detect changed directories
-            images=$(git diff --name-only HEAD~1 HEAD -- images/ | cut -d'/' -f2 | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+            # Detect changed directories that contain a Dockerfile
+            changed=$(git diff --name-only HEAD~1 HEAD -- images/ | cut -d'/' -f2 | sort -u)
+            images="[]"
+            for dir in $changed; do
+              if [ -f "images/$dir/Dockerfile" ]; then
+                images=$(echo "$images" | jq -c ". + [\"$dir\"]")
+              fi
+            done
           fi
           echo "images=$images" >> $GITHUB_OUTPUT
           echo "Building images: $images"
