@@ -23,8 +23,7 @@ spec:
           effect: NoSchedule
       containers:
         - name: gluetun
-          image: kubernia/gluetun-transmission-cli:latest
-          imagePullPolicy: Never
+          image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest
           securityContext:
             capabilities:
               add:
