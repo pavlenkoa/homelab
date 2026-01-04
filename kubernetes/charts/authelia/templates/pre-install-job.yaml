@@ -25,7 +25,7 @@ spec:
       serviceAccountName: {{ include "authelia.fullname" . }}-secret-generator
       containers:
       - name: generate-secrets
-        image: vault-tools:local
+        image: {{ .Values.preInstall.image | default "ghcr.io/pavlenkoa/vault-tools:latest" }}
         command: ["/bin/sh"]
         args:
         - -c
