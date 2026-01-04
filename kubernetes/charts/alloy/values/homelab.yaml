@@ -58,6 +58,13 @@ alloy:
         }
       }
 
+      // Transmission exporter metrics
+      prometheus.scrape "transmission" {
+        targets    = [{"__address__" = "transmission.transmission:19091"}]
+        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+        job_name   = "transmission"
+      }
+
       // Remote write to Grafana Cloud Prometheus
       prometheus.remote_write "grafana_cloud" {
         external_labels = {
