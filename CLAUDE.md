@@ -40,10 +40,12 @@ Metrics and logs ship to Grafana Cloud.
 
 ## TODO
 
-- [ ] Update Alloy chart to latest (replace existing)
-- [ ] Deploy Alloy DaemonSet (ArgoCD)
+- [x] Deploy Alloy DaemonSet (ArgoCD)
+- [x] Configure Grafana Cloud remote write
+- [ ] Add transmission-exporter for torrent metrics
+- [ ] Add mikrotik-exporter (mktxp) for router metrics
+- [ ] Evaluate Grafana Cloud usage (logs/metrics volume)
 - [ ] Install Alloy on macOS (Homebrew)
-- [ ] Configure Grafana Cloud remote write
 - [ ] GitHub Action to build images from images/ dir
 - [ ] Add Renovate bot for dependency updates
 
