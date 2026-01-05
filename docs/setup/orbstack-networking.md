@@ -11,6 +11,16 @@ macmini (OrbStack VM)     raspberrypi
 └─ Cilium tunnel endpoint: 192.168.139.81  ← RPi can't reach this
 ```
 
+## Prerequisites
+
+### macOS Local Network Permission
+
+OrbStack requires Local Network permission to reach LAN devices:
+
+**System Settings → Privacy & Security → Local Network → OrbStack (enable)**
+
+Without this, VM can only reach the gateway and Mac itself, not other LAN hosts like RPi.
+
 ## Solution
 
 MikroTik router NAT rules redirect traffic destined for the VM's internal IP to the Mac's LAN IP.
