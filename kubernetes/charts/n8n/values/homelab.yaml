@@ -1,66 +1,67 @@
 # n8n values for homelab deployment
 # Local-only access configuration without SSO
 
-# Enable ingress for local access
-ingress:
-  enabled: true
-  className: "nginx"
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-  hosts:
-    - host: n8n.pavlenko.io
-      paths:
-        - /
-  tls:
-    - hosts:
-        - n8n.pavlenko.io
-      secretName: n8n-tls
-
-# Main n8n application configuration
-main:
-  config:
-    n8n:
-      host: "n8n.pavlenko.io"
-      protocol: "https"
-      port: 5678
-      path: "/"
-      listen_address: "0.0.0.0"
-      # Disable telemetry for privacy
-      diagnostics:
-        enabled: false
-      # Basic settings
-      log:
-        level: "info"
-    # Use SQLite for simplicity (local-only deployment)
-    db:
-      type: "sqlite"
-
-  # Enable persistence for workflow data
-  persistence:
+n8n:
+  # Enable ingress for local access
+  ingress:
     enabled: true
-    type: dynamic
-    storageClass: ""  # Use default storage class
-    accessModes:
-      - ReadWriteOnce
-    size: 5Gi
+    className: "nginx"
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: n8n.pavlenko.io
+        paths:
+          - /
+    tls:
+      - hosts:
+          - n8n.pavlenko.io
+        secretName: n8n-tls
 
-  # Resource limits
-  resources:
-    requests:
-      memory: "256Mi"
-      cpu: "100m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
+  # Main n8n application configuration
+  main:
+    config:
+      n8n:
+        host: "n8n.pavlenko.io"
+        protocol: "https"
+        port: 5678
+        path: "/"
+        listen_address: "0.0.0.0"
+        # Disable telemetry for privacy
+        diagnostics:
+          enabled: false
+        # Basic settings
+        log:
+          level: "info"
+      # Use SQLite for simplicity (local-only deployment)
+      db:
+        type: "sqlite"
 
-# Disable worker and webhook modes (single instance for local use)
-worker:
-  enabled: false
+    # Enable persistence for workflow data
+    persistence:
+      enabled: true
+      type: dynamic
+      storageClass: ""  # Use default storage class
+      accessModes:
+        - ReadWriteOnce
+      size: 5Gi
 
-webhook:
-  enabled: false
+    # Resource limits
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
 
-# Disable Redis/Valkey (not needed for single instance)
-valkey:
-  enabled: false
+  # Disable worker and webhook modes (single instance for local use)
+  worker:
+    enabled: false
+
+  webhook:
+    enabled: false
+
+  # Disable Redis/Valkey (not needed for single instance)
+  valkey:
+    enabled: false
