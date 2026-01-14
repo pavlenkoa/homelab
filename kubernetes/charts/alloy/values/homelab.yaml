@@ -1,171 +1,172 @@
 # Alloy DaemonSet for Grafana Cloud metrics/logs
 
-controller:
-  type: daemonset
-  # Run on all nodes including tainted raspberrypi
-  tolerations:
-    - key: dedicated
-      operator: Equal
-      value: media
-      effect: NoSchedule
-
 alloy:
-  # Mount /var/log for pod logs
-  mounts:
-    varlog: true
+  controller:
+    type: daemonset
+    # Run on all nodes including tainted raspberrypi
+    tolerations:
+      - key: dedicated
+        operator: Equal
+        value: media
+        effect: NoSchedule
 
-  configMap:
-    content: |
-      // Node metrics
-      prometheus.exporter.unix "node" {
-        disable_collectors = ["arp", "bcache", "bonding", "btrfs", "conntrack", "dmi", "edac", "entropy", "fibrechannel", "hwmon", "infiniband", "ipvs", "mdadm", "nfs", "nfsd", "nvme", "os", "powersupplyclass", "pressure", "rapl", "schedstat", "selinux", "softnet", "tapestats", "thermal_zone", "timex", "udp_queues", "watchdog", "xfs", "zfs"]
-      }
+  alloy:
+    # Mount /var/log for pod logs
+    mounts:
+      varlog: true
 
-      prometheus.scrape "node" {
-        targets    = prometheus.exporter.unix.node.targets
-        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
-        job_name   = "node"
-      }
-
-      // Kubelet metrics
-      discovery.kubernetes "nodes" {
-        role = "node"
-      }
-
-      prometheus.scrape "kubelet" {
-        targets    = discovery.kubernetes.nodes.targets
-        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
-        job_name   = "kubelet"
-        scheme     = "https"
-        bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-        tls_config {
-          ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-          insecure_skip_verify = true
+    configMap:
+      content: |
+        // Node metrics
+        prometheus.exporter.unix "node" {
+          disable_collectors = ["arp", "bcache", "bonding", "btrfs", "conntrack", "dmi", "edac", "entropy", "fibrechannel", "hwmon", "infiniband", "ipvs", "mdadm", "nfs", "nfsd", "nvme", "os", "powersupplyclass", "pressure", "rapl", "schedstat", "selinux", "softnet", "tapestats", "thermal_zone", "timex", "udp_queues", "watchdog", "xfs", "zfs"]
         }
-      }
 
-      // cAdvisor metrics from kubelet
-      prometheus.scrape "cadvisor" {
-        targets    = discovery.kubernetes.nodes.targets
-        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
-        job_name   = "cadvisor"
-        scheme     = "https"
-        metrics_path = "/metrics/cadvisor"
-        bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-        tls_config {
-          ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-          insecure_skip_verify = true
+        prometheus.scrape "node" {
+          targets    = prometheus.exporter.unix.node.targets
+          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          job_name   = "node"
         }
-      }
 
-      // Transmission exporter metrics
-      prometheus.scrape "transmission" {
-        targets    = [{"__address__" = "transmission.transmission:19091"}]
-        forward_to = [prometheus.remote_write.grafana_cloud.receiver]
-        job_name   = "transmission"
-      }
-
-      // Remote write to Grafana Cloud Prometheus
-      prometheus.remote_write "grafana_cloud" {
-        external_labels = {
-          cluster = "homelab",
+        // Kubelet metrics
+        discovery.kubernetes "nodes" {
+          role = "node"
         }
-        endpoint {
-          url = env("PROMETHEUS_ENDPOINT")
-          basic_auth {
-            username = env("PROMETHEUS_USERNAME")
-            password = env("PROMETHEUS_PASSWORD")
+
+        prometheus.scrape "kubelet" {
+          targets    = discovery.kubernetes.nodes.targets
+          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          job_name   = "kubelet"
+          scheme     = "https"
+          bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+          tls_config {
+            ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+            insecure_skip_verify = true
           }
         }
-      }
 
-      // Pod log discovery
-      discovery.kubernetes "pods" {
-        role = "pod"
-      }
-
-      discovery.relabel "pod_logs" {
-        targets = discovery.kubernetes.pods.targets
-
-        rule {
-          source_labels = ["__meta_kubernetes_namespace"]
-          target_label  = "namespace"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_name"]
-          target_label  = "pod"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_container_name"]
-          target_label  = "container"
-        }
-        rule {
-          source_labels = ["__meta_kubernetes_pod_node_name"]
-          target_label  = "node"
-        }
-      }
-
-      // Collect pod logs
-      loki.source.kubernetes "pods" {
-        targets    = discovery.relabel.pod_logs.output
-        forward_to = [loki.write.grafana_cloud.receiver]
-      }
-
-      // Send logs to Grafana Cloud Loki
-      loki.write "grafana_cloud" {
-        external_labels = {
-          cluster = "homelab",
-        }
-        endpoint {
-          url = env("LOKI_ENDPOINT")
-          basic_auth {
-            username = env("LOKI_USERNAME")
-            password = env("LOKI_PASSWORD")
+        // cAdvisor metrics from kubelet
+        prometheus.scrape "cadvisor" {
+          targets    = discovery.kubernetes.nodes.targets
+          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          job_name   = "cadvisor"
+          scheme     = "https"
+          metrics_path = "/metrics/cadvisor"
+          bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+          tls_config {
+            ca_file              = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+            insecure_skip_verify = true
           }
         }
-      }
 
-  envFrom:
-    - secretRef:
-        name: grafana-cloud-credentials
+        // Transmission exporter metrics
+        prometheus.scrape "transmission" {
+          targets    = [{"__address__" = "transmission.transmission:19091"}]
+          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          job_name   = "transmission"
+        }
 
-# ExternalSecret for Grafana Cloud credentials from Vault
-extraObjects:
-  - apiVersion: external-secrets.io/v1
-    kind: ExternalSecret
-    metadata:
-      name: grafana-cloud-credentials
-      namespace: monitoring
-    spec:
-      refreshInterval: 1h
-      secretStoreRef:
-        name: vault-backend
-        kind: ClusterSecretStore
-      target:
+        // Remote write to Grafana Cloud Prometheus
+        prometheus.remote_write "grafana_cloud" {
+          external_labels = {
+            cluster = "homelab",
+          }
+          endpoint {
+            url = env("PROMETHEUS_ENDPOINT")
+            basic_auth {
+              username = env("PROMETHEUS_USERNAME")
+              password = env("PROMETHEUS_PASSWORD")
+            }
+          }
+        }
+
+        // Pod log discovery
+        discovery.kubernetes "pods" {
+          role = "pod"
+        }
+
+        discovery.relabel "pod_logs" {
+          targets = discovery.kubernetes.pods.targets
+
+          rule {
+            source_labels = ["__meta_kubernetes_namespace"]
+            target_label  = "namespace"
+          }
+          rule {
+            source_labels = ["__meta_kubernetes_pod_name"]
+            target_label  = "pod"
+          }
+          rule {
+            source_labels = ["__meta_kubernetes_pod_container_name"]
+            target_label  = "container"
+          }
+          rule {
+            source_labels = ["__meta_kubernetes_pod_node_name"]
+            target_label  = "node"
+          }
+        }
+
+        // Collect pod logs
+        loki.source.kubernetes "pods" {
+          targets    = discovery.relabel.pod_logs.output
+          forward_to = [loki.write.grafana_cloud.receiver]
+        }
+
+        // Send logs to Grafana Cloud Loki
+        loki.write "grafana_cloud" {
+          external_labels = {
+            cluster = "homelab",
+          }
+          endpoint {
+            url = env("LOKI_ENDPOINT")
+            basic_auth {
+              username = env("LOKI_USERNAME")
+              password = env("LOKI_PASSWORD")
+            }
+          }
+        }
+
+    envFrom:
+      - secretRef:
+          name: grafana-cloud-credentials
+
+  # ExternalSecret for Grafana Cloud credentials from Vault
+  extraObjects:
+    - apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
         name: grafana-cloud-credentials
-        creationPolicy: Owner
-      data:
-        - secretKey: PROMETHEUS_ENDPOINT
-          remoteRef:
-            key: grafana
-            property: prometheus_endpoint
-        - secretKey: PROMETHEUS_USERNAME
-          remoteRef:
-            key: grafana
-            property: prometheus_username
-        - secretKey: PROMETHEUS_PASSWORD
-          remoteRef:
-            key: grafana
-            property: prometheus_password
-        - secretKey: LOKI_ENDPOINT
-          remoteRef:
-            key: grafana
-            property: loki_endpoint
-        - secretKey: LOKI_USERNAME
-          remoteRef:
-            key: grafana
-            property: loki_username
-        - secretKey: LOKI_PASSWORD
-          remoteRef:
-            key: grafana
-            property: loki_password
+        namespace: monitoring
+      spec:
+        refreshInterval: 1h
+        secretStoreRef:
+          name: vault-backend
+          kind: ClusterSecretStore
+        target:
+          name: grafana-cloud-credentials
+          creationPolicy: Owner
+        data:
+          - secretKey: PROMETHEUS_ENDPOINT
+            remoteRef:
+              key: grafana
+              property: prometheus_endpoint
+          - secretKey: PROMETHEUS_USERNAME
+            remoteRef:
+              key: grafana
+              property: prometheus_username
+          - secretKey: PROMETHEUS_PASSWORD
+            remoteRef:
+              key: grafana
+              property: prometheus_password
+          - secretKey: LOKI_ENDPOINT
+            remoteRef:
+              key: grafana
+              property: loki_endpoint
+          - secretKey: LOKI_USERNAME
+            remoteRef:
+              key: grafana
+              property: loki_username
+          - secretKey: LOKI_PASSWORD
+            remoteRef:
+              key: grafana
+              property: loki_password
