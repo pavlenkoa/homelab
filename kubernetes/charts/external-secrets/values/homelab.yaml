@@ -1,78 +1,79 @@
 # External Secrets Operator configuration for homelab
 
-# Install CRDs via Helm  
-crds:
-  create: true
+external-secrets:
+  # Install CRDs via Helm
+  crds:
+    create: true
 
-# Concurrent secret fetches
-concurrent: 3
+  # Concurrent secret fetches
+  concurrent: 3
 
-# Resource limits for single-node cluster
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 10m
-    memory: 32Mi
-
-webhook:
+  # Resource limits for single-node cluster
   resources:
     limits:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 100m
+      memory: 128Mi
     requests:
       cpu: 10m
-      memory: 16Mi
+      memory: 32Mi
 
-certController:
-  resources:
-    limits:
-      cpu: 50m
-      memory: 64Mi
-    requests:
-      cpu: 10m
-      memory: 16Mi
+  webhook:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
 
-# Security context
-securityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-    - ALL
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 65534
-  seccompProfile:
-    type: RuntimeDefault
+  certController:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
 
-# Pod security context  
-podSecurityContext:
-  fsGroup: 65534
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
 
-# Monitoring (disabled for now)
-serviceMonitor:
-  enabled: false
+  # Pod security context
+  podSecurityContext:
+    fsGroup: 65534
 
-# Extra objects - ClusterSecretStore for Vault backend (using sync waves for proper timing)
-extraObjects:
-  - |
-    apiVersion: external-secrets.io/v1
-    kind: ClusterSecretStore
-    metadata:
-      name: vault-backend
-      annotations:
-        argocd.argoproj.io/sync-wave: "10"  # Apply after CRDs and deployments (wave 0)
-    spec:
-      provider:
-        vault:
-          server: "http://vault.vault.svc.cluster.local:8200"
-          path: "kv"
-          version: "v2"
-          auth:
-            kubernetes:
-              mountPath: "kubernetes"
-              role: "external-secrets"
-              serviceAccountRef:
-                name: "external-secrets"
-                namespace: "external-secrets"
+  # Monitoring (disabled for now)
+  serviceMonitor:
+    enabled: false
+
+  # Extra objects - ClusterSecretStore for Vault backend (using sync waves for proper timing)
+  extraObjects:
+    - |
+      apiVersion: external-secrets.io/v1
+      kind: ClusterSecretStore
+      metadata:
+        name: vault-backend
+        annotations:
+          argocd.argoproj.io/sync-wave: "10"  # Apply after CRDs and deployments (wave 0)
+      spec:
+        provider:
+          vault:
+            server: "http://vault.vault.svc.cluster.local:8200"
+            path: "kv"
+            version: "v2"
+            auth:
+              kubernetes:
+                mountPath: "kubernetes"
+                role: "external-secrets"
+                serviceAccountRef:
+                  name: "external-secrets"
+                  namespace: "external-secrets"
