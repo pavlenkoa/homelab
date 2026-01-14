@@ -1,5 +1,5 @@
 # Single-stage build for vault-tools image
-FROM alpine:3.19
+FROM alpine:3.23
 
 LABEL maintainer="homelab@pavlenko.io"
 LABEL description="Vault tools image with kubectl, vault-cli, and authelia for secret management"
