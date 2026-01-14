@@ -40,14 +40,9 @@ Metrics and logs ship to Grafana Cloud.
 
 ## TODO
 
-- [x] Deploy Alloy DaemonSet (ArgoCD)
-- [x] Configure Grafana Cloud remote write
-- [x] Add transmission-exporter for torrent metrics
 - [ ] Add mikrotik-exporter (mktxp) for router metrics
 - [ ] Deploy local monitoring stack (VictoriaMetrics, Loki, Grafana) with local storage
 - [ ] Install Alloy on macOS (Homebrew)
-- [x] GitHub Action to build images from images/ dir
-- [ ] Add Renovate bot for dependency updates
 
 ## Project Structure
 
@@ -55,10 +50,12 @@ Metrics and logs ship to Grafana Cloud.
 homelab/
 ├── CLAUDE.md
 ├── README.md
+├── .github/
+│   ├── CODEOWNERS
+│   ├── renovate.json5
+│   └── workflows/
 ├── docker-compose/
 │   └── transmission/           # Legacy - migrated to k8s
-│       ├── docker-compose.yaml
-│       └── .env.example
 ├── images/
 │   ├── gluetun-transmission-cli/
 │   ├── transmission-exporter/
@@ -71,31 +68,34 @@ homelab/
 └── kubernetes/
     ├── manifests/              # Raw manifests for RPi k3s
     │   └── transmission/
-    │       ├── namespace.yaml
-    │       ├── secret.yaml
-    │       ├── statefulset.yaml
-    │       └── service.yaml
     ├── app-of-apps/
     │   ├── Chart.yaml
     │   ├── templates/
-    │   │   ├── _application.tpl
-    │   │   ├── applications.yaml
-    │   │   └── projects.yaml
-    │   ├── values.yaml             # All apps defined (enabled: true/false)
+    │   ├── values.yaml
     │   └── values/
-    │       └── homelab.yaml        # Just environmentName
-    └── charts/                     # Flat structure
+    │       └── homelab.yaml
+    └── charts/                 # Wrapper charts (Renovate-managed)
+        ├── alloy/
         ├── argocd/
         ├── authelia/
         ├── cert-manager/
+        ├── cilium/
         ├── external-secrets/
-        ├── external-services/
+        ├── external-services/  # Local custom
         ├── ingress-nginx/
         ├── n8n/
         ├── vault/
-        ├── vault-secrets-generator/
+        ├── vault-secrets-generator/  # Local custom
         └── victoriametrics/
 ```
+
+## Helm Charts
+
+All charts use the **wrapper pattern** for Renovate compatibility:
+- `Chart.yaml` declares upstream chart as dependency
+- `values.yaml` contains sensible defaults
+- `values/homelab.yaml` contains environment-specific overrides (hostnames, IPs, secrets)
+- Renovate automatically updates chart versions and `.tgz` archives
 
 ## SSH Access
 
