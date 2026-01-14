@@ -33,7 +33,7 @@ services:
     restart: unless-stopped
 
   transmission:
-    image: lscr.io/linuxserver/transmission:4.0.6
+    image: lscr.io/linuxserver/transmission:4.0.6@sha256:7ffccac759f5c2f075ab09757b2da1db2c05a35989b5b0c27ae535928c09283f
     container_name: transmission
     depends_on:
       - gluetun
