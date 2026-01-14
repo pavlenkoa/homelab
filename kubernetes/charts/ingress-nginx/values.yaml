@@ -32,6 +32,10 @@ ingress-nginx:
     # Only 1 replica - port 80/443 conflict with hostNetwork
     replicaCount: 1
 
+    # Recreate strategy required for hostNetwork (can't have 2 pods on same port)
+    updateStrategy:
+      type: Recreate
+
     # PDB disabled with single replica
     podDisruptionBudget:
       enabled: false
