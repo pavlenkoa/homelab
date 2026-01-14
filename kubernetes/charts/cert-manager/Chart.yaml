@@ -5,5 +5,5 @@ description: "Wrapper chart for cert-manager"
 
 dependencies:
   - name: cert-manager
-    version: "v1.18.0"
+    version: "v1.19.2"
     repository: "https://charts.jetstack.io"
