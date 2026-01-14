@@ -26,6 +26,9 @@ layerDefaults:
   prefixNames: false
   annotations: {}
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
       - ServerSideApply=true
@@ -36,6 +39,9 @@ layerDefaults:
 childDefaults:
   annotations: {}
   syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
     syncOptions:
       - CreateNamespace=true
       - PrunePropagationPolicy=foreground
@@ -80,13 +86,6 @@ layers:
     description: "Core cluster components"
     annotations:
       argocd.argoproj.io/sync-wave: "-1"
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: true
-      syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
     children:
       - name: cilium
         namespace: kube-system
@@ -122,13 +121,6 @@ layers:
     description: "Platform services and DevOps tools"
     annotations:
       argocd.argoproj.io/sync-wave: "0"
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: false
-      syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
     sourceRepos:
       - "https://github.com/pavlenkoa/homelab.git"
       - "https://github.com/pavlenkoa/vault-secrets-generator.git"
@@ -181,13 +173,6 @@ layers:
     description: "End-user applications and services"
     annotations:
       argocd.argoproj.io/sync-wave: "1"
-    syncPolicy:
-      automated:
-        prune: true
-        selfHeal: false
-      syncOptions:
-        - CreateNamespace=true
-        - ServerSideApply=true
     children:
       - name: external-services
         helm:
