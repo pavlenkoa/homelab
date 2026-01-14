@@ -1,4 +1,57 @@
 # Wrapper chart for external-secrets
-# All configuration in values/homelab.yaml
+# Defaults here, environment-specific overrides in values/homelab.yaml
 
-external-secrets: {}
+external-secrets:
+  # Install CRDs via Helm
+  crds:
+    create: true
+
+  # Concurrent secret fetches
+  concurrent: 3
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+  webhook:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+
+  certController:
+    resources:
+      limits:
+        cpu: 50m
+        memory: 64Mi
+      requests:
+        cpu: 10m
+        memory: 16Mi
+
+  # Security context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
+
+  # Pod security context
+  podSecurityContext:
+    fsGroup: 65534
+
+  # Monitoring (disabled)
+  serviceMonitor:
+    enabled: false

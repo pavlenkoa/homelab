@@ -1,4 +1,11 @@
 # Wrapper chart for alloy
-# All configuration in values/homelab.yaml
+# Defaults here, environment-specific overrides in values/homelab.yaml
 
-alloy: {}
+alloy:
+  controller:
+    type: daemonset
+
+  alloy:
+    # Mount /var/log for pod logs
+    mounts:
+      varlog: true

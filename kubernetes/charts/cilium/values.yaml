@@ -1,4 +1,18 @@
 # Wrapper chart for cilium
-# All configuration in values/homelab.yaml
+# Defaults here, environment-specific overrides in values/homelab.yaml
 
-cilium: {}
+cilium:
+  kubeProxyReplacement: true
+
+  # Disable envoy - RPi4 doesn't support 48-bit VA that tcmalloc requires
+  envoy:
+    enabled: false
+
+  operator:
+    replicas: 1
+
+  hubble:
+    relay:
+      enabled: true
+    ui:
+      enabled: true

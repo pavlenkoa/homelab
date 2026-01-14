@@ -1,4 +1,55 @@
 # Wrapper chart for cert-manager
-# All configuration in values/homelab.yaml
+# Defaults here, environment-specific overrides in values/homelab.yaml
 
-cert-manager: {}
+cert-manager:
+  # Install CRDs via Helm
+  crds:
+    enabled: true
+
+  # Enable the default issuer
+  ingressShim:
+    defaultIssuerName: letsencrypt-prod
+    defaultIssuerKind: ClusterIssuer
+    defaultIssuerGroup: cert-manager.io
+
+  # Prometheus monitoring (disabled - no Prometheus Operator)
+  prometheus:
+    enabled: false
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
+
+  webhook:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
+
+  cainjector:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
+
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
+
+  # DNS01 self-check - use external DNS servers
+  dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
+  dns01RecursiveNameserversOnly: true

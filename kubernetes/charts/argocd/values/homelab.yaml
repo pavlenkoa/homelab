@@ -1,9 +1,7 @@
 # ArgoCD configuration for homelab cluster
+# Environment-specific overrides only
 
 argo-cd:
-  # Override name to "argocd" instead of "argo-cd" for consistent naming
-  nameOverride: argocd
-
   # Bootstrap app-of-apps using Job hook - creates once and deletes itself
   extraObjects:
     - apiVersion: batch/v1
@@ -92,7 +90,6 @@ argo-cd:
 
   # Server configuration
   server:
-    # Ingress configuration for proper TLS termination
     ingress:
       enabled: true
       ingressClassName: "nginx"
@@ -105,74 +102,9 @@ argo-cd:
         hosts:
         - "argocd.pavlenko.io"
 
-  # ArgoCD configuration via configs section
   configs:
-    params:
-      server.insecure: true
-
     cm:
-      # Enable anonymous access for easier setup (can be disabled later)
       url: "https://argocd.pavlenko.io"
-
-      # Resource exclusions - override default to exclude only Endpoints (not EndpointSlice)
-      resource.exclusions: |
-        ### Network resources created by the Kubernetes control plane (keeping only Endpoints excluded)
-        - apiGroups:
-          - ''
-          kinds:
-          - Endpoints
-        ### Internal Kubernetes resources excluded reduce the number of watched events
-        - apiGroups:
-          - coordination.k8s.io
-          kinds:
-          - Lease
-        ### Internal Kubernetes Authz/Authn resources excluded reduce the number of watched events
-        - apiGroups:
-          - authentication.k8s.io
-          - authorization.k8s.io
-          kinds:
-          - SelfSubjectReview
-          - TokenReview
-          - LocalSubjectAccessReview
-
-      # Resource customizations
-      resource.customizations: |
-        argoproj.io/Application:
-          health.lua: |
-            hs = {}
-            hs.status = "Progressing"
-            hs.message = ""
-            if obj.status ~= nil then
-              if obj.status.health ~= nil then
-                hs.status = obj.status.health.status
-                if obj.status.health.message ~= nil then
-                  hs.message = obj.status.health.message
-                end
-              end
-            end
-            return hs
-
-      # Global ignore differences for common Kubernetes normalization issues
-      resource.customizations.ignoreDifferences.all: |
-        jsonPointers:
-        - /metadata/generation
-        managedFieldsManagers:
-        - kube-controller-manager
-
-      # StatefulSet volumeClaimTemplates normalization
-      resource.customizations.ignoreDifferences.apps_StatefulSet: |
-        jqPathExpressions:
-        - .spec.volumeClaimTemplates[].apiVersion
-        - .spec.volumeClaimTemplates[].kind
-
-      # Webhook CA bundle changes (managed by cert-manager)
-      resource.customizations.ignoreDifferences.admissionregistration.k8s.io_MutatingWebhookConfiguration: |
-        jqPathExpressions:
-        - .webhooks[]?.clientConfig.caBundle
-
-      resource.customizations.ignoreDifferences.admissionregistration.k8s.io_ValidatingWebhookConfiguration: |
-        jqPathExpressions:
-        - .webhooks[]?.clientConfig.caBundle
 
     # Git repositories configuration
     repositories:
@@ -180,40 +112,3 @@ argo-cd:
         url: https://github.com/pavlenkoa/homelab.git
         type: git
         name: homelab
-
-  # Controller configuration
-  controller:
-    resources:
-      limits:
-        memory: 512Mi
-      requests:
-        memory: 256Mi
-
-  # Repo server configuration
-  repoServer:
-    resources:
-      limits:
-        memory: 256Mi
-      requests:
-        memory: 128Mi
-
-  # Application set controller
-  applicationSet:
-    enabled: true
-    resources:
-      limits:
-        memory: 128Mi
-      requests:
-        memory: 64Mi
-
-  # Notifications controller
-  notifications:
-    enabled: false  # Can enable later for alerting
-
-  # Redis configuration
-  redis:
-    resources:
-      limits:
-        memory: 128Mi
-      requests:
-        memory: 64Mi

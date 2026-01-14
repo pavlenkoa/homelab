@@ -1,22 +1,8 @@
-# Cilium CNI for k3s (kube-proxy free)
+# Cilium configuration for homelab cluster
+# Environment-specific overrides only
 
 cilium:
-  kubeProxyReplacement: true
-
   # Required: direct API server access (no kube-proxy to route ClusterIP)
   # Use Mac's LAN IP so all nodes (VM + RPi) can reach it
   k8sServiceHost: 192.168.88.2
   k8sServicePort: 6443
-
-  # Disable envoy - RPi4 doesn't support 48-bit VA that tcmalloc requires
-  envoy:
-    enabled: false
-
-  operator:
-    replicas: 1
-
-  hubble:
-    relay:
-      enabled: true
-    ui:
-      enabled: true
