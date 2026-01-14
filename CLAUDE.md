@@ -54,8 +54,6 @@ homelab/
 │   ├── CODEOWNERS
 │   ├── renovate.json5
 │   └── workflows/
-├── docker-compose/
-│   └── transmission/           # Legacy - migrated to k8s
 ├── images/
 │   ├── gluetun-transmission-cli/
 │   ├── transmission-exporter/
