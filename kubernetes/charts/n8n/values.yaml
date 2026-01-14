@@ -1,4 +1,48 @@
 # Wrapper chart for n8n
-# All configuration in values/homelab.yaml
+# Defaults here, environment-specific overrides in values/homelab.yaml
 
-n8n: {}
+n8n:
+  # Main n8n application configuration
+  main:
+    config:
+      n8n:
+        port: 5678
+        path: "/"
+        listen_address: "0.0.0.0"
+        # Disable telemetry for privacy
+        diagnostics:
+          enabled: false
+        log:
+          level: "info"
+      # Use SQLite for simplicity
+      db:
+        type: "sqlite"
+
+    # Enable persistence for workflow data
+    persistence:
+      enabled: true
+      type: dynamic
+      storageClass: ""  # Use default storage class
+      accessModes:
+        - ReadWriteOnce
+      size: 5Gi
+
+    # Resource limits
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+  # Disable worker and webhook modes (single instance)
+  worker:
+    enabled: false
+
+  webhook:
+    enabled: false
+
+  # Disable Redis/Valkey (not needed for single instance)
+  valkey:
+    enabled: false

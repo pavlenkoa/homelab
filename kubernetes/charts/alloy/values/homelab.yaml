@@ -1,8 +1,8 @@
-# Alloy DaemonSet for Grafana Cloud metrics/logs
+# Alloy configuration for homelab cluster
+# Environment-specific overrides only
 
 alloy:
   controller:
-    type: daemonset
     # Run on all nodes including tainted raspberrypi
     tolerations:
       - key: dedicated
@@ -11,10 +11,6 @@ alloy:
         effect: NoSchedule
 
   alloy:
-    # Mount /var/log for pod logs
-    mounts:
-      varlog: true
-
     configMap:
       content: |
         // Node metrics

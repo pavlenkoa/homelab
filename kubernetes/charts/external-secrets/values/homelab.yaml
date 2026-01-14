@@ -1,61 +1,8 @@
-# External Secrets Operator configuration for homelab
+# external-secrets configuration for homelab cluster
+# Environment-specific overrides only
 
 external-secrets:
-  # Install CRDs via Helm
-  crds:
-    create: true
-
-  # Concurrent secret fetches
-  concurrent: 3
-
-  # Resource limits for single-node cluster
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 32Mi
-
-  webhook:
-    resources:
-      limits:
-        cpu: 50m
-        memory: 64Mi
-      requests:
-        cpu: 10m
-        memory: 16Mi
-
-  certController:
-    resources:
-      limits:
-        cpu: 50m
-        memory: 64Mi
-      requests:
-        cpu: 10m
-        memory: 16Mi
-
-  # Security context
-  securityContext:
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-      - ALL
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-    runAsUser: 65534
-    seccompProfile:
-      type: RuntimeDefault
-
-  # Pod security context
-  podSecurityContext:
-    fsGroup: 65534
-
-  # Monitoring (disabled for now)
-  serviceMonitor:
-    enabled: false
-
-  # Extra objects - ClusterSecretStore for Vault backend (using sync waves for proper timing)
+  # ClusterSecretStore for Vault backend
   extraObjects:
     - |
       apiVersion: external-secrets.io/v1

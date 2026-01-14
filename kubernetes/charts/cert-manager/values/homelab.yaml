@@ -1,59 +1,7 @@
-# cert-manager configuration for OrbStack cluster
+# cert-manager configuration for homelab cluster
+# Environment-specific overrides only
 
 cert-manager:
-  # Install CRDs via Helm
-  crds:
-    enabled: true
-
-  # Enable the default issuer
-  ingressShim:
-    defaultIssuerName: letsencrypt-prod
-    defaultIssuerKind: ClusterIssuer
-    defaultIssuerGroup: cert-manager.io
-
-  # Prometheus monitoring (disabled for now - no Prometheus Operator installed)
-  prometheus:
-    enabled: false
-
-  # Resource limits for single-node cluster
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 32Mi
-
-  webhook:
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 10m
-        memory: 32Mi
-
-  cainjector:
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 10m
-        memory: 32Mi
-
-  # Security context
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    fsGroup: 1000
-
-  # DNS01 self-check configuration
-  # Use external DNS servers for zone detection and self-check
-  dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
-  dns01RecursiveNameserversOnly: true
-
   # Extra objects - ExternalSecret for Cloudflare API token and ClusterIssuer
   extraObjects:
     - |
