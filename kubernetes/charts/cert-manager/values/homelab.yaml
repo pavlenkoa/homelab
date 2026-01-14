@@ -1,29 +1,21 @@
 # cert-manager configuration for OrbStack cluster
 
-# Install CRDs via Helm
-crds:
-  enabled: true
+cert-manager:
+  # Install CRDs via Helm
+  crds:
+    enabled: true
 
-# Enable the default issuer
-ingressShim:
-  defaultIssuerName: letsencrypt-prod
-  defaultIssuerKind: ClusterIssuer
-  defaultIssuerGroup: cert-manager.io
+  # Enable the default issuer
+  ingressShim:
+    defaultIssuerName: letsencrypt-prod
+    defaultIssuerKind: ClusterIssuer
+    defaultIssuerGroup: cert-manager.io
 
-# Prometheus monitoring (disabled for now - no Prometheus Operator installed)
-prometheus:
-  enabled: false
+  # Prometheus monitoring (disabled for now - no Prometheus Operator installed)
+  prometheus:
+    enabled: false
 
-# Resource limits for single-node cluster
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 10m
-    memory: 32Mi
-
-webhook:
+  # Resource limits for single-node cluster
   resources:
     limits:
       cpu: 100m
@@ -32,70 +24,79 @@ webhook:
       cpu: 10m
       memory: 32Mi
 
-cainjector:
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 32Mi
+  webhook:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
 
-# Security context
-securityContext:
-  runAsNonRoot: true
-  runAsUser: 1000
-  runAsGroup: 1000
-  fsGroup: 1000
+  cainjector:
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 10m
+        memory: 32Mi
 
-# DNS01 self-check configuration
-# Use external DNS servers for zone detection and self-check
-dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
-dns01RecursiveNameserversOnly: true
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    runAsGroup: 1000
+    fsGroup: 1000
 
-# Extra objects - ExternalSecret for Cloudflare API token and ClusterIssuer
-extraObjects:
-  - |
-    apiVersion: external-secrets.io/v1
-    kind: ExternalSecret
-    metadata:
-      name: cloudflare-api-token
-      namespace: cert-manager
-    spec:
-      refreshInterval: 1h
-      secretStoreRef:
-        name: vault-backend
-        kind: ClusterSecretStore
-      target:
+  # DNS01 self-check configuration
+  # Use external DNS servers for zone detection and self-check
+  dns01RecursiveNameservers: "1.1.1.1:53,8.8.8.8:53"
+  dns01RecursiveNameserversOnly: true
+
+  # Extra objects - ExternalSecret for Cloudflare API token and ClusterIssuer
+  extraObjects:
+    - |
+      apiVersion: external-secrets.io/v1
+      kind: ExternalSecret
+      metadata:
         name: cloudflare-api-token
-        creationPolicy: Owner
-      data:
-      - secretKey: api-token
-        remoteRef:
-          key: cloudflare
-          property: api-token
-          conversionStrategy: Default
-          decodingStrategy: None
-          metadataPolicy: None
-  - |
-    apiVersion: cert-manager.io/v1
-    kind: ClusterIssuer
-    metadata:
-      name: letsencrypt-prod
-      annotations:
-        argocd.argoproj.io/sync-wave: "20"  # Apply after ExternalSecret creates the secret
-    spec:
-      acme:
-        server: https://acme-v02.api.letsencrypt.org/directory
-        email: contact@pavlenko.io
-        privateKeySecretRef:
-          name: letsencrypt-prod
-        solvers:
-        - dns01:
-            cloudflare:
-              apiTokenSecretRef:
-                name: cloudflare-api-token
-                key: api-token
-          selector:
-            dnsZones:
-            - "pavlenko.io"
+        namespace: cert-manager
+      spec:
+        refreshInterval: 1h
+        secretStoreRef:
+          name: vault-backend
+          kind: ClusterSecretStore
+        target:
+          name: cloudflare-api-token
+          creationPolicy: Owner
+        data:
+        - secretKey: api-token
+          remoteRef:
+            key: cloudflare
+            property: api-token
+            conversionStrategy: Default
+            decodingStrategy: None
+            metadataPolicy: None
+    - |
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-prod
+        annotations:
+          argocd.argoproj.io/sync-wave: "20"  # Apply after ExternalSecret creates the secret
+      spec:
+        acme:
+          server: https://acme-v02.api.letsencrypt.org/directory
+          email: contact@pavlenko.io
+          privateKeySecretRef:
+            name: letsencrypt-prod
+          solvers:
+          - dns01:
+              cloudflare:
+                apiTokenSecretRef:
+                  name: cloudflare-api-token
+                  key: api-token
+            selector:
+              dnsZones:
+              - "pavlenko.io"
