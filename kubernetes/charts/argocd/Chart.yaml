@@ -5,5 +5,5 @@ description: "Wrapper chart for argo-cd"
 
 dependencies:
   - name: argo-cd
-    version: "9.2.4"
+    version: "9.3.5"
     repository: "https://argoproj.github.io/argo-helm"

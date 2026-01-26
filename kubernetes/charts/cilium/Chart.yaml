@@ -5,5 +5,5 @@ description: "Wrapper chart for cilium"
 
 dependencies:
   - name: cilium
-    version: "1.18.5"
+    version: "1.18.6"
     repository: "https://helm.cilium.io"
