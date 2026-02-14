@@ -2,7 +2,7 @@
 ArgoCD Application template helper for child applications
 
 Features:
-- Auto path: kubernetes/charts/<name> (helm) or kubernetes/manifests/<name> (directory)
+- Auto path: kubernetes/apps/<name>
 - Auto namespace: <name>
 - Auto valueFiles: values/<environment>.yaml (helm only)
 - Name prefixing via parent's prefixNames setting
@@ -32,7 +32,7 @@ Merge order: childDefaults → parentConfig.childDefaults → app
 {{- /* Determine source type: directory (plain manifests) or helm (default) */ -}}
 {{- $isDirectory := hasKey $app "directory" -}}
 {{- /* Smart defaults - path depends on source type */ -}}
-{{- $defaultPath := ternary (printf "kubernetes/manifests/%s" $app.name) (printf "kubernetes/charts/%s" $app.name) $isDirectory -}}
+{{- $defaultPath := printf "kubernetes/apps/%s" $app.name -}}
 {{- $appPath := $app.path | default $defaultPath -}}
 {{- $appNamespace := $app.namespace | default $app.name -}}
 {{- $appRepoURL := (($app.repository).url) | default $root.Values.repository.url -}}
@@ -40,7 +40,7 @@ Merge order: childDefaults → parentConfig.childDefaults → app
 {{- /* Auto-generate valueFiles if not specified */ -}}
 {{- $autoValueFile := printf "values/%s.yaml" $envName -}}
 {{- /* For external repos, use full path from homelab repo */ -}}
-{{- $autoValueFileExternal := printf "kubernetes/charts/%s/values/%s.yaml" $app.name $envName -}}
+{{- $autoValueFileExternal := printf "kubernetes/apps/%s/values/%s.yaml" $app.name $envName -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:

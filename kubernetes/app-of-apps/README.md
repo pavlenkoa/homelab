@@ -79,9 +79,9 @@ argocd app create app-of-apps \
              argocd.argoproj.io/sync-wave: "2"
    ```
 
-2. Create the chart at `kubernetes/charts/my-app/`
+2. Create the chart at `kubernetes/apps/my-app/`
 
-3. Create values at `kubernetes/charts/my-app/values/homelab.yaml`
+3. Create values at `kubernetes/apps/my-app/values/homelab.yaml`
 
 ## Features
 
