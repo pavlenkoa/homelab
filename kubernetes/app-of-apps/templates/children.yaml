@@ -1,28 +1,35 @@
 {{/*
-Children - rendered when renderLayer is set
+Children - rendered when renderParent is set
 Creates:
-  1. AppProject for the layer
+  1. AppProject for the parent
   2. Child Applications (cilium, vault, etc.)
 
-Controlled by: childDefaults + layers.<name>.childDefaults + layers.<name>.children
+Controlled by: childDefaults + parents.<name>.childDefaults + parents.<name>.children
 */}}
-{{- if .Values.renderLayer }}
-{{- $renderLayer := .Values.renderLayer }}
+{{- if .Values.renderParent }}
+{{- $renderParent := .Values.renderParent }}
 {{- $envName := .Values.environment }}
-{{- $layerDefaults := .Values.layerDefaults }}
-{{- range $layerName, $layerConfig := .Values.layers }}
-{{- if eq $layerName $renderLayer }}
-{{- $prefixNames := $layerConfig.prefixNames | default $layerDefaults.prefixNames }}
-{{- $effectiveLayerName := $layerName }}
+{{- $parentDefaults := .Values.parentDefaults }}
+{{- range $parentName, $parentConfig := .Values.parents }}
+{{- if eq $parentName $renderParent }}
+{{- $prefixNames := $parentConfig.prefixNames | default $parentDefaults.prefixNames }}
+{{- $effectiveParentName := $parentName }}
 {{- if $prefixNames }}
-  {{- $effectiveLayerName = printf "%s-%s" $envName $layerName }}
+  {{- $effectiveParentName = printf "%s-%s" $envName $parentName }}
 {{- end }}
+{{- $excluded := $parentConfig.excludeChildren | default list }}
 ---
-{{ include "app-of-apps.appProject" (list $effectiveLayerName ($layerConfig.description | default $layerName) $layerConfig $.Values) }}
-{{- range $layerConfig.children }}
-{{- if ne .enabled false }}
+{{ include "app-of-apps.appProject" (list $effectiveParentName ($parentConfig.description | default $parentName) $parentConfig $.Values) }}
+{{- range $parentConfig.children }}
+{{- if and (ne .enabled false) (not (has .name $excluded)) }}
 ---
-{{ include "app-of-apps.application" (list $ . $layerName $layerConfig) }}
+{{ include "app-of-apps.application" (list $ . $parentName $parentConfig) }}
+{{- end }}
+{{- end }}
+{{- range ($parentConfig.extraChildren | default list) }}
+{{- if and (ne .enabled false) (not (has .name $excluded)) }}
+---
+{{ include "app-of-apps.application" (list $ . $parentName $parentConfig) }}
 {{- end }}
 {{- end }}
 {{- end }}

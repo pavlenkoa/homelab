@@ -1,106 +1,79 @@
 # App-of-Apps
 
-GitOps pattern for managing multiple environments with ArgoCD.
+GitOps pattern for managing ArgoCD applications with a parent/child hierarchy.
 
 ## Architecture
 
 ```
-app-of-apps (Application) ← bootstrap with kubectl apply
-└── environments (ApplicationSet) ← git generator discovers values/*.yaml
-    └── homelab (Application) ← generated per environment
-        ├── homelab (AppProject)
-        ├── system (Application) ← in homelab project
-        │   ├── system (AppProject)
-        │   ├── cilium
-        │   ├── ingress-nginx
-        │   └── cert-manager
-        ├── platform (Application) ← in homelab project
-        │   ├── platform (AppProject)
-        │   ├── vault
-        │   ├── argocd
-        │   └── ...
-        └── applications (Application) ← in homelab project
-            ├── applications (AppProject)
-            └── external-services
+app-of-apps (Application) ← bootstrap with argocd CLI
+├── parents (AppProject)
+├── system (Application) ← in parents project
+│   ├── system (AppProject)
+│   ├── cilium
+│   ├── ingress-nginx
+│   └── cert-manager
+├── platform (Application) ← in parents project
+│   ├── platform (AppProject)
+│   ├── vault
+│   ├── argocd
+│   └── ...
+└── applications (Application) ← in parents project
+    ├── applications (AppProject)
+    └── external-services
 ```
 
 ## How It Works
 
 ### Consistent Pattern
 
-Both environment and layer levels use the same pattern:
+Both environment and parent levels use the same pattern:
 - Create AppProject (wave -10)
 - Create child Applications (their respective waves)
 
 | Level | Creates | Children |
 |-------|---------|----------|
-| `homelab` | homelab AppProject | system, platform, applications |
+| `app-of-apps` | parents AppProject | system, platform, applications |
 | `system` | system AppProject | cilium, ingress-nginx, cert-manager |
 | `platform` | platform AppProject | vault, argocd, n8n, authelia... |
-| `applications` | applications AppProject | external-services |
+| `applications` | applications AppProject | external-services, transmission |
 
 ### Template Files
 
 | File | Renders When | Creates |
 |------|--------------|---------|
-| `bootstrap.yaml` | kubectl apply | app-of-apps Application |
-| `environments.yaml` | renderLayer="" (app-of-apps) | environments ApplicationSet |
-| `environment.yaml` | renderLayer="" (homelab) | AppProject + layer Applications |
-| `layer.yaml` | renderLayer=X | AppProject + child Applications |
+| `parents.yaml` | renderParent="" | AppProject + parent Applications |
+| `children.yaml` | renderParent=X | AppProject + child Applications |
 | `_application.tpl` | always | Helper for Application resources |
+| `_helpers.tpl` | always | Shared helpers (syncPolicy, labels, etc.) |
 
-### renderLayer Parameter
+### renderParent Parameter
 
 | Value | Template Used | Output |
 |-------|---------------|--------|
-| (empty at app-of-apps) | environments.yaml | environments ApplicationSet |
-| (empty at homelab) | environment.yaml | homelab AppProject + system/platform/applications |
-| `system` | layer.yaml | system AppProject + cilium/ingress-nginx/cert-manager |
-| `platform` | layer.yaml | platform AppProject + vault/argocd/... |
-| `applications` | layer.yaml | applications AppProject + external-services |
+| (empty) | parents.yaml | parents AppProject + system/platform/applications |
+| `system` | children.yaml | system AppProject + cilium/ingress-nginx/cert-manager |
+| `platform` | children.yaml | platform AppProject + vault/argocd/... |
+| `applications` | children.yaml | applications AppProject + external-services/transmission |
 
 ## Bootstrap
 
-### Single Environment
-```bash
-argocd app create homelab \
-  --repo https://github.com/pavlenkoa/homelab.git \
-  --path kubernetes/app-of-apps \
-  --values values/homelab.yaml \
-  --dest-server https://kubernetes.default.svc \
-  --dest-namespace argocd
-```
-
-### Multi-Environment (ApplicationSet)
 ```bash
 argocd app create app-of-apps \
   --repo https://github.com/pavlenkoa/homelab.git \
-  --path kubernetes/app-of-apps/bootstrap \
+  --path kubernetes/app-of-apps \
   --dest-server https://kubernetes.default.svc \
-  --dest-namespace argocd
+  --dest-namespace argocd \
+  --sync-policy automated --auto-prune
 ```
-Syncs `bootstrap/environments-appset.yaml` which discovers `values/*.yaml` and generates one Application per environment.
-
-## Adding New Environment
-
-1. Create `values/<env-name>.yaml`:
-   ```yaml
-   global:
-     environmentName: "<env-name>"
-   ```
-
-2. Commit and push - ApplicationSet auto-discovers and creates the environment
 
 ## Adding New Application
 
-1. Add to `values.yaml` under the appropriate layer:
+1. Add to `values.yaml` under the appropriate parent:
    ```yaml
-   layers:
+   parents:
      platform:
-       apps:
+       children:
          - name: my-app
-           enabled: true
-           path: kubernetes/charts/my-app
            namespace: my-app
            annotations:
              argocd.argoproj.io/sync-wave: "2"
@@ -110,22 +83,50 @@ Syncs `bootstrap/environments-appset.yaml` which discovers `values/*.yaml` and g
 
 3. Create values at `kubernetes/charts/my-app/values/homelab.yaml`
 
+## Features
+
+### Labels
+
+Parent Applications get `environment: <envName>` label automatically. Child Applications get `parent: <parentName>` label. Custom labels can be added via `parentDefaults.labels`, `childDefaults.labels`, or per-app `labels`.
+
+### excludeChildren
+
+Exclude specific children from a parent without removing them from values:
+```yaml
+parents:
+  platform:
+    excludeChildren:
+      - victoriametrics
+      - grafana
+```
+
+### extraChildren
+
+Add extra children to a parent (e.g., from environment overrides):
+```yaml
+parents:
+  platform:
+    extraChildren:
+      - name: extra-app
+        namespace: extra
+```
+
 ## Projects
 
 | Project | Contains | Filter in UI |
 |---------|----------|--------------|
 | `default` | app-of-apps | Root application |
-| `homelab` | system, platform, applications | Environment layer apps |
+| `parents` | system, platform, applications | Parent apps |
 | `system` | cilium, ingress-nginx, cert-manager | System components |
 | `platform` | vault, argocd, n8n, authelia... | Platform services |
-| `applications` | external-services | End-user applications |
+| `applications` | external-services, transmission | End-user applications |
 
 ## Sync Order
 
 Controlled by sync-waves:
 1. AppProject (wave -10) - always created first
-2. Layer apps by their configured waves:
+2. Parent apps by their configured waves:
    - system: wave -1
    - platform: wave 0
    - applications: wave 1
-3. Child apps within layers by their waves
+3. Child apps within parents by their waves

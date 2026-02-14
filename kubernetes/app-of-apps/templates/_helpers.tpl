@@ -1,6 +1,6 @@
 {{/*
 Shared helper functions for app-of-apps templates.
-Used by layers.yaml, children.yaml, and _application.tpl.
+Used by parents.yaml, children.yaml, and _application.tpl.
 */}}
 
 {{/*
@@ -8,7 +8,7 @@ app-of-apps.appProject - Renders an ArgoCD AppProject
 Arguments: list($name, $description, $config, $root)
   $name - project name
   $description - project description
-  $config - layer config (for sourceRepos, projectDefaults override)
+  $config - parent config (for sourceRepos, projectDefaults override)
   $root - root Values object (for projectDefaults, repository, destination)
 */}}
 {{- define "app-of-apps.appProject" -}}
@@ -91,8 +91,12 @@ Arguments: list($configs, $additionalSyncOptionsList)
 syncPolicy:
   {{- if $merged.automated }}
   automated:
-    prune: {{ $merged.automated.prune | default false }}
-    selfHeal: {{ $merged.automated.selfHeal | default false }}
+    {{- if $merged.automated.prune }}
+    prune: true
+    {{- end }}
+    {{- if $merged.automated.selfHeal }}
+    selfHeal: true
+    {{- end }}
   {{- end }}
   {{- /* Collect all syncOptions */ -}}
   {{- $allSyncOptions := list -}}
@@ -172,6 +176,23 @@ annotations:
   {{ $key }}: {{ $value | quote }}
 {{- end }}
 {{- end -}}
+{{- end -}}
+
+{{/*
+app-of-apps.labels - Renders labels
+Arguments: list($labelMaps...)
+  Merges all label maps, later ones override earlier
+*/}}
+{{- define "app-of-apps.labels" -}}
+{{- $merged := dict -}}
+{{- range . -}}
+  {{- if . -}}
+    {{- $merged = mergeOverwrite $merged . -}}
+  {{- end -}}
+{{- end -}}
+{{- range $key, $value := $merged }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}
 {{- end -}}
 
 {{/*

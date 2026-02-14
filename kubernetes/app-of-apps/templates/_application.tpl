@@ -5,24 +5,24 @@ Features:
 - Auto path: kubernetes/charts/<name> (helm) or kubernetes/manifests/<name> (directory)
 - Auto namespace: <name>
 - Auto valueFiles: values/<environment>.yaml (helm only)
-- Name prefixing via layer's prefixNames setting
+- Name prefixing via parent's prefixNames setting
 - Directory source support for plain manifests
 
-Merge order: childDefaults → layerConfig.childDefaults → app
+Merge order: childDefaults → parentConfig.childDefaults → app
 */}}
 {{- define "app-of-apps.application" -}}
 {{- $root := index . 0 -}}
 {{- $app := index . 1 -}}
-{{- $layerName := index . 2 -}}
-{{- $layerConfig := index . 3 -}}
+{{- $parentName := index . 2 -}}
+{{- $parentConfig := index . 3 -}}
 {{- $envName := $root.Values.environment -}}
 {{- $childDefaults := $root.Values.childDefaults -}}
-{{- $layerDefaults := $root.Values.layerDefaults -}}
-{{- $layerChildDefaults := $layerConfig.childDefaults | default dict -}}
-{{- $prefixNames := $layerConfig.prefixNames | default $layerDefaults.prefixNames -}}
-{{- $effectiveLayerName := $layerName -}}
+{{- $parentDefaults := $root.Values.parentDefaults -}}
+{{- $parentChildDefaults := $parentConfig.childDefaults | default dict -}}
+{{- $prefixNames := $parentConfig.prefixNames | default $parentDefaults.prefixNames -}}
+{{- $effectiveParentName := $parentName -}}
 {{- if $prefixNames }}
-  {{- $effectiveLayerName = printf "%s-%s" $envName $layerName -}}
+  {{- $effectiveParentName = printf "%s-%s" $envName $parentName -}}
 {{- end }}
 {{- /* Calculate effective application name */ -}}
 {{- $effectiveAppName := $app.name -}}
@@ -46,10 +46,13 @@ kind: Application
 metadata:
   name: {{ $effectiveAppName }}
   namespace: argocd
-  {{- include "app-of-apps.annotations" (list $childDefaults.annotations $layerChildDefaults.annotations $app.annotations) | nindent 2 }}
-  {{- include "app-of-apps.finalizers" (list $app.finalizers $layerChildDefaults.finalizers $childDefaults.finalizers) | nindent 2 }}
+  labels:
+    parent: {{ $effectiveParentName }}
+  {{- include "app-of-apps.labels" (list $childDefaults.labels $parentChildDefaults.labels $app.labels) | nindent 2 }}
+  {{- include "app-of-apps.annotations" (list $childDefaults.annotations $parentChildDefaults.annotations $app.annotations) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $app.finalizers $parentChildDefaults.finalizers $childDefaults.finalizers) | nindent 2 }}
 spec:
-  project: {{ $effectiveLayerName }}
+  project: {{ $effectiveParentName }}
 {{- if $useMultipleSources }}
   {{- /* Multiple sources: chart from external repo, values from homelab repo */ -}}
   sources:
@@ -90,7 +93,7 @@ spec:
 {{- else }}
   source:
     repoURL: {{ $appRepoURL }}
-    targetRevision: {{ (($app.repository).targetRevision) | default $root.Values.repository.targetRevision }}
+    targetRevision: {{ (($app.repository).targetRevision) | default (($root.Values.chartsRepository).targetRevision) | default $root.Values.repository.targetRevision }}
     path: {{ $appPath }}
 {{- if $isDirectory }}
 {{- with $app.directory }}
@@ -159,14 +162,14 @@ spec:
 {{- end }}
 {{- end }}
   destination:
-    server: {{ (($app.destination).server) | default $root.Values.destination.server }}
+    server: {{ (($app.destination).server) | default (($parentChildDefaults.destination).server) | default (($childDefaults.destination).server) | default $root.Values.destination.server }}
     namespace: {{ $appNamespace }}
   {{- include "app-of-apps.syncPolicy" (list
-        (list $childDefaults.syncPolicy $layerChildDefaults.syncPolicy $app.syncPolicy)
-        (list $childDefaults.additionalSyncOptions $layerChildDefaults.additionalSyncOptions $app.additionalSyncOptions)
+        (list $childDefaults.syncPolicy $parentChildDefaults.syncPolicy $app.syncPolicy)
+        (list $childDefaults.additionalSyncOptions $parentChildDefaults.additionalSyncOptions $app.additionalSyncOptions)
       ) | nindent 2 }}
   {{- include "app-of-apps.ignoreDifferences" (list
-        (list $app.ignoreDifferences $layerChildDefaults.ignoreDifferences $childDefaults.ignoreDifferences)
-        (list $childDefaults.additionalIgnoreDifferences $layerChildDefaults.additionalIgnoreDifferences $app.additionalIgnoreDifferences)
+        (list $app.ignoreDifferences $parentChildDefaults.ignoreDifferences $childDefaults.ignoreDifferences)
+        (list $childDefaults.additionalIgnoreDifferences $parentChildDefaults.additionalIgnoreDifferences $app.additionalIgnoreDifferences)
       ) | nindent 2 }}
 {{- end }}
