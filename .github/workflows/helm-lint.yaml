@@ -5,6 +5,7 @@ on:
     paths:
       - 'kubernetes/**'
       - '!kubernetes/**/*.md'
+      - '.github/workflows/helm-lint.yaml'
   push:
     branches: [main]
     paths:
