@@ -12,7 +12,8 @@ n8n:
     hosts:
       - host: n8n.pavlenko.io
         paths:
-          - /
+          - path: /
+            pathType: Prefix
     tls:
       - hosts:
           - n8n.pavlenko.io
