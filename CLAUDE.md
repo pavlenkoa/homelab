@@ -69,9 +69,7 @@ homelab/
     ├── app-of-apps/
     │   ├── Chart.yaml
     │   ├── templates/
-    │   ├── values.yaml
-    │   └── values/
-    │       └── homelab.yaml
+    │   └── values.yaml
     └── charts/                 # Wrapper charts (Renovate-managed)
         ├── alloy/
         ├── argocd/

@@ -1,8 +1,8 @@
 # App-of-Apps Chart
 #
 # Hierarchy:
-#   layers.yaml   → projectDefaults, layerDefaults + layers.<name>
-#   children.yaml → projectDefaults + layers.<name>.projectDefaults, childDefaults + layers.<name>.childDefaults
+#   parents.yaml   → projectDefaults, parentDefaults + parents.<name>
+#   children.yaml → projectDefaults + parents.<name>.projectDefaults, childDefaults + parents.<name>.childDefaults
 #
 # Merge rules:
 #   - syncPolicy, ignoreDifferences, finalizers: Override (child wins)
@@ -12,18 +12,22 @@ repository:
   url: "https://github.com/pavlenkoa/homelab.git"
   targetRevision: "HEAD"
 
+# chartsRepository:
+#   targetRevision: "HEAD"
+
 destination:
   server: "https://kubernetes.default.svc"
 
-# Used by ApplicationSet for app name, and templates for AppProject/valueFiles
-environment: ""
+# Environment name - used for AppProject naming and valueFiles paths
+environment: "homelab"
 
 # Internal - set via helm parameters by parent Applications
-renderLayer: ""
+renderParent: ""
 
-# Defaults for layer Applications (system, platform, applications)
-layerDefaults:
+# Defaults for parent Applications (system, platform, applications)
+parentDefaults:
   prefixNames: false
+  labels: {}
   annotations: {}
   syncPolicy:
     automated:
@@ -37,6 +41,7 @@ layerDefaults:
 
 # Defaults for child Applications (cilium, vault, etc.)
 childDefaults:
+  labels: {}
   annotations: {}
   syncPolicy:
     automated:
@@ -65,7 +70,7 @@ childDefaults:
   finalizers:
     - resources-finalizer.argocd.argoproj.io
 
-# Defaults for AppProjects (environment + layer projects)
+# Defaults for AppProjects (environment + parent projects)
 projectDefaults:
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
@@ -80,8 +85,8 @@ projectDefaults:
   destinations:
     - namespace: "*"
 
-# Layers
-layers:
+# Parents
+parents:
   system:
     description: "Core cluster components"
     annotations:
