@@ -72,6 +72,58 @@ spec:
 {{- end -}}
 
 {{/*
+app-of-apps.parentApplication - Renders a parent ArgoCD Application
+Arguments: list($root, $parentName, $parentConfig)
+*/}}
+{{- define "app-of-apps.parentApplication" -}}
+{{- $root := index . 0 -}}
+{{- $parentName := index . 1 -}}
+{{- $parentConfig := index . 2 -}}
+{{- $parentDefaults := $root.Values.parentDefaults -}}
+{{- $envName := $root.Values.environment -}}
+{{- $prefixNames := $parentConfig.prefixNames | default $parentDefaults.prefixNames -}}
+{{- $effectiveParentName := $parentName -}}
+{{- if $prefixNames }}
+  {{- $effectiveParentName = printf "%s-%s" $envName $parentName -}}
+{{- end }}
+{{- $parentsProjectName := "parents" -}}
+{{- if $prefixNames }}
+  {{- $parentsProjectName = printf "%s-parents" $envName -}}
+{{- end }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $effectiveParentName }}
+  namespace: argocd
+  labels:
+    environment: {{ $envName }}
+  {{- include "app-of-apps.labels" (list $parentDefaults.labels $parentConfig.labels) | nindent 2 }}
+  {{- include "app-of-apps.annotations" (list $parentDefaults.annotations $parentConfig.annotations) | nindent 2 }}
+  {{- include "app-of-apps.finalizers" (list $parentConfig.finalizers $parentDefaults.finalizers) | nindent 2 }}
+spec:
+  project: {{ $parentsProjectName }}
+  source:
+    repoURL: {{ ($parentConfig.repository).url | default $root.Values.repository.url }}
+    targetRevision: {{ ($parentConfig.repository).targetRevision | default $root.Values.repository.targetRevision }}
+    path: kubernetes/app-of-apps
+    helm:
+      parameters:
+        - name: renderParent
+          value: {{ $parentName }}
+  destination:
+    server: {{ (($parentConfig.destination).server) | default (($parentDefaults.destination).server) | default $root.Values.destination.server }}
+    namespace: argocd
+  {{- include "app-of-apps.syncPolicy" (list
+        (list $parentDefaults.syncPolicy $parentConfig.syncPolicy)
+        (list $parentDefaults.additionalSyncOptions $parentConfig.additionalSyncOptions)
+      ) | nindent 2 }}
+  {{- include "app-of-apps.ignoreDifferences" (list
+        (list $parentConfig.ignoreDifferences $parentDefaults.ignoreDifferences)
+        (list $parentDefaults.additionalIgnoreDifferences $parentConfig.additionalIgnoreDifferences)
+      ) | nindent 2 }}
+{{- end -}}
+
+{{/*
 app-of-apps.syncPolicy - Renders syncPolicy block
 Arguments: list($configs, $additionalSyncOptionsList)
   $configs - list of syncPolicy objects to merge (later overrides earlier)

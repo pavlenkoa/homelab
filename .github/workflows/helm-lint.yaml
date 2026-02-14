@@ -1,0 +1,115 @@
+name: Helm Lint
+
+on:
+  pull_request:
+    paths:
+      - 'kubernetes/**'
+      - '!kubernetes/**/*.md'
+  push:
+    branches: [main]
+    paths:
+      - 'kubernetes/**'
+      - '!kubernetes/**/*.md'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Detect changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          list-files: shell
+          filters: |
+            charts:
+              - 'kubernetes/apps/*/**'
+              - 'kubernetes/app-of-apps/**'
+              - '!kubernetes/**/*.md'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Validate changed charts
+        if: steps.filter.outputs.charts == 'true'
+        run: |
+          # Deduplicate changed files to chart-level directories
+          dirs=""
+          for f in ${{ steps.filter.outputs.charts_files }}; do
+            # kubernetes/apps/<name> or kubernetes/app-of-apps
+            if echo "$f" | grep -q '^kubernetes/app-of-apps/'; then
+              dir="kubernetes/app-of-apps"
+            else
+              dir=$(echo "$f" | cut -d'/' -f1-3)
+            fi
+            if [ -f "$dir/Chart.yaml" ]; then
+              dirs="$dirs $dir"
+            fi
+          done
+          dirs=$(echo "$dirs" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          echo "Changed charts: $dirs"
+
+          failed=()
+          for dir in $dirs; do
+            chart=$(basename "$dir")
+
+            if grep -q '^dependencies:' "$dir/Chart.yaml"; then
+              echo "::group::$chart — dependency build"
+              if ! helm dependency build "$dir"; then
+                failed+=("$chart:dependency-build")
+                echo "::endgroup::"
+                continue
+              fi
+              echo "::endgroup::"
+            fi
+
+            echo "::group::$chart — lint"
+            if ! helm lint "$dir"; then
+              failed+=("$chart:lint")
+            fi
+            echo "::endgroup::"
+
+            # Collect values file args: bare first, then each values/*.yaml
+            values_args=("")
+            values_labels=("")
+            for vf in "$dir"/values/*.yaml; do
+              [ -f "$vf" ] || continue
+              values_args+=("-f $vf")
+              values_labels+=("values/$(basename "$vf")")
+            done
+
+            for i in "${!values_args[@]}"; do
+              va="${values_args[$i]}"
+              vl="${values_labels[$i]}"
+              if [ -n "$vl" ]; then
+                suffix=" ($vl)"
+              else
+                suffix=""
+              fi
+
+              echo "::group::$chart — template$suffix"
+              if ! helm template "$dir" $va; then
+                failed+=("$chart:template$suffix")
+              fi
+              echo "::endgroup::"
+
+              # app-of-apps: also template each parent application
+              if [ "$chart" = "app-of-apps" ]; then
+                parents=$(helm template app-of-apps "$dir" $va 2>/dev/null | \
+                  grep -A1 'name: renderParent' | grep 'value:' | awk '{print $2}')
+                for parent in $parents; do
+                  echo "::group::$chart — template$suffix (parent: $parent)"
+                  if ! helm template app-of-apps "$dir" $va --set renderParent="$parent"; then
+                    failed+=("$chart:template$suffix-parent-$parent")
+                  fi
+                  echo "::endgroup::"
+                done
+              fi
+            done
+          done
+
+          if [ ${#failed[@]} -gt 0 ]; then
+            echo "::error::Failed: ${failed[*]}"
+            exit 1
+          fi
