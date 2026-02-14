@@ -48,11 +48,11 @@ chmod 600 ~/.kube/config
 ## Step 4: Install Cilium
 
 ```bash
-helm dependency update kubernetes/charts/cilium
+helm dependency update kubernetes/apps/cilium
 
-helm upgrade --install cilium kubernetes/charts/cilium \
+helm upgrade --install cilium kubernetes/apps/cilium \
   --namespace kube-system \
-  -f kubernetes/charts/cilium/values/homelab.yaml
+  -f kubernetes/apps/cilium/values/homelab.yaml
 ```
 
 ## Step 5: Join Raspberry Pi
