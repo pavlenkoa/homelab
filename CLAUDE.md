@@ -64,22 +64,22 @@ homelab/
 │       ├── mikrotik-wireguard.md
 │       └── orbstack-networking.md
 └── kubernetes/
-    ├── manifests/              # Raw manifests for RPi k3s
-    │   └── transmission/
     ├── app-of-apps/
     │   ├── Chart.yaml
     │   ├── templates/
     │   └── values.yaml
-    └── charts/                 # Wrapper charts (Renovate-managed)
+    └── apps/                   # All applications (Helm wrapper charts + raw manifests)
         ├── alloy/
         ├── argocd/
         ├── authelia/
         ├── cert-manager/
         ├── cilium/
+        ├── cilium-lb/
         ├── external-secrets/
         ├── external-services/  # Local custom
         ├── ingress-nginx/
         ├── n8n/
+        ├── transmission/       # Raw manifests (not a chart)
         ├── vault/
         ├── vault-secrets-generator/  # Local custom
         └── victoriametrics/
@@ -91,7 +91,8 @@ All charts use the **wrapper pattern** for Renovate compatibility:
 - `Chart.yaml` declares upstream chart as dependency
 - `values.yaml` contains sensible defaults
 - `values/homelab.yaml` contains environment-specific overrides (hostnames, IPs, secrets)
-- Renovate automatically updates chart versions and `.tgz` archives
+- Renovate updates chart versions in `Chart.yaml`; ArgoCD fetches dependencies at sync time
+- No `Chart.lock` or `.tgz` archives committed to git
 
 ## SSH Access
 
