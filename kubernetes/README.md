@@ -18,19 +18,20 @@ kubernetes/
 │   ├── values.yaml                 # All apps defined here (enabled: true/false)
 │   └── values/
 │       └── homelab.yaml            # Environment config (just environment name)
-├── charts/                         # All Helm charts (flat structure)
-│   ├── argocd/
-│   ├── authelia/
-│   ├── cert-manager/
-│   ├── cilium/
-│   ├── external-secrets/
-│   ├── external-services/
-│   ├── ingress-nginx/
-│   ├── n8n/
-│   ├── vault/
-│   ├── vault-secrets-generator/    # External chart - values only
-│   └── victoriametrics/
-└── manifests/                      # Raw manifests (transmission)
+└── apps/                           # All applications (Helm wrapper charts + raw manifests)
+    ├── argocd/
+    ├── authelia/
+    ├── cert-manager/
+    ├── cilium/
+    ├── cilium-lb/
+    ├── external-secrets/
+    ├── external-services/
+    ├── ingress-nginx/
+    ├── n8n/
+    ├── transmission/               # Raw manifests (not a chart)
+    ├── vault/
+    ├── vault-secrets-generator/    # External chart - values only
+    └── victoriametrics/
 ```
 
 ## Architecture
@@ -81,8 +82,8 @@ environments (ApplicationSet)
 
 ## Adding New Applications
 
-1. Add chart to `kubernetes/charts/<name>/`
-2. Add values file at `kubernetes/charts/<name>/values/homelab.yaml`
+1. Add chart to `kubernetes/apps/<name>/`
+2. Add values file at `kubernetes/apps/<name>/values/homelab.yaml`
 3. Add entry to appropriate layer in `app-of-apps/values.yaml`:
    ```yaml
    layers:
@@ -110,7 +111,7 @@ For apps from external repositories (e.g., vault-secrets-generator):
     targetRevision: "HEAD"
 ```
 
-Values are still pulled from homelab repo at `kubernetes/charts/<name>/values/<env>.yaml`.
+Values are still pulled from homelab repo at `kubernetes/apps/<name>/values/<env>.yaml`.
 
 ## Bootstrap
 
@@ -119,9 +120,9 @@ Values are still pulled from homelab repo at `kubernetes/charts/<name>/values/<e
 ```bash
 # Install ArgoCD first
 kubectl create namespace argocd
-helm install argocd kubernetes/charts/argocd \
+helm install argocd kubernetes/apps/argocd \
   -n argocd \
-  -f kubernetes/charts/argocd/values/homelab.yaml
+  -f kubernetes/apps/argocd/values/homelab.yaml
 
 # Deploy bootstrap ApplicationSet
 argocd app create app-of-apps \
