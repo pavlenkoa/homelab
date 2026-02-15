@@ -11,14 +11,11 @@ kubernetes/
 │   ├── templates/
 │   │   ├── _helpers.tpl            # Shared template helpers
 │   │   ├── _application.tpl        # Application resource template
-│   │   ├── layers.yaml             # Layer Applications + environment AppProject
-│   │   └── children.yaml           # Child Applications + layer AppProject
-│   ├── bootstrap/
-│   │   └── environments-appset.yaml  # Multi-environment auto-discovery
-│   ├── values.yaml                 # All apps defined here (enabled: true/false)
-│   └── values/
-│       └── homelab.yaml            # Environment config (just environment name)
+│   │   ├── parents.yaml            # Parent Applications + parents AppProject
+│   │   └── children.yaml           # Child Applications + parent AppProject
+│   └── values.yaml                 # All apps defined here (enabled: true/false)
 └── apps/                           # All applications (Helm wrapper charts + raw manifests)
+    ├── alloy/
     ├── argocd/
     ├── authelia/
     ├── cert-manager/
@@ -36,33 +33,34 @@ kubernetes/
 
 ## Architecture
 
-The app-of-apps uses a hierarchical rendering approach via `renderLayer` parameter:
+The app-of-apps uses a hierarchical rendering approach via `renderParent` parameter:
 
 ```
-environments (ApplicationSet)
-  └─ homelab Application (renderLayer="")
-      ├─ homelab AppProject
-      ├─ system Application (renderLayer=system)
-      │   ├─ system AppProject
-      │   ├─ cilium
-      │   ├─ ingress-nginx
-      │   └─ cert-manager
-      ├─ platform Application (renderLayer=platform)
-      │   ├─ platform AppProject
-      │   ├─ vault
-      │   ├─ external-secrets
-      │   ├─ argocd
-      │   ├─ n8n
-      │   └─ authelia
-      └─ applications Application (renderLayer=applications)
-          ├─ applications AppProject
-          └─ external-services
+app-of-apps (Application) ← bootstrap with argocd CLI
+├── parents (AppProject)
+├── system (Application, renderParent=system)
+│   ├── system (AppProject)
+│   ├── cilium
+│   ├── ingress-nginx
+│   └── cert-manager
+├── platform (Application, renderParent=platform)
+│   ├── platform (AppProject)
+│   ├── vault
+│   ├── external-secrets
+│   ├── argocd
+│   ├── alloy
+│   ├── n8n
+│   └── authelia
+└── applications (Application, renderParent=applications)
+    ├── applications (AppProject)
+    ├── external-services
+    └── transmission
 ```
 
-## Layers
+## Parents
 
-| Layer | Wave | Description |
-|-------|------|-------------|
+| Parent | Wave | Description |
+|--------|------|-------------|
 | system | -1 | Core cluster components (CNI, ingress, certificates) |
 | platform | 0 | Platform services and DevOps tools |
 | applications | 1 | End-user applications and services |
@@ -76,21 +74,20 @@ environments (ApplicationSet)
 | -2 | ingress-nginx | External traffic routing |
 | 0 | cert-manager, vault, external-secrets | TLS certificates, secret management |
 | 1 | argocd | GitOps platform |
-| 2 | vault-secrets-generator, victoriametrics | Secret generation, monitoring |
+| 2 | alloy, vault-secrets-generator, victoriametrics | Monitoring, secret generation |
 | 3 | n8n, authelia | Platform services |
-| 4 | external-services | End-user services |
+| 4 | external-services, transmission | End-user services |
 
 ## Adding New Applications
 
 1. Add chart to `kubernetes/apps/<name>/`
 2. Add values file at `kubernetes/apps/<name>/values/homelab.yaml`
-3. Add entry to appropriate layer in `app-of-apps/values.yaml`:
+3. Add entry to appropriate parent in `app-of-apps/values.yaml`:
    ```yaml
-   layers:
+   parents:
      platform:  # or system/applications
        children:
          - name: my-app
-           enabled: true
            namespace: my-namespace
            annotations:
              argocd.argoproj.io/sync-wave: "2"
@@ -115,32 +112,19 @@ Values are still pulled from homelab repo at `kubernetes/apps/<name>/values/<env
 
 ## Bootstrap
 
-### Option 1: ApplicationSet (Recommended)
-
 ```bash
 # Install ArgoCD first
 kubectl create namespace argocd
 helm install argocd kubernetes/apps/argocd \
-  -n argocd \
-  -f kubernetes/apps/argocd/values/homelab.yaml
+  -n argocd
 
-# Deploy bootstrap ApplicationSet
+# Deploy app-of-apps
 argocd app create app-of-apps \
   --repo https://github.com/pavlenkoa/homelab.git \
-  --path kubernetes/app-of-apps/bootstrap \
+  --path kubernetes/app-of-apps \
   --dest-server https://kubernetes.default.svc \
   --dest-namespace argocd \
-  --sync-policy automated --self-heal --auto-prune
-```
-
-The ApplicationSet auto-discovers `values/*.yaml` files and creates an Application per environment.
-
-### Option 2: Direct Helm Install
-
-```bash
-helm install app-of-apps kubernetes/app-of-apps \
-  -n argocd \
-  -f kubernetes/app-of-apps/values/homelab.yaml
+  --sync-policy automated --auto-prune
 ```
 
 ## Access ArgoCD
@@ -165,7 +149,7 @@ kubectl get secret argocd-initial-admin-secret -n argocd \
 | annotations | Merge | Later wins |
 | finalizers | Override | First non-empty |
 
-**Hierarchy:** childDefaults → layerChildDefaults → child-specific config
+**Hierarchy:** childDefaults → parent-level childDefaults → child-specific config
 
 ## Secret Management
 
