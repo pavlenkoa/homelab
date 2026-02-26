@@ -140,7 +140,7 @@ parents:
         annotations:
           argocd.argoproj.io/sync-wave: "1"
       - name: vault-secrets-generator
-        enabled: false
+        enabled: true
         namespace: vsg
         path: helm/vault-secrets-generator
         repository:
