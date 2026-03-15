@@ -37,4 +37,4 @@ See [CLAUDE.md](CLAUDE.md) for detailed project documentation.
 
 ---
 
-*Latest iteration done with help of [Claude Code](https://github.com/anthropics/claude-code) using Opus 4.5 :)*
+*Latest iteration done with help of [Claude Code](https://github.com/anthropics/claude-code) :)*
