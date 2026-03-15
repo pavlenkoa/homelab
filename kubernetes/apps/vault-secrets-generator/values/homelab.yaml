@@ -2,7 +2,7 @@
 # Showcases various VSG features for declarative secret management
 
 image:
-  tag: "latest"
+  tag: "2.2.2"
 
 # Service account name must match *-secret-generator pattern for Vault role
 serviceAccount:
