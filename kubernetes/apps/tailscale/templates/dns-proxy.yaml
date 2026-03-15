@@ -34,3 +34,4 @@ ports:
 endpoints:
   - addresses:
       - "192.168.88.1"
+    conditions: {}
