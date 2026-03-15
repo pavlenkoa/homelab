@@ -6,12 +6,10 @@ vault:
   secretPath: "kv/authelia"
   secretStoreName: "vault-backend"
 
-# Disable pre-install job - secrets are now managed by VSG
-preInstall:
-  enabled: false
-  adminUser:
-    displayName: "Homelab Administrator"
-    email: "admin@pavlenko.io"
+# Admin user for users_database template
+adminUser:
+  displayName: "Homelab Administrator"
+  email: "admin@pavlenko.io"
 
 # Override upstream chart values for homelab
 authelia:
@@ -137,7 +135,7 @@ authelia:
   # Resource configuration for homelab (limits removed for performance)
   pod:
     resources: {}
-  
+
   # Redis configuration
   redis:
     auth:

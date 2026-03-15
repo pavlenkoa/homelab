@@ -13,12 +13,10 @@ serviceAccount:
 upstream:
   enabled: true
 
-# Pre-install job configuration
-preInstall:
-  enabled: true
-  adminUser:
-    displayName: "Administrator"
-    email: "admin@pavlenko.io"
+# Admin user configuration (used in users_database template)
+adminUser:
+  displayName: "Administrator"
+  email: "admin@pavlenko.io"
 
 # Vault configuration
 vault:
