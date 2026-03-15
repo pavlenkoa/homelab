@@ -6,8 +6,9 @@ vault:
   secretPath: "kv/authelia"
   secretStoreName: "vault-backend"
 
-# Admin user configuration
+# Disable pre-install job - secrets are now managed by VSG
 preInstall:
+  enabled: false
   adminUser:
     displayName: "Homelab Administrator"
     email: "admin@pavlenko.io"

@@ -93,6 +93,33 @@ config:
       }
     }
 
+    # Authelia secrets
+    secret "authelia" {
+      path = "authelia"
+
+      content {
+        # Admin credentials
+        admin_password      = generate({length = 32})
+        admin_password_hash = argon2({from = "admin_password"})
+
+        # Cryptographic secrets
+        jwt_secret             = generate({length = 64, symbols = 0})
+        session_secret         = generate({length = 64, symbols = 0})
+        storage_encryption_key = generate({length = 64, symbols = 0})
+        oidc_hmac_secret       = generate({length = 64, symbols = 0})
+
+        # Redis
+        redis_password = generate({length = 32})
+
+        # OIDC client secret with PBKDF2 hash for Authelia
+        immich_oidc_client_plaintext = generate({length = 64, symbols = 0})
+        immich_oidc_client_secret    = pbkdf2({from = "immich_oidc_client_plaintext", variant = "sha512"})
+
+        # RSA key for OIDC JWKS signing
+        oidc_jwks_key = command("openssl genrsa 4096 2>/dev/null", {strategy = "create"})
+      }
+    }
+
 # Environment variables for the job
 env:
   - name: POD_NAMESPACE
