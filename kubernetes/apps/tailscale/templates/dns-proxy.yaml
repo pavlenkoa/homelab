@@ -1,37 +1,107 @@
-apiVersion: v1
-kind: Service
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: home-dns
-  annotations:
-    tailscale.com/expose: "true"
-    tailscale.com/hostname: home-dns
 spec:
-  type: ClusterIP
-  ports:
-    - name: dns-udp
-      port: 53
-      targetPort: 53
-      protocol: UDP
-    - name: dns-tcp
-      port: 53
-      targetPort: 53
-      protocol: TCP
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-dns
+  template:
+    metadata:
+      labels:
+        app: home-dns
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: macmini
+      serviceAccountName: home-dns
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 8.8.8.8
+      containers:
+        - name: tailscale
+          image: ghcr.io/tailscale/tailscale:latest
+          env:
+            - name: TS_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: operator-oauth
+                  key: client_id
+            - name: TS_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: operator-oauth
+                  key: client_secret
+            - name: TS_HOSTNAME
+              value: home-dns
+            - name: TS_KUBE_SECRET
+              value: home-dns-state
+            - name: TS_USERSPACE
+              value: "false"
+            - name: TS_ACCEPT_DNS
+              value: "false"
+            - name: TS_EXTRA_ARGS
+              value: "--advertise-tags=tag:homelab"
+          volumeMounts:
+            - name: tun
+              mountPath: /dev/net/tun
+          securityContext:
+            capabilities:
+              add:
+                - NET_ADMIN
+                - NET_RAW
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: 100m
+        - name: dnsmasq
+          image: drpsychick/dnsmasq:latest
+          args:
+            - --no-daemon
+            - --listen-address=0.0.0.0
+            - --server=192.168.88.1
+            - --no-resolv
+          ports:
+            - containerPort: 53
+              protocol: UDP
+            - containerPort: 53
+              protocol: TCP
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
+          resources:
+            limits:
+              memory: 32Mi
+              cpu: 50m
+      volumes:
+        - name: tun
+          hostPath:
+            path: /dev/net/tun
 ---
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
+apiVersion: v1
+kind: ServiceAccount
 metadata:
   name: home-dns
-  labels:
-    kubernetes.io/service-name: home-dns
-addressType: IPv4
-ports:
-  - name: dns-udp
-    port: 53
-    protocol: UDP
-  - name: dns-tcp
-    port: 53
-    protocol: TCP
-endpoints:
-  - addresses:
-      - "192.168.88.1"
-    conditions: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: home-dns
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "get", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: home-dns
+subjects:
+  - kind: ServiceAccount
+    name: home-dns
+roleRef:
+  kind: Role
+  name: home-dns
+  apiGroup: rbac.authorization.k8s.io
