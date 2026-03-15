@@ -54,7 +54,6 @@ metadata:
 spec:
   project: {{ $effectiveParentName }}
 {{- if $useMultipleSources }}
-  {{- /* Multiple sources: chart from external repo, values from homelab repo */ -}}
   sources:
     - repoURL: {{ $appRepoURL }}
       targetRevision: {{ (($app.repository).targetRevision) | default $root.Values.repository.targetRevision }}
