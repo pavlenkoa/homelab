@@ -27,8 +27,10 @@ config:
       }
     }
 
-    # Default password policy
+    # Default settings
     defaults {
+      mount = "kv"
+
       generate {
         length     = 32
         digits     = 5
@@ -38,48 +40,57 @@ config:
     }
 
     # Demo secret block with various value types
-    secret "kv/vsg-demo" {
-      # Generated passwords with different policies
-      api_key          = generate()
-      jwt_secret       = generate({length = 64, symbols = 0})
-      database_password = generate({length = 24, digits = 4, symbols = 2})
-      simple_token     = generate({length = 16, symbols = 0, no_upper = true})
+    secret "vsg-demo" {
+      path = "vsg-demo"
 
-      # Command-generated values
-      uuid             = command("cat /proc/sys/kernel/random/uuid")
-      hostname         = command("hostname")
-      random_hex       = command("head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \\n'")
-      timestamp        = command("date -u +%Y-%m-%dT%H:%M:%SZ")
+      content {
+        # Generated passwords with different policies
+        api_key           = generate()
+        jwt_secret        = generate({length = 64, symbols = 0})
+        database_password = generate({length = 24, digits = 4, symbols = 2})
+        simple_token      = generate({length = 16, symbols = 0, no_upper = true})
 
-      # Static configuration values
-      environment      = "homelab"
-      cluster_name     = "orbstack"
-      managed_by       = "vault-secrets-generator"
+        # Command-generated values
+        uuid       = command("cat /proc/sys/kernel/random/uuid")
+        hostname   = command("hostname")
+        random_hex = command("head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \\n'")
+        timestamp  = command("date -u +%Y-%m-%dT%H:%M:%SZ")
 
-      # Environment variable references
-      namespace        = env("POD_NAMESPACE")
-      pod_name         = env("POD_NAME")
-      node_name        = env("NODE_NAME")
+        # Static configuration values
+        environment = "homelab"
+        cluster_name = "orbstack"
+        managed_by  = "vault-secrets-generator"
 
-      # Copy from another Vault secret
-      shared_password  = vault("kv/shared", "password")
+        # Environment variable references
+        namespace = env("POD_NAMESPACE")
+        pod_name  = env("POD_NAME")
+        node_name = env("NODE_NAME")
+      }
     }
 
     # Separate secret block for app-specific config
-    secret "kv/vsg-demo/database" {
-      host     = "postgres.database.svc.cluster.local"
-      port     = "5432"
-      username = "app_user"
-      password = generate({length = 32})
-      ssl_mode = "require"
+    secret "vsg-demo-database" {
+      path = "vsg-demo/database"
+
+      content {
+        host     = "postgres.database.svc.cluster.local"
+        port     = "5432"
+        username = "app_user"
+        password = generate({length = 32})
+        ssl_mode = "require"
+      }
     }
 
     # Redis configuration example
-    secret "kv/vsg-demo/redis" {
-      host     = "redis.cache.svc.cluster.local"
-      port     = "6379"
-      password = generate({length = 24, symbols = 0})
-      db       = "0"
+    secret "vsg-demo-redis" {
+      path = "vsg-demo/redis"
+
+      content {
+        host     = "redis.cache.svc.cluster.local"
+        port     = "6379"
+        password = generate({length = 24, symbols = 0})
+        db       = "0"
+      }
     }
 
 # Environment variables for the job
