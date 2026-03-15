@@ -116,7 +116,7 @@ config:
 
         # OIDC client secret with PBKDF2 hash for Authelia
         immich_oidc_client_plaintext = generate({length = 64, symbols = 0})
-        immich_oidc_client_secret    = pbkdf2({from = "immich_oidc_client_plaintext", variant = "sha512"})
+        immich_oidc_client_secret    = pbkdf2({from = "immich_oidc_client_plaintext", variant = "sha512", encoding = "crypt"})
 
         # RSA key for OIDC JWKS signing
         oidc_jwks_key = command("openssl genrsa 4096 2>/dev/null", {strategy = "create"})
