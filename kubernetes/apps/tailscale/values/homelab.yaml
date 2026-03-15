@@ -1,0 +1,11 @@
+# Tailscale configuration for homelab cluster
+# Environment-specific overrides only
+
+tailscale-operator:
+  oauth: {}
+
+  operatorConfig:
+    defaultTags:
+      - "tag:homelab"
+    nodeSelector:
+      kubernetes.io/hostname: macmini

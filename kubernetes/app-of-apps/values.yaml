@@ -173,6 +173,9 @@ parents:
       - name: authelia
         annotations:
           argocd.argoproj.io/sync-wave: "3"
+      - name: tailscale
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
 
   applications:
     description: "End-user applications and services"
