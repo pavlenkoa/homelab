@@ -41,6 +41,7 @@ config:
 
     # Demo secret block with various value types
     secret "vsg-demo" {
+      enabled = false
       path = "vsg-demo"
 
       content {
@@ -70,6 +71,7 @@ config:
 
     # Separate secret block for app-specific config
     secret "vsg-demo-database" {
+      enabled = false
       path = "vsg-demo/database"
 
       content {
@@ -83,6 +85,7 @@ config:
 
     # Redis configuration example
     secret "vsg-demo-redis" {
+      enabled = false
       path = "vsg-demo/redis"
 
       content {
@@ -95,7 +98,8 @@ config:
 
     # Authelia secrets
     secret "authelia" {
-      path = "authelia"
+      path  = "authelia"
+      prune = true
 
       content {
         # Admin credentials
