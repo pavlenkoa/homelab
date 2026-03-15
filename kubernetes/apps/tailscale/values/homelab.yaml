@@ -9,3 +9,6 @@ tailscale-operator:
       - "tag:homelab"
     nodeSelector:
       kubernetes.io/hostname: macmini
+
+  proxyConfig:
+    defaultTags: "tag:homelab"
