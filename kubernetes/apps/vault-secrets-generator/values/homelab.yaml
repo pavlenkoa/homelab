@@ -1,8 +1,7 @@
 # Vault Secrets Generator - Demo deployment
 # Showcases various VSG features for declarative secret management
 
-image:
-  tag: "2.2.2"
+# image.tag defaults to Chart.appVersion from the upstream chart
 
 # Service account name must match *-secret-generator pattern for Vault role
 serviceAccount:
