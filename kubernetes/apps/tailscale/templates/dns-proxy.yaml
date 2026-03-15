@@ -53,12 +53,10 @@ spec:
               memory: 128Mi
               cpu: 100m
         - name: dnsmasq
-          image: drpsychick/dnsmasq:latest
+          image: alpine:latest
+          command: ["sh", "-c"]
           args:
-            - --no-daemon
-            - --listen-address=0.0.0.0
-            - --server=192.168.88.1
-            - --no-resolv
+            - apk add --no-cache dnsmasq && exec dnsmasq --no-daemon --listen-address=0.0.0.0 --server=192.168.88.1 --no-resolv --no-hosts --no-dhcp-interface= --log-queries
           ports:
             - containerPort: 53
               protocol: UDP
