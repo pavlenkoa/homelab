@@ -15,10 +15,7 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: macmini
       serviceAccountName: home-dns
-      dnsPolicy: None
-      dnsConfig:
-        nameservers:
-          - 8.8.8.8
+      dnsPolicy: ClusterFirst
       containers:
         - name: tailscale
           image: ghcr.io/tailscale/tailscale:latest
