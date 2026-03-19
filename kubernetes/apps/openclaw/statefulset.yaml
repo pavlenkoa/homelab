@@ -32,6 +32,7 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/pavlenkoa/openclaw:latest
+          imagePullPolicy: IfNotPresent
           env:
             - name: TZ
               value: "Europe/Kyiv"
