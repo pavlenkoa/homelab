@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: openclaw
+  namespace: openclaw
+spec:
+  serviceName: openclaw
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw
+  template:
+    metadata:
+      labels:
+        app: openclaw
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: raspberrypi
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: media
+          effect: NoSchedule
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: copy-config
+          image: busybox:1.37
+          command: ["sh", "-c", "cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json"]
+          volumeMounts:
+            - name: config
+              mountPath: /home/node/.openclaw
+            - name: openclaw-config
+              mountPath: /config-source
+      containers:
+        - name: openclaw
+          image: ghcr.io/pavlenkoa/openclaw:latest
+          env:
+            - name: TZ
+              value: "Europe/Kyiv"
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-telegram
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_ALLOWED_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-telegram
+                  key: TELEGRAM_ALLOWED_IDS
+            - name: TOLOKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-toloka
+                  key: TOLOKA_USERNAME
+            - name: TOLOKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-toloka
+                  key: TOLOKA_PASSWORD
+          ports:
+            - containerPort: 18789
+              name: gateway
+            - containerPort: 18793
+              name: canvas
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 18789
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 18789
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - name: config
+              mountPath: /home/node/.openclaw
+            - name: media-tv
+              mountPath: /media/tv
+            - name: media-movies
+              mountPath: /media/movies
+            - name: media-tvanimation
+              mountPath: /media/tvanimation
+            - name: media-animation
+              mountPath: /media/animation
+            - name: watch
+              mountPath: /watch
+      volumes:
+        - name: config
+          hostPath:
+            path: /media/openclaw
+            type: DirectoryOrCreate
+        - name: openclaw-config
+          configMap:
+            name: openclaw-config
+        - name: media-tv
+          hostPath:
+            path: /media/emby/tv
+            type: Directory
+        - name: media-movies
+          hostPath:
+            path: /media/emby/movies
+            type: Directory
+        - name: media-tvanimation
+          hostPath:
+            path: /media/emby/tvanimation
+            type: Directory
+        - name: media-animation
+          hostPath:
+            path: /media/emby/animation
+            type: Directory
+        - name: watch
+          hostPath:
+            path: /media/transmission/watch
+            type: Directory

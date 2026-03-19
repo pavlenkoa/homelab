@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: openclaw
+data:
+  openclaw.json: |
+    {
+      "agents": {
+        "defaults": {
+          "model": {
+            "primary": "claude-cli/opus-4.6"
+          },
+          "cliBackends": {
+            "claude-cli": {
+              "command": "/usr/local/bin/claude"
+            }
+          }
+        }
+      },
+      "channels": {
+        "telegram": {
+          "enabled": true,
+          "botToken": "${TELEGRAM_BOT_TOKEN}",
+          "dmPolicy": "allowlist",
+          "allowFrom": ["${TELEGRAM_ALLOWED_IDS}"],
+          "groups": {
+            "*": {
+              "requireMention": true
+            }
+          }
+        }
+      },
+      "gateway": {
+        "bind": "0.0.0.0",
+        "port": 18789
+      },
+      "canvas": {
+        "bind": "0.0.0.0",
+        "port": 18793
+      }
+    }
