@@ -23,7 +23,7 @@ spec:
           image: busybox:1.37
           securityContext:
             runAsUser: 0
-          command: ["sh", "-c", "chown 1000:1000 /home/node/.openclaw && cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json && chown 1000:1000 /home/node/.openclaw/openclaw.json"]
+          command: ["sh", "-c", "chown 1000:1000 /home/node/.openclaw && cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json && chown 1000:1000 /home/node/.openclaw/openclaw.json && mkdir -p /home/node/.openclaw/.claude && chown 1000:1000 /home/node/.openclaw/.claude"]
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
@@ -83,6 +83,9 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
+            - name: config
+              mountPath: /home/node/.claude
+              subPath: .claude
             - name: media
               mountPath: /media
               subPath: emby
