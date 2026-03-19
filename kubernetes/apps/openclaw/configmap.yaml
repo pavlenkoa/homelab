@@ -32,11 +32,7 @@ data:
         }
       },
       "gateway": {
-        "bind": "0.0.0.0",
+        "bind": "lan",
         "port": 18789
-      },
-      "canvas": {
-        "bind": "0.0.0.0",
-        "port": 18793
       }
     }
