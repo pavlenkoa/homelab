@@ -14,13 +14,6 @@ spec:
       labels:
         app: openclaw
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: raspberrypi
-      tolerations:
-        - key: dedicated
-          operator: Equal
-          value: media
-          effect: NoSchedule
       securityContext:
         runAsUser: 1000
         runAsGroup: 1000
@@ -89,41 +82,20 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
-            - name: media-tv
-              mountPath: /media/tv
-            - name: media-movies
-              mountPath: /media/movies
-            - name: media-tvanimation
-              mountPath: /media/tvanimation
-            - name: media-animation
-              mountPath: /media/animation
-            - name: watch
+            - name: media
+              mountPath: /media
+              subPath: emby
+            - name: media
               mountPath: /watch
+              subPath: transmission/watch
       volumes:
         - name: config
-          hostPath:
+          nfs:
+            server: 192.168.88.3
             path: /media/openclaw
-            type: DirectoryOrCreate
         - name: openclaw-config
           configMap:
             name: openclaw-config
-        - name: media-tv
-          hostPath:
-            path: /media/emby/tv
-            type: Directory
-        - name: media-movies
-          hostPath:
-            path: /media/emby/movies
-            type: Directory
-        - name: media-tvanimation
-          hostPath:
-            path: /media/emby/tvanimation
-            type: Directory
-        - name: media-animation
-          hostPath:
-            path: /media/emby/animation
-            type: Directory
-        - name: watch
-          hostPath:
-            path: /media/transmission/watch
-            type: Directory
+        - name: media
+          persistentVolumeClaim:
+            claimName: media-nfs
