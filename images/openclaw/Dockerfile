@@ -1,6 +1,8 @@
 FROM ghcr.io/openclaw/openclaw:2026.3.8
 
-# Install Claude Code CLI for Max subscription usage
+# Install media tools for file inspection
 USER root
-RUN npm install -g @anthropic-ai/claude-code@2.1.80
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 USER 1000

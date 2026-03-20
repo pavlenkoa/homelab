@@ -46,7 +46,8 @@ spec:
               mountPath: /config-source
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.3.8
+          image: ghcr.io/pavlenkoa/openclaw:latest
+          imagePullPolicy: IfNotPresent
           env:
             - name: TZ
               value: "Europe/Kyiv"
