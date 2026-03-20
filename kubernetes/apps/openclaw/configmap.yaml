@@ -38,23 +38,7 @@ data:
         "token": "${OPENCLAW_HOOK_TOKEN}"
       },
       "cron": {
-        "enabled": true,
-        "jobs": [
-          {
-            "name": "check-tv-subscriptions",
-            "schedule": {"kind": "cron", "expr": "0 8,20 * * *", "tz": "Europe/Warsaw"},
-            "sessionTarget": "isolated",
-            "payload": {
-              "kind": "agentTurn",
-              "message": "Check all TV series subscriptions for updates. For each file in tracking/subscriptions/: Step A - check TMDB for upcoming air dates and notify subscribers if episodes air within 3 days. Step B - login to Toloka, check if torrent size changed, download new episodes if available, and notify subscribers. Follow the instructions in AGENTS.md.",
-              "timeoutSeconds": 300
-            },
-            "delivery": {
-              "mode": "announce",
-              "channel": "telegram"
-            }
-          }
-        ]
+        "enabled": true
       },
       "gateway": {
         "bind": "lan",
@@ -414,6 +398,28 @@ data:
     ## Heartbeats
 
     When you receive a heartbeat poll, check `HEARTBEAT.md` for tasks. If nothing needs attention, reply `HEARTBEAT_OK`.
+  jobs.json: |
+    {
+      "version": 1,
+      "jobs": [
+        {
+          "jobId": "check-tv-subscriptions",
+          "name": "check-tv-subscriptions",
+          "enabled": true,
+          "schedule": {"kind": "cron", "expr": "0 8,20 * * *", "tz": "Europe/Warsaw"},
+          "sessionTarget": "isolated",
+          "payload": {
+            "kind": "agentTurn",
+            "message": "Check all TV series subscriptions for updates. For each file in tracking/subscriptions/: Step A - check TMDB for upcoming air dates and notify subscribers if episodes air within 3 days. Step B - login to Toloka, check if torrent size changed, download new episodes if available, and notify subscribers. Follow the instructions in AGENTS.md.",
+            "timeoutSeconds": 300
+          },
+          "delivery": {
+            "mode": "announce",
+            "channel": "telegram"
+          }
+        }
+      ]
+    }
   SOUL.md: |
     # SOUL.md - Who You Are
 

@@ -35,8 +35,10 @@ spec:
               # and the important operational bits we want to keep
               cp /config-source/AGENTS.md /home/node/.openclaw/workspace/AGENTS.md
               cp /config-source/SOUL.md /home/node/.openclaw/workspace/SOUL.md
+              mkdir -p /home/node/.openclaw/cron
+              cp /config-source/jobs.json /home/node/.openclaw/cron/jobs.json
               rm -f /home/node/.openclaw/workspace/BOOTSTRAP.md
-              chown -R 1000:1000 /home/node/.openclaw/workspace /home/node/.openclaw/openclaw.json /home/node/.openclaw/auth
+              chown -R 1000:1000 /home/node/.openclaw/workspace /home/node/.openclaw/openclaw.json /home/node/.openclaw/auth /home/node/.openclaw/cron
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
