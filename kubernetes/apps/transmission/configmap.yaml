@@ -9,7 +9,7 @@ data:
     # Called by Transmission when a torrent finishes downloading.
     # Env vars from Transmission: TR_TORRENT_DIR, TR_TORRENT_HASH, TR_TORRENT_ID, TR_TORRENT_NAME
 
-    HOOK_URL="http://openclaw.openclaw.svc:18789/hooks/agent"
+    HOOK_URL="http://openclaw.openclaw.svc.cluster.local:18789/hooks/agent"
 
     wget -q -O /dev/null \
       --header="Content-Type: application/json" \
