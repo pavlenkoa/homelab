@@ -14,5 +14,5 @@ data:
     wget -q -O /dev/null \
       --header="Content-Type: application/json" \
       --header="Authorization: Bearer ${HOOK_TOKEN}" \
-      --post-data="{\"message\":\"Torrent download complete. Hash: ${TR_TORRENT_HASH}, Name: ${TR_TORRENT_NAME}, Dir: ${TR_TORRENT_DIR}. Check tracking/downloads/ for this hash, update status to completed, notify the user who requested it, and refresh the Emby library.\",\"channel\":\"telegram\",\"deliver\":true,\"wakeMode\":\"now\"}" \
+      --post-data="{\"message\":\"SYSTEM EVENT: Torrent download complete. Hash: ${TR_TORRENT_HASH}, Name: ${TR_TORRENT_NAME}, Dir: ${TR_TORRENT_DIR}. Look up tracking/downloads/${TR_TORRENT_HASH}.json to find who requested this download. Update the status to completed. Then use openclaw message send --channel telegram --target CHAT_ID --message YOUR_MESSAGE to notify that specific user that their download is ready. Finally refresh the Emby library.\",\"wakeMode\":\"now\"}" \
       "${HOOK_URL}" 2>/dev/null || true

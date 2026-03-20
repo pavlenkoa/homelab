@@ -283,11 +283,16 @@ data:
     To find a tracking file by name (any language): `grep -rl "search term" ~/.openclaw/workspace/tracking/ 2>/dev/null`
 
     ### Webhook: torrent-done
-    When you receive a message via `/hooks/agent` containing torrent completion info:
-    1. Find the tracking file by the hash in the message
-    2. Update `status` to `"completed"` and add `"completed_at"` timestamp
-    3. Look up `requested_by` and send them a notification that their download is ready
-    4. Trigger Emby library refresh: `curl -s -X POST "http://host.internal:8096/emby/Library/Refresh?api_key=$EMBY_API_KEY"`
+    When you receive a message containing "SYSTEM EVENT: Torrent download complete":
+    1. Extract the hash from the message
+    2. Find the tracking file: `cat ~/.openclaw/workspace/tracking/downloads/<HASH>.json`
+    3. Update `status` to `"completed"` and add `"completed_at"` timestamp
+    4. Read `requested_by` field to get the Telegram chat ID
+    5. Send notification to that user using the CLI:
+       ```bash
+       openclaw message send --channel telegram --target <CHAT_ID> --message "Your download is ready: <TORRENT_NAME>"
+       ```
+    6. Trigger Emby library refresh: `curl -s -X POST "http://host.internal:8096/emby/Library/Refresh?api_key=$EMBY_API_KEY"`
 
     ## TV Series Subscriptions
 
