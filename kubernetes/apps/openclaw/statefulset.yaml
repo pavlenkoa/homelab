@@ -23,12 +23,19 @@ spec:
           image: busybox:1.37
           securityContext:
             runAsUser: 0
+          env:
+            - name: TELEGRAM_ALLOWED_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-telegram
+                  key: TELEGRAM_ALLOWED_IDS
           command:
             - sh
             - -c
             - |
               chown 1000:1000 /home/node/.openclaw
               cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json
+              sed -i "s|\"allowFrom\": \[\]|\"allowFrom\": $TELEGRAM_ALLOWED_IDS|" /home/node/.openclaw/openclaw.json
               mkdir -p /home/node/.openclaw/workspace /home/node/.openclaw/auth /home/node/.openclaw/workspace/tracking/downloads /home/node/.openclaw/workspace/tracking/subscriptions /home/node/.openclaw/workspace/tracking/users
               # Always overwrite AGENTS.md and SOUL.md with our versions
               # The defaults are generic; ours contain both our custom instructions

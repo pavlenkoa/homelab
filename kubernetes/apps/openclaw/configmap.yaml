@@ -18,7 +18,7 @@ data:
           "enabled": true,
           "botToken": "${TELEGRAM_BOT_TOKEN}",
           "dmPolicy": "allowlist",
-          "allowFrom": "${TELEGRAM_ALLOWED_IDS}",
+          "allowFrom": [],
           "groups": {
             "*": {
               "requireMention": true
