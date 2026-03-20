@@ -256,7 +256,7 @@ data:
 
     ## Download Tracking
 
-    When adding a torrent to Transmission, ALWAYS create a tracking file so we know who to notify when it's done.
+    **ALWAYS** create a tracking file when adding a torrent to Transmission — regardless of who asked or whether anyone subscribed.
     Tracking files live in `~/.openclaw/workspace/tracking/downloads/` (keyed by transmission hash).
 
     ### Create tracking file after adding torrent
@@ -266,14 +266,19 @@ data:
     {
       "name": "Human-readable name",
       "type": "movie|tv|animation|tvanimation",
-      "requested_by": "<telegram_sender_id>",
       "total_episodes": null,
-      "season": null
+      "season": null,
+      "notify": []
     }
     TRACKEOF
     ```
-    For TV shows: look up TMDB to fill `total_episodes` and `season` before creating the file.
-    For movies: leave them as null.
+    - **Always create** the file with metadata (`name`, `type`, `total_episodes`, `season`)
+    - For TV shows: look up TMDB to fill `total_episodes` and `season`
+    - For movies: leave them as null
+    - `notify` is an array of chat_ids who want to be notified when download completes
+    - If user wants notifications → add their chat_id to `notify` array
+    - If user doesn't want notifications or hasn't been asked yet → leave `notify` empty
+    - Multiple users can be in `notify` — all get notified
 
     ### Lookup tracking files
     To find a tracking file by name (any language): `grep -rl "search term" ~/.openclaw/workspace/tracking/ 2>/dev/null`
@@ -281,32 +286,31 @@ data:
     ### Webhook: torrent-done
     When you receive a message containing "SYSTEM EVENT: Torrent download complete":
     1. Extract the hash, name, and dir from the message
-    2. Read the tracking file: `cat ~/.openclaw/workspace/tracking/downloads/<HASH>.json` to get `requested_by`
-    3. Check what actually downloaded — look at the files on disk based on the dir and name from the webhook. For example `ls /media/tvanimation/` or `ls /media/movies/` to see the actual files, count episodes, check file sizes etc.
-    4. Trigger Emby library refresh: `curl -s -X POST "http://host.internal:8096/emby/Library/Refresh?api_key=$EMBY_API_KEY"`
-    5. Send notification via:
+    2. Read the tracking file: `cat ~/.openclaw/workspace/tracking/downloads/<HASH>.json`
+    3. Refresh Emby library: `curl -s -X POST "http://host.internal:8096/emby/Library/Refresh?api_key=$EMBY_API_KEY"`
+    4. Check what actually downloaded — look at files on disk, count episodes, check sizes
+    5. For EACH chat_id in the `notify` array, send a friendly message:
        ```bash
        openclaw message send --channel telegram --target <CHAT_ID> --message "<MESSAGE>"
        ```
-       Message templates (use Ukrainian by default, check user preferences file for language):
+       Message templates (check user preferences file for language, default Ukrainian):
 
-       **Movie downloaded:**
+       **Movie:**
        "The Wolf of Wall Street (2013) скачався — 6.9 ГБ, 1080p. Вже в Emby!"
 
-       **Full TV season downloaded (all episodes out):**
-       "Jujutsu Kaisen Season 2 готовий — 24 серії, 1080p. Вже в Emby!"
+       **Full TV season (all episodes):**
+       "Jujutsu Kaisen Season 2 готовий — всі 24 серії, 1080p. Вже в Emby!"
 
-       **Partial TV season downloaded (not all episodes aired yet):**
-       "Jujutsu Kaisen Season 3 — скачав 11 з 12 серій. 12 серія ще не вийшла, докачаю автоматично як з'явиться і повідомлю."
+       **Partial TV season (not all episodes aired):**
+       "Jujutsu Kaisen Season 3 — скачав 11 з 12 серій. Решту докачаю автоматично як з'являться і повідомлю."
 
-       **Single new episode downloaded (from subscription update):**
+       **New episode from subscription update:**
        "Нова серія Jujutsu Kaisen S3E12 скачалась! Вже в Emby."
 
-       **Multiple new episodes downloaded (from subscription update):**
+       **Multiple new episodes from subscription update:**
        "Jujutsu Kaisen Season 3 — докачав серії 12-13. Вже в Emby!"
 
-       Always check actual files on disk to get accurate episode count and sizes.
-    6. Clean up: `rm ~/.openclaw/workspace/tracking/downloads/<HASH>.json`
+       Always check actual files on disk to get accurate info.
 
     ## TV Series Subscriptions
 

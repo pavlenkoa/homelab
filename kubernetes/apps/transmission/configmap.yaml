@@ -9,10 +9,25 @@ data:
     # Called by Transmission when a torrent finishes downloading.
     # Env vars from Transmission: TR_TORRENT_DIR, TR_TORRENT_HASH, TR_TORRENT_ID, TR_TORRENT_NAME
 
-    HOOK_URL="http://openclaw.openclaw.svc.cluster.local:18789/hooks/agent"
+    TRACKING_DIR="/tracking/downloads"
+    TRACKING_FILE="${TRACKING_DIR}/${TR_TORRENT_HASH}.json"
+    OPENCLAW_URL="http://openclaw.openclaw.svc.cluster.local:18789/hooks/agent"
 
-    wget -q -O /dev/null \
+    # No tracking file = no one to notify
+    if [ ! -f "$TRACKING_FILE" ]; then
+      exit 0
+    fi
+
+    # Check if there are any subscribers in notify array
+    NOTIFY_COUNT=$(jq -r '.notify | length' "$TRACKING_FILE" 2>/dev/null)
+    if [ "$NOTIFY_COUNT" = "0" ] || [ -z "$NOTIFY_COUNT" ]; then
+      exit 0
+    fi
+
+    # Has subscriber — trigger AI agent with full context
+    wget -q -O /dev/null --timeout=10 \
       --header="Content-Type: application/json" \
       --header="Authorization: Bearer ${HOOK_TOKEN}" \
-      --post-data="{\"message\":\"SYSTEM EVENT: Torrent download complete. Hash: ${TR_TORRENT_HASH}, Name: ${TR_TORRENT_NAME}, Dir: ${TR_TORRENT_DIR}. Look up tracking/downloads/${TR_TORRENT_HASH}.json to find who requested this download. Update the status to completed. Then use openclaw message send --channel telegram --target CHAT_ID --message YOUR_MESSAGE to notify that specific user that their download is ready. Finally refresh the Emby library.\",\"wakeMode\":\"now\"}" \
-      "${HOOK_URL}" 2>/dev/null || true
+      --post-data="{\"message\":\"SYSTEM EVENT: Torrent download complete. Hash: ${TR_TORRENT_HASH}, Name: ${TR_TORRENT_NAME}, Dir: ${TR_TORRENT_DIR}. Read tracking file tracking/downloads/${TR_TORRENT_HASH}.json for metadata and notify list. Check actual files on disk, count episodes, compare with total_episodes. Send a friendly notification to each chat_id in the notify array via openclaw message send. Refresh Emby library.\",\"wakeMode\":\"now\"}" \
+      "${OPENCLAW_URL}" 2>/dev/null || true
+

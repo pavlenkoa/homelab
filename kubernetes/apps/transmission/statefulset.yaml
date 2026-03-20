@@ -131,6 +131,8 @@ spec:
             - name: scripts
               mountPath: /scripts
               readOnly: true
+            - name: tracking
+              mountPath: /tracking/downloads
             - name: watch
               mountPath: /watch
             - name: downloads-tv
@@ -161,6 +163,10 @@ spec:
           configMap:
             name: transmission-scripts
             defaultMode: 0755
+        - name: tracking
+          hostPath:
+            path: /media/openclaw/workspace/tracking/downloads
+            type: DirectoryOrCreate
         - name: config
           hostPath:
             path: /home/andrii/transmission-config
