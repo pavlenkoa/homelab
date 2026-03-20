@@ -46,7 +46,7 @@ spec:
               mountPath: /config-source
       containers:
         - name: openclaw
-          image: ghcr.io/pavlenkoa/openclaw:latest
+          image: ghcr.io/pavlenkoa/openclaw:latest@sha256:d3ff6f2ab6ec15fee8f93cf8089450c604b02b0abd6e778dd35a02944ff8455d
           imagePullPolicy: IfNotPresent
           env:
             - name: TZ
