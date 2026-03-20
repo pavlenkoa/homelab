@@ -73,6 +73,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-emby
                   key: EMBY_API_KEY
+            - name: TMDB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-tmdb
+                  key: TMDB_API_KEY
           ports:
             - containerPort: 18789
               name: gateway
