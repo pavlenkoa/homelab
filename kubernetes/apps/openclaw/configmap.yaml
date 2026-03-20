@@ -284,8 +284,22 @@ data:
 
     ## TV Series Subscriptions
 
-    When a user asks to "track" or "follow" a TV series for new episodes, create a subscription file.
     Subscriptions live in `~/.openclaw/workspace/tracking/subscriptions/` (keyed by toloka topic ID).
+    Subscriptions have TWO purposes that are SEPARATE:
+    1. **Tracking** (always active) — cron checks Toloka for new episodes and downloads them automatically
+    2. **Notifications** (per-user opt-in) — subscribers get notified about new episodes and upcoming air dates
+
+    ### When to create subscriptions AUTOMATICALLY
+    - When a user downloads a TV series and there are MISSING episodes (not all aired yet), ALWAYS create a subscription
+    - Ask the user: "Хочеш отримувати повідомлення коли вийдуть нові серії?" (or equivalent in their language)
+    - If yes → add them to `subscribers` list
+    - If no → still create the subscription (for auto-download), just don't add them to `subscribers`
+    - Remember their preference in per-user preferences file (see below)
+
+    ### Unsubscribing
+    - "Unsubscribe" means STOP NOTIFICATIONS ONLY — remove the user from `subscribers` list
+    - The subscription itself stays active — cron still checks and downloads new episodes
+    - Only admin can fully delete a subscription (stop tracking entirely)
 
     ### Create subscription file
     ```bash
@@ -353,6 +367,23 @@ data:
 
     ### Adding subscribers
     If another user asks about a show that already has a subscription, add their chat_id to the `subscribers` array.
+    If a user downloads a show that already has a subscription, check their notification preference and add them if they want notifications.
+
+    ## Per-User Preferences
+
+    Store per-user preferences in `~/.openclaw/workspace/tracking/users/<telegram_chat_id>.json`:
+    ```json
+    {
+      "chat_id": "<telegram_chat_id>",
+      "auto_subscribe_notifications": true,
+      "created_at": "<ISO8601>"
+    }
+    ```
+
+    - `auto_subscribe_notifications`: if true, automatically add this user to notification subscribers when they download a TV series with missing episodes. If false, still track but don't subscribe them.
+    - First time a user downloads a TV series, ASK them if they want auto-notifications and save the preference.
+    - After that, respect the saved preference without asking again.
+    - User can change their preference anytime: "не хочу отримувати повідомлення" or "хочу отримувати повідомлення"
 
     ## General Assistant
 
