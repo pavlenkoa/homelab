@@ -29,7 +29,7 @@ spec:
             - |
               chown 1000:1000 /home/node/.openclaw
               cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json
-              mkdir -p /home/node/.openclaw/workspace /home/node/.openclaw/auth
+              mkdir -p /home/node/.openclaw/workspace /home/node/.openclaw/auth /home/node/.openclaw/workspace/tracking/downloads /home/node/.openclaw/workspace/tracking/subscriptions
               # Always overwrite AGENTS.md and SOUL.md with our versions
               # The defaults are generic; ours contain both our custom instructions
               # and the important operational bits we want to keep
@@ -78,6 +78,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-tmdb
                   key: TMDB_API_KEY
+            - name: OPENCLAW_HOOK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-hook
+                  key: HOOK_TOKEN
           ports:
             - containerPort: 18789
               name: gateway

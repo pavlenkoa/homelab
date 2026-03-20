@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: transmission-scripts
+  namespace: transmission
+data:
+  torrent-done.sh: |
+    #!/bin/sh
+    # Called by Transmission when a torrent finishes downloading.
+    # Env vars from Transmission: TR_TORRENT_DIR, TR_TORRENT_HASH, TR_TORRENT_ID, TR_TORRENT_NAME
+
+    HOOK_URL="http://openclaw.openclaw.svc:18789/hooks/agent"
+
+    wget -q -O /dev/null \
+      --header="Content-Type: application/json" \
+      --header="Authorization: Bearer ${HOOK_TOKEN}" \
+      --post-data="{\"message\":\"Torrent download complete. Hash: ${TR_TORRENT_HASH}, Name: ${TR_TORRENT_NAME}, Dir: ${TR_TORRENT_DIR}. Check tracking/downloads/ for this hash, update status to completed, notify the user who requested it, and refresh the Emby library.\",\"channel\":\"telegram\",\"deliver\":true,\"wakeMode\":\"now\"}" \
+      "${HOOK_URL}" 2>/dev/null || true

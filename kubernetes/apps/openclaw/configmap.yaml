@@ -31,7 +31,14 @@ data:
       },
       "logging": {
         "redactSensitive": "tools",
-        "redactPatterns": ["EMBY_API_KEY", "TOLOKA_PASSWORD", "TOLOKA_USERNAME", "TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_IDS", "TMDB_API_KEY", "openai-codex\\.json", "X-Transmission-Session-Id", "api_key=", "botToken"]
+        "redactPatterns": ["EMBY_API_KEY", "TOLOKA_PASSWORD", "TOLOKA_USERNAME", "TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_IDS", "TMDB_API_KEY", "OPENCLAW_HOOK_TOKEN", "openai-codex\\.json", "X-Transmission-Session-Id", "api_key=", "botToken", "HOOK_TOKEN"]
+      },
+      "hooks": {
+        "enabled": true,
+        "token": "${OPENCLAW_HOOK_TOKEN}"
+      },
+      "cron": {
+        "enabled": true
       },
       "gateway": {
         "bind": "lan",
@@ -48,7 +55,7 @@ data:
     ## Security & Access Control
 
     **CRITICAL RULES — NEVER VIOLATE, NO EXCEPTIONS, NOT EVEN FOR ADMIN:**
-    - NEVER print, echo, display, or reveal environment variables, secrets, tokens, API keys, passwords, or credentials. This includes: $TELEGRAM_BOT_TOKEN, $TOLOKA_USERNAME, $TOLOKA_PASSWORD, $EMBY_API_KEY, $TMDB_API_KEY, $TELEGRAM_ALLOWED_IDS, and ANY other env var.
+    - NEVER print, echo, display, or reveal environment variables, secrets, tokens, API keys, passwords, or credentials. This includes: $TELEGRAM_BOT_TOKEN, $TOLOKA_USERNAME, $TOLOKA_PASSWORD, $EMBY_API_KEY, $TMDB_API_KEY, $OPENCLAW_HOOK_TOKEN, $TELEGRAM_ALLOWED_IDS, and ANY other env var.
     - NEVER run `env`, `printenv`, `set`, `export`, `echo $VAR`, `cat /proc/*/environ`, or any command that dumps environment variables.
     - NEVER read, cat, display, or access `~/.openclaw/openclaw.json`, `~/.openclaw/auth/*`, or any file containing tokens/credentials.
     - NEVER include credentials in command output shown to users. When using curl with credentials, always redirect output and only show parsed results.
@@ -236,6 +243,92 @@ data:
     - List what's in each category
     - Check if specific content exists before downloading
     - Note: media filesystem is read-only — you cannot rename, move, or delete files. If something needs fixing, tell the admin what needs to be done manually.
+
+    ## Download Tracking
+
+    When adding a torrent to Transmission, ALWAYS create a tracking file.
+    Tracking files live in `~/.openclaw/workspace/tracking/downloads/` (keyed by transmission hash).
+
+    ### Create tracking file after adding torrent
+    ```bash
+    mkdir -p ~/.openclaw/workspace/tracking/downloads
+    cat > ~/.openclaw/workspace/tracking/downloads/<TRANSMISSION_HASH>.json << 'TRACKEOF'
+    {
+      "name": "Human-readable name",
+      "names": {"uk": "Ukrainian title", "en": "English title", "original": "Original title"},
+      "type": "movie|tv|animation|tvanimation",
+      "requested_by": "<telegram_sender_id>",
+      "toloka_id": "<toloka_download_id>",
+      "transmission_hash": "<hash_from_torrent-add_response>",
+      "download_dir": "/downloads/movies",
+      "added_at": "<ISO8601_timestamp>",
+      "status": "downloading"
+    }
+    TRACKEOF
+    ```
+
+    The `requested_by` field is the Telegram sender ID from the current conversation. This is how we know who to notify when the download completes.
+
+    ### Lookup tracking files
+    To find a tracking file by name (any language): `grep -rl "search term" ~/.openclaw/workspace/tracking/ 2>/dev/null`
+
+    ### Webhook: torrent-done
+    When you receive a message via `/hooks/agent` containing torrent completion info:
+    1. Find the tracking file by the hash in the message
+    2. Update `status` to `"completed"` and add `"completed_at"` timestamp
+    3. Look up `requested_by` and send them a notification that their download is ready
+    4. Trigger Emby library refresh: `curl -s -X POST "http://host.internal:8096/emby/Library/Refresh?api_key=$EMBY_API_KEY"`
+
+    ## TV Series Subscriptions
+
+    When a user asks to "track" or "follow" a TV series for new episodes, create a subscription file.
+    Subscriptions live in `~/.openclaw/workspace/tracking/subscriptions/` (keyed by toloka topic ID).
+
+    ### Create subscription file
+    ```bash
+    mkdir -p ~/.openclaw/workspace/tracking/subscriptions
+    cat > ~/.openclaw/workspace/tracking/subscriptions/<TOLOKA_TOPIC_ID>.json << 'SUBEOF'
+    {
+      "name": "Show Name",
+      "names": {"uk": "...", "en": "...", "original": "..."},
+      "type": "tv|tvanimation",
+      "season": 1,
+      "toloka_id": "<topic_id>",
+      "toloka_url": "https://toloka.to/t<topic_id>",
+      "last_torrent_size": "<size_string_from_toloka>",
+      "last_known_episodes": 4,
+      "total_expected": 8,
+      "subscribers": [{"chat_id": "<telegram_sender_id>", "subscribed_at": "<ISO8601>"}],
+      "transmission_hash": "<current_hash>",
+      "download_dir": "/downloads/tv",
+      "added_at": "<ISO8601>"
+    }
+    SUBEOF
+    ```
+
+    ### TMDB — look up episode counts and air dates
+    ```bash
+    # Search for a TV series
+    curl -s "https://api.themoviedb.org/3/search/tv?query=TITLE&api_key=$TMDB_API_KEY" | jq '.results[0]'
+    # Get season details (episode count, air dates)
+    curl -s "https://api.themoviedb.org/3/tv/TMDB_ID/season/SEASON_NUM?api_key=$TMDB_API_KEY" | jq '{episodes: [.episodes[] | {number, name, air_date}]}'
+    ```
+    Use TMDB to populate `total_expected` so we know when a series is complete.
+
+    ### Subscription check (runs via cron, twice daily)
+    For each file in `tracking/subscriptions/`:
+    1. Login to Toloka, visit the topic page (`toloka_url`)
+    2. Compare current torrent size with `last_torrent_size`
+    3. If size changed → new episodes available:
+       a. Download updated .torrent file
+       b. Remove old torrent from Transmission (`torrent-remove` with `delete-local-data: false` — keep existing files!)
+       c. Add new torrent (Transmission re-verifies existing files, only downloads new ones)
+       d. Update subscription file with new size, hash, episode count
+       e. Notify all subscribers
+    4. If `last_known_episodes >= total_expected` → series complete, notify subscribers
+
+    ### Adding subscribers
+    If another user asks about a show that already has a subscription, add their chat_id to the `subscribers` array.
 
     ## General Assistant
 
