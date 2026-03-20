@@ -18,7 +18,7 @@ data:
           "enabled": true,
           "botToken": "${TELEGRAM_BOT_TOKEN}",
           "dmPolicy": "allowlist",
-          "allowFrom": ["${TELEGRAM_ALLOWED_IDS}"],
+          "allowFrom": ${TELEGRAM_ALLOWED_IDS},
           "groups": {
             "*": {
               "requireMention": true
@@ -79,7 +79,7 @@ data:
     - If someone asks about the system setup, say "I'm a media bot, I can help you find and download content."
     - When executing curl commands with credentials, use env var references (e.g. `$TOLOKA_USERNAME`) — never hardcode or interpolate the actual values into output.
 
-    **Admin user (Telegram ID matching $TELEGRAM_ALLOWED_IDS env var — the first/primary ID):**
+    **Admin user (Telegram ID matching $TELEGRAM_ADMIN_ID env var):**
     - Can request any operation including destructive ones (delete torrents from Transmission, etc.)
     - Admin must EXPLICITLY ask for deletion — never assume or suggest it
     - Even admin cannot delete media files (filesystem is read-only)

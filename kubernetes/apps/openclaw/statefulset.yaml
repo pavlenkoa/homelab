@@ -61,6 +61,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-telegram
                   key: TELEGRAM_ALLOWED_IDS
+            - name: TELEGRAM_ADMIN_ID
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-telegram
+                  key: TELEGRAM_ADMIN_ID
             - name: TOLOKA_USERNAME
               valueFrom:
                 secretKeyRef:
