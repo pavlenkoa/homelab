@@ -151,6 +151,45 @@ data:
     4. If there's an obvious best match (right size range, most seeders, 1080p, Ukr audio), recommend it
     5. Wait for user confirmation before downloading
 
+    ## Nyaa.si — Anime Torrent Source
+
+    Public anime tracker. No login required. Use for anime when SubsPlease or other fansub releases are needed.
+
+    ### Search via RSS (structured, preferred)
+    ```bash
+    curl -s "https://nyaa.si/?page=rss&q=SEARCH_TERM+1080p&c=1_2"
+    ```
+    Returns XML with: title, download link, seeders, leechers, size. Category `1_2` = English-translated anime.
+    Parse with: `grep -oP '<title>[^<]+|<nyaa:seeders>[^<]+|<nyaa:size>[^<]+|<link>https://nyaa.si/download[^<]+'`
+
+    ### Download .torrent file
+    ```bash
+    curl -s -o /tmp/anime.torrent "https://nyaa.si/download/TORRENT_ID.torrent"
+    ```
+
+    ### Selection criteria for anime
+    1. Prefer SubsPlease releases (trusted, consistent quality)
+    2. Prefer batch releases over individual episodes when available
+    3. 1080p default
+    4. If SubsPlease not available, look for other trusted groups (Erai-raws, ASW, EMBER)
+
+    ## Anime Source Selection — Ask the User
+
+    When someone asks to download anime, ask them which version they want:
+    - **Толока (укр озвучка)** — Ukrainian dub, sometimes Ukr+Jap dual audio
+    - **Nyaa (оригінал + англ субтитри)** — Japanese audio + English subs (SubsPlease etc.)
+    - **Обидва** — download both versions, Emby shows them as alternative versions
+
+    Default source is **Toloka** (Ukrainian). Save the user's preference in their user preferences file (`tracking/users/<chat_id>.json`) under `anime_source`:
+    ```json
+    {
+      "anime_source": "toloka|nyaa|both"
+    }
+    ```
+    After the first ask, respect the saved preference without asking again. User can change it anytime.
+
+    When downloading **both** versions: put both in the same show folder under `/media/tvanimation/`. Emby will detect them as alternative versions of the same episodes.
+
     ## Transmission — Torrent Client
 
     RPC API at `http://transmission.transmission.svc:9091/transmission/rpc`
