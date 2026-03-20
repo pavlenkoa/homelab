@@ -298,6 +298,10 @@ data:
       "last_torrent_size": "<size_string_from_toloka>",
       "last_known_episodes": 4,
       "total_expected": 8,
+      "tmdb_id": 12345,
+      "tmdb_status": "Returning Series",
+      "tmdb_next_air_date": "2026-10-15",
+      "tmdb_last_notified_date": null,
       "subscribers": [{"chat_id": "<telegram_sender_id>", "subscribed_at": "<ISO8601>"}],
       "transmission_hash": "<current_hash>",
       "download_dir": "/downloads/tv",
@@ -305,6 +309,11 @@ data:
     }
     SUBEOF
     ```
+    Fields from TMDB:
+    - `tmdb_id`: TMDB series ID for future lookups
+    - `tmdb_status`: "Returning Series", "Ended", "In Production", "Planned"
+    - `tmdb_next_air_date`: next episode air date (null if unknown or series ended)
+    - `tmdb_last_notified_date`: the air date we last notified subscribers about (prevents repeat notifications)
 
     ### TMDB — look up episode counts and air dates
     ```bash
@@ -317,6 +326,17 @@ data:
 
     ### Subscription check (runs via cron, twice daily)
     For each file in `tracking/subscriptions/`:
+
+    **Step A — Check TMDB for upcoming episodes:**
+    1. Query TMDB for the show's next air date: `curl -s "https://api.themoviedb.org/3/tv/$TMDB_ID?api_key=$TMDB_API_KEY" | jq '{next_episode_to_air, status}'`
+    2. If `next_episode_to_air` exists and is within 3 days, and `tmdb_last_notified_date` != this date:
+       - Notify all subscribers: "Show Name — new episode airing on DATE"
+       - Update `tmdb_last_notified_date` to this date
+    3. If `tmdb_status` changed (e.g. show renewed, new season announced):
+       - Notify all subscribers about the status change
+       - Update `tmdb_status` and `tmdb_next_air_date`
+
+    **Step B — Check Toloka for new torrent content:**
     1. Login to Toloka, visit the topic page (`toloka_url`)
     2. Compare current torrent size with `last_torrent_size`
     3. If size changed → new episodes available:
@@ -324,8 +344,9 @@ data:
        b. Remove old torrent from Transmission (`torrent-remove` with `delete-local-data: false` — keep existing files!)
        c. Add new torrent (Transmission re-verifies existing files, only downloads new ones)
        d. Update subscription file with new size, hash, episode count
-       e. Notify all subscribers
-    4. If `last_known_episodes >= total_expected` → series complete, notify subscribers
+       e. Notify all subscribers: "Show Name — new episodes downloaded!"
+       f. Trigger Emby library refresh
+    4. If `last_known_episodes >= total_expected` and `tmdb_status` is "Ended" → series complete, notify subscribers
 
     ### Adding subscribers
     If another user asks about a show that already has a subscription, add their chat_id to the `subscribers` array.
