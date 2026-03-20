@@ -43,6 +43,13 @@ data:
       "gateway": {
         "bind": "lan",
         "port": 18789,
+        "auth": {
+          "mode": "trusted-proxy",
+          "trustedProxy": {
+            "userHeader": "Remote-User"
+          }
+        },
+        "trustedProxies": ["10.0.0.0/16"],
         "controlUi": {
           "allowedOrigins": ["https://openclaw.pavlenko.io"]
         }
