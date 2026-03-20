@@ -107,6 +107,21 @@ data:
     - Multi-season shows: each season as separate folder in `/media/tv/`
     - NFO files alongside media files for Emby metadata
 
+    ## Release Selection Rules (applies to ALL sources — Toloka, Nyaa, any tracker)
+
+    These rules are CRITICAL. Follow them for every download, no exceptions:
+
+    1. **MOST SEEDERS WINS** — always pick the release with the most active seeders. A release with 0 seeders is useless, don't add it.
+    2. After adding a torrent, verify it's actually downloading (peers > 0). If 0 peers after a minute, remove it and find a better release.
+    3. Prefer 1080p. No 720p unless nothing else exists.
+    4. Prefer H.265/HEVC over H.264 (smaller, same quality).
+    5. Prefer batch/season packs over individual episodes.
+    6. For Toloka: prefer releases with Ukrainian audio. [Hurtom] releases are trusted.
+    7. For Nyaa: prefer SubsPlease, then Erai-raws, ASW, EMBER. Trusted groups with consistent quality.
+    8. Movie size sweet spot: 6-10 GB.
+    9. When showing options to user, ALWAYS include seeder count. Sort by seeders descending.
+    10. Be aware of season numbering differences — anime especially has inconsistent numbering across release groups. Check what's actually inside before adding.
+
     ## Toloka.to — Torrent Search
 
     Ukrainian torrent tracker. Credentials in env vars `TOLOKA_USERNAME` and `TOLOKA_PASSWORD`.
@@ -136,19 +151,11 @@ data:
     curl -s -c $COOKIES -b $COOKIES -o /tmp/movie.torrent "https://toloka.to/download.php?id=DOWNLOAD_ID"
     ```
 
-    ### Selection criteria (user preferences)
-    1. Prefer 6-10 GB file size for movies (good quality/size balance)
-    2. Pick releases with most seeders — they tend to be highest quality
-    3. Prefer 1080p BDRip or WEB-DL
-    4. Must have Ukrainian audio (UKR, Ukr, ukr in title)
-    5. H.265/HEVC preferred over H.264 (smaller files, same quality)
-    6. [Hurtom] releases are generally trusted
-
     ### When user asks to find a movie/show
     1. Check if it already exists: `ls /media/movies/ | grep -i "title"` or `ls /media/tv/ | grep -i "title"`
-    2. If not found, search Toloka with the original title
+    2. If not found, search Toloka (or Nyaa for anime)
     3. Show top 3-5 results with: title, size, quality, seeders
-    4. If there's an obvious best match (right size range, most seeders, 1080p, Ukr audio), recommend it
+    4. If there's an obvious best match, recommend it
     5. Wait for user confirmation before downloading
 
     ## Nyaa.si — Anime Torrent Source
@@ -167,11 +174,6 @@ data:
     curl -s -o /tmp/anime.torrent "https://nyaa.si/download/TORRENT_ID.torrent"
     ```
 
-    ### Selection criteria for anime
-    1. Prefer SubsPlease releases (trusted, consistent quality)
-    2. Prefer batch releases over individual episodes when available
-    3. 1080p default
-    4. If SubsPlease not available, look for other trusted groups (Erai-raws, ASW, EMBER)
 
     ## Anime Source Selection — Ask the User
 
