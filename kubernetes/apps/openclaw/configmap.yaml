@@ -42,7 +42,10 @@ data:
       },
       "gateway": {
         "bind": "lan",
-        "port": 18789
+        "port": 18789,
+        "controlUi": {
+          "allowedOrigins": ["https://openclaw.pavlenko.io"]
+        }
       }
     }
   AGENTS.md: |
