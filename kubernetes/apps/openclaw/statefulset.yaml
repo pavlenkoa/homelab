@@ -29,14 +29,14 @@ spec:
             - |
               chown 1000:1000 /home/node/.openclaw
               cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json
-              mkdir -p /home/node/.openclaw/workspace /home/node/.openclaw/.claude
+              mkdir -p /home/node/.openclaw/workspace /home/node/.openclaw/auth
               # Always overwrite AGENTS.md and SOUL.md with our versions
               # The defaults are generic; ours contain both our custom instructions
               # and the important operational bits we want to keep
               cp /config-source/AGENTS.md /home/node/.openclaw/workspace/AGENTS.md
               cp /config-source/SOUL.md /home/node/.openclaw/workspace/SOUL.md
               rm -f /home/node/.openclaw/workspace/BOOTSTRAP.md
-              chown -R 1000:1000 /home/node/.openclaw/workspace /home/node/.openclaw/openclaw.json /home/node/.openclaw/.claude
+              chown -R 1000:1000 /home/node/.openclaw/workspace /home/node/.openclaw/openclaw.json /home/node/.openclaw/auth
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
@@ -44,8 +44,7 @@ spec:
               mountPath: /config-source
       containers:
         - name: openclaw
-          image: ghcr.io/pavlenkoa/openclaw:latest
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/openclaw/openclaw:2026.3.8
           env:
             - name: TZ
               value: "Europe/Kyiv"
@@ -101,9 +100,6 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
-            - name: config
-              mountPath: /home/node/.claude
-              subPath: .claude
             - name: media
               mountPath: /media
               subPath: emby
