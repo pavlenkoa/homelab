@@ -23,7 +23,7 @@ spec:
           image: busybox:1.37
           securityContext:
             runAsUser: 0
-          command: ["sh", "-c", "chown 1000:1000 /home/node/.openclaw && cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json && chown 1000:1000 /home/node/.openclaw/openclaw.json && mkdir -p /home/node/.openclaw/.claude && chown 1000:1000 /home/node/.openclaw/.claude"]
+          command: ["sh", "-c", "chown 1000:1000 /home/node/.openclaw && cp /config-source/openclaw.json /home/node/.openclaw/openclaw.json && cp /config-source/AGENTS.md /home/node/.openclaw/AGENTS.md && chown -R 1000:1000 /home/node/.openclaw/openclaw.json /home/node/.openclaw/AGENTS.md && mkdir -p /home/node/.openclaw/.claude && chown 1000:1000 /home/node/.openclaw/.claude"]
           volumeMounts:
             - name: config
               mountPath: /home/node/.openclaw
@@ -56,6 +56,11 @@ spec:
                 secretKeyRef:
                   name: openclaw-toloka
                   key: TOLOKA_PASSWORD
+            - name: EMBY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-emby
+                  key: EMBY_API_KEY
           ports:
             - containerPort: 18789
               name: gateway
@@ -89,9 +94,7 @@ spec:
             - name: media
               mountPath: /media
               subPath: emby
-            - name: media
-              mountPath: /watch
-              subPath: transmission/watch
+              readOnly: true
       volumes:
         - name: config
           nfs:
