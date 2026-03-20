@@ -77,7 +77,7 @@ spec:
             - name: FIREWALL_INPUT_PORTS
               value: "9091,19091"
             - name: FIREWALL_OUTBOUND_SUBNETS
-              value: "10.42.0.0/16,10.43.0.0/16"
+              value: "10.0.0.0/16,10.43.0.0/16"
           volumeMounts:
             - name: tun-device
               mountPath: /dev/net/tun
