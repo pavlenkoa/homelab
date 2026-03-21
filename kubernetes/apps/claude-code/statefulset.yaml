@@ -55,6 +55,10 @@ spec:
             - -c
             - |
               ln -sf /home/claude/.claude/.claude.json /home/claude/.claude.json
+              while [ ! -f /home/claude/.claude/.credentials.json ]; do
+                echo "Not authenticated. Run: kubectl exec -it -n claude-code claude-code-0 -- claude auth login"
+                sleep 30
+              done
               exec claude --channels "plugin:telegram@claude-plugins-official,/home/claude/plugins/cron"
           env:
             - name: TZ
