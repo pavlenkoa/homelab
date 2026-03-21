@@ -18,33 +18,6 @@ spec:
         runAsUser: 1000
         runAsGroup: 1000
         fsGroup: 1000
-      initContainers:
-        - name: copy-config
-          image: busybox:1.37
-          securityContext:
-            runAsUser: 0
-          command:
-            - sh
-            - -c
-            - |
-              chown 1000:1000 /home/claude/.claude
-              mkdir -p /home/claude/.claude/channels/telegram
-              mkdir -p /home/claude/workspace/.claude/skills/media
-              # .claude.json must exist at ~/. Store on NFS and symlink.
-              if [ ! -f /home/claude/.claude/.claude.json ]; then
-                echo '{}' > /home/claude/.claude/.claude.json
-              fi
-              cp /config-source/CLAUDE.md /home/claude/workspace/CLAUDE.md
-              cp /config-source/SKILL.md /home/claude/workspace/.claude/skills/media/SKILL.md
-              cp /config-source/mcp.json /home/claude/workspace/.mcp.json
-              chown -R 1000:1000 /home/claude/.claude/channels /home/claude/workspace
-          volumeMounts:
-            - name: claude-home
-              mountPath: /home/claude/.claude
-            - name: workspace
-              mountPath: /home/claude/workspace
-            - name: claude-config
-              mountPath: /config-source
       containers:
         - name: claude-code
           image: ghcr.io/pavlenkoa/claude-code:latest
@@ -54,8 +27,87 @@ spec:
             - sh
             - -c
             - |
+              set -e
+
+              # Auto-update Claude Code CLI
+              npm update -g @anthropic-ai/claude-code 2>/dev/null || true
+
+              # Symlink .claude.json to NFS so it persists
+              if [ ! -f /home/claude/.claude/.claude.json ]; then
+                echo '{}' > /home/claude/.claude/.claude.json
+              fi
               ln -sf /home/claude/.claude/.claude.json /home/claude/.claude.json
-              exec sleep infinity
+
+              # Setup workspace configs (overwrite on every start)
+              mkdir -p /home/claude/workspace/.claude/skills/media
+              cp /config-source/CLAUDE.md /home/claude/workspace/CLAUDE.md
+              cp /config-source/SKILL.md /home/claude/workspace/.claude/skills/media/SKILL.md
+              cp /config-source/mcp.json /home/claude/workspace/.mcp.json
+
+              # Create telegram .env from secret (plugin reads token from here)
+              mkdir -p /home/claude/.claude/channels/telegram
+              echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" > /home/claude/.claude/channels/telegram/.env
+              chmod 600 /home/claude/.claude/channels/telegram/.env
+
+              # Auto-install/update telegram plugin from marketplace
+              MARKETPLACE=/home/claude/.claude/plugins/marketplaces/claude-plugins-official
+              PLUGIN_SRC=$MARKETPLACE/external_plugins/telegram
+              CACHE=/home/claude/.claude/plugins/cache/claude-plugins-official/telegram
+
+              if [ -d "$MARKETPLACE/.git" ]; then
+                git -C "$MARKETPLACE" pull --ff-only 2>/dev/null || true
+              else
+                git clone https://github.com/anthropics/claude-plugins-official "$MARKETPLACE"
+              fi
+
+              LATEST_VER=$(cat "$PLUGIN_SRC/.claude-plugin/plugin.json" | grep '"version"' | head -1 | sed 's/.*"version".*"\([^"]*\)".*/\1/')
+              INSTALLED_VER=""
+              if [ -f /home/claude/.claude/plugins/installed_plugins.json ]; then
+                INSTALLED_VER=$(cat /home/claude/.claude/plugins/installed_plugins.json | grep '"version"' | head -1 | sed 's/.*"version".*"\([^"]*\)".*/\1/')
+              fi
+
+              if [ "$LATEST_VER" != "$INSTALLED_VER" ] || [ ! -d "$CACHE/$LATEST_VER/node_modules" ]; then
+                echo "Installing telegram plugin v$LATEST_VER (was: ${INSTALLED_VER:-none})"
+                mkdir -p "$CACHE/$LATEST_VER"
+                cp -r "$PLUGIN_SRC"/* "$CACHE/$LATEST_VER/"
+                cp -r "$PLUGIN_SRC/.claude-plugin" "$CACHE/$LATEST_VER/"
+                cp "$PLUGIN_SRC/.mcp.json" "$CACHE/$LATEST_VER/" 2>/dev/null || true
+                cd "$CACHE/$LATEST_VER" && npm install --production
+                NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
+                SHA=$(git -C "$MARKETPLACE" rev-parse HEAD)
+                cat > /home/claude/.claude/plugins/installed_plugins.json << PEOF
+              {
+                "version": 2,
+                "plugins": {
+                  "telegram@claude-plugins-official": [{
+                    "scope": "user",
+                    "installPath": "$CACHE/$LATEST_VER",
+                    "version": "$LATEST_VER",
+                    "installedAt": "$NOW",
+                    "lastUpdated": "$NOW",
+                    "gitCommitSha": "$SHA"
+                  }]
+                }
+              }
+              PEOF
+                cat > /home/claude/.claude/plugins/known_marketplaces.json << MEOF
+              {
+                "claude-plugins-official": {
+                  "source": {"source": "github", "repo": "anthropics/claude-plugins-official"},
+                  "installLocation": "$MARKETPLACE",
+                  "lastUpdated": "$NOW"
+                }
+              }
+              MEOF
+              fi
+
+              # Wait for auth (one-time: kubectl exec -it -n claude-code claude-code-0 -- claude)
+              while [ ! -f /home/claude/.claude/.credentials.json ]; do
+                echo "Not authenticated. Run: kubectl exec -it -n claude-code claude-code-0 -- claude"
+                sleep 30
+              done
+
+              exec claude --channels plugin:telegram@claude-plugins-official --dangerously-skip-permissions
           env:
             - name: TZ
               value: "Europe/Kyiv"
