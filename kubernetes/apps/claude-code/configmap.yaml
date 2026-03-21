@@ -31,12 +31,21 @@ data:
     - Shared tracking dir at `/tracking/` (shared with Pan Tolik)
 
     ## Scheduled Tasks
-    Use the cron plugin tools to manage scheduled tasks (persisted to disk, survive restarts):
-    - `add_cron(name, schedule, prompt)` — add/update a scheduled task
-    - `remove_cron(name)` — remove a scheduled task
-    - `list_crons()` — list all crons with next fire time
+    Use the built-in CronCreate tool or `/loop` for recurring tasks. These are session-scoped — they die on restart.
 
-    Schedule format is cron expression, e.g. `0 8,20 * * *` (8am and 8pm).
+    To persist across restarts, maintain `/tracking/CRON.md`. On every session start, read it and recreate all crons.
+
+    When the user asks to add, remove, or change a scheduled task:
+    1. Create/remove the cron using CronCreate/CronDelete or `/loop`
+    2. Update `/tracking/CRON.md` to match (so it gets recreated after restart)
+
+    CRON.md format:
+    ```
+    ## check-tv
+    - schedule: every 12h
+    - prompt: Check TV subscriptions in /tracking/subscriptions/. Only message me if new episodes are available.
+    ```
+
     Cron jobs should stay silent unless there's actionable news.
 
     ## Message Style

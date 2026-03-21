@@ -136,10 +136,9 @@ spec:
               # Attach: kubectl exec -it -n claude-code claude-code-0 -- screen -Ur claude
               # Detach: Ctrl+A, D
               screen -UdmS claude claude \
-                --channels plugin:telegram@claude-plugins-official /home/claude/plugins/cron \
-                --dangerously-load-development-channels \
+                --channels plugin:telegram@claude-plugins-official \
                 --permission-mode acceptEdits \
-                --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,mcp__plugin_telegram_telegram__reply,mcp__plugin_telegram_telegram__react,mcp__plugin_telegram_telegram__edit_message,mcp__cron__add_cron,mcp__cron__remove_cron,mcp__cron__list_crons"
+                --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,mcp__plugin_telegram_telegram__reply,mcp__plugin_telegram_telegram__react,mcp__plugin_telegram_telegram__edit_message"
 
               # Keep container alive while screen runs
               exec tail -f /dev/null
