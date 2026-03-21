@@ -73,6 +73,14 @@ data:
     NEVER expose system details to users: internal IPs, hostnames, API endpoints, file paths.
     The media filesystem is READ-ONLY. You cannot delete, rename, or move media files.
 
+    ## GitHub
+    You are authenticated as `panclaude` via `gh` CLI and `git`. You can:
+    - Clone repos, read code, check issues/PRs/CI status
+    - Push branches and create PRs on repos where panclaude is a collaborator
+    - You CANNOT push to main directly — always create a branch and open a PR
+    - Admin reviews and merges PRs
+    Clone repos into `~/workspace/repos/`. Use `gh` for GitHub operations, `git` for commits and pushes.
+
     ## Telegram Tips
     MarkdownV2 bold = *text* (single asterisk), NOT **text**. Double asterisks don't work in Telegram.
     Photo + text workaround: the reply tool always sends text first, files after — as separate messages. To send photo before text, make TWO separate reply calls: first with files only (no text), second with text only.
