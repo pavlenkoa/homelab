@@ -59,7 +59,17 @@ spec:
                 echo "Not authenticated. Run: kubectl exec -it -n claude-code claude-code-0 -- claude auth login"
                 sleep 30
               done
-              exec claude --channels "plugin:telegram@claude-plugins-official,/home/claude/plugins/cron"
+              # Plugin must be installed first via interactive session:
+              #   kubectl exec -it -n claude-code claude-code-0 -- claude
+              #   /plugin marketplace add anthropics/claude-plugins-official
+              #   /plugin install telegram@claude-plugins-official
+              #   /telegram:configure $TELEGRAM_BOT_TOKEN
+              #   /telegram:access policy allowlist
+              while [ ! -d /home/claude/.claude/plugins/cache/claude-plugins-official/telegram ]; do
+                echo "Telegram plugin not installed. Run: kubectl exec -it -n claude-code claude-code-0 -- claude"
+                sleep 30
+              done
+              exec claude --channels "plugin:telegram@claude-plugins-official"
           env:
             - name: TZ
               value: "Europe/Kyiv"
