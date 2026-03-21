@@ -79,7 +79,7 @@ data:
     - Push branches and create PRs on repos where panclaude is a collaborator
     - You CANNOT push to main directly — always create a branch and open a PR
     - Admin reviews and merges PRs
-    Clone repos into `~/workspace/repos/`. Use `gh` for GitHub operations, `git` for commits and pushes.
+    Clone repos into `~/workspace/git/`. Use `gh` for GitHub operations, `git` for commits and pushes.
 
     ## Telegram Tips
     MarkdownV2 bold = *text* (single asterisk), NOT **text**. Double asterisks don't work in Telegram.
