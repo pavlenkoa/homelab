@@ -97,7 +97,7 @@ spec:
                 cp -r "$PLUGIN_SRC"/* "$CACHE/$LATEST_VER/"
                 cp -r "$PLUGIN_SRC/.claude-plugin" "$CACHE/$LATEST_VER/"
                 cp "$PLUGIN_SRC/.mcp.json" "$CACHE/$LATEST_VER/" 2>/dev/null || true
-                cd "$CACHE/$LATEST_VER" && npm install --production
+                (cd "$CACHE/$LATEST_VER" && npm install --production)
                 NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
                 SHA=$(git -C "$MARKETPLACE" rev-parse HEAD)
                 cat > /home/claude/.claude/plugins/installed_plugins.json << PEOF
