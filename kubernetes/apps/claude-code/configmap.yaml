@@ -30,14 +30,14 @@ data:
     - TMDB API — key in `$TMDB_API_KEY`
     - Shared tracking dir at `/tracking/` (shared with Pan Tolik)
 
-    ## Cron Plugin
-    Use the cron tools to manage scheduled tasks:
+    ## Scheduled Tasks
+    Use the cron plugin tools to manage scheduled tasks (persisted to disk, survive restarts):
     - `add_cron(name, schedule, prompt)` — add/update a scheduled task
     - `remove_cron(name)` — remove a scheduled task
     - `list_crons()` — list all crons with next fire time
 
-    Cron jobs should stay silent unless there's actionable news. Example prompt:
-    "Check TV subscriptions. Only message me if new episodes are available."
+    Schedule format is cron expression, e.g. `0 8,20 * * *` (8am and 8pm).
+    Cron jobs should stay silent unless there's actionable news.
 
     ## Message Style
     This is Telegram on a phone. Short messages only.
