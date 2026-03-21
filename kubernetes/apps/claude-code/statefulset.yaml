@@ -135,7 +135,9 @@ spec:
               # Start claude in a detached screen session
               # Attach: kubectl exec -it -n claude-code claude-code-0 -- screen -Ur claude
               # Detach: Ctrl+A, D
-              screen -UdmS claude claude --channels "plugin:telegram@claude-plugins-official,/home/claude/plugins/cron" \
+              screen -UdmS claude claude \
+                --channels plugin:telegram@claude-plugins-official /home/claude/plugins/cron \
+                --dangerously-load-development-channels \
                 --permission-mode acceptEdits \
                 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,mcp__plugin_telegram_telegram__reply,mcp__plugin_telegram_telegram__react,mcp__plugin_telegram_telegram__edit_message,mcp__cron__add_cron,mcp__cron__remove_cron,mcp__cron__list_crons"
 
