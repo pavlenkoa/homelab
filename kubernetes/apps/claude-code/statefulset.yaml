@@ -133,9 +133,9 @@ spec:
               done
 
               # Start claude in a detached screen session
-              # Attach: kubectl exec -it -n claude-code claude-code-0 -- screen -r claude
+              # Attach: kubectl exec -it -n claude-code claude-code-0 -- screen -Ur claude
               # Detach: Ctrl+A, D
-              screen -dmS claude claude --channels plugin:telegram@claude-plugins-official \
+              screen -UdmS claude claude --channels plugin:telegram@claude-plugins-official \
                 --permission-mode acceptEdits \
                 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,mcp__plugin_telegram_telegram__reply,mcp__plugin_telegram_telegram__react,mcp__plugin_telegram_telegram__edit_message"
 
@@ -144,6 +144,8 @@ spec:
           env:
             - name: TZ
               value: "Europe/Kyiv"
+            - name: LANG
+              value: "C.UTF-8"
             - name: TELEGRAM_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
