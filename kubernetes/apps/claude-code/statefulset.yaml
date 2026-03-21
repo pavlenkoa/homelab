@@ -37,7 +37,7 @@ spec:
               cp /config-source/CLAUDE.md /home/claude/workspace/CLAUDE.md
               cp /config-source/SKILL.md /home/claude/workspace/.claude/skills/media/SKILL.md
               cp /config-source/mcp.json /home/claude/workspace/.mcp.json
-              chown -R 1000:1000 /home/claude/.claude/channels /home/claude/workspace /home/claude/.claude.json
+              chown -R 1000:1000 /home/claude/.claude/channels /home/claude/workspace
           volumeMounts:
             - name: claude-home
               mountPath: /home/claude/.claude
