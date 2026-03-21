@@ -16,7 +16,8 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
 
 RUN npm install -g @anthropic-ai/claude-code@latest
 
-RUN useradd -m -u 1000 -s /bin/bash claude
+# node:22 already has user "node" with UID 1000; rename to "claude"
+RUN usermod -l claude -d /home/claude -m node && groupmod -n claude node
 USER 1000
 
 # Install bun as claude user
