@@ -34,9 +34,25 @@ spec:
               # Auto-update Claude Code CLI
               npm update -g @anthropic-ai/claude-code 2>/dev/null || true
 
-              # Symlink .claude.json to NFS so it persists
+              # Create .claude.json with pre-approved workspaces (skip trust dialog)
               if [ ! -f /home/claude/.claude/.claude.json ]; then
-                echo '{}' > /home/claude/.claude/.claude.json
+                cat > /home/claude/.claude/.claude.json << 'CJEOF'
+              {
+                "hasCompletedOnboarding": true,
+                "projects": {
+                  "/home/claude/workspace": {
+                    "allowedTools": [],
+                    "hasTrustDialogAccepted": true,
+                    "hasClaudeMdExternalIncludesApproved": false
+                  },
+                  "/home/claude/.claude/plugins/cache/claude-plugins-official/telegram": {
+                    "allowedTools": [],
+                    "hasTrustDialogAccepted": true,
+                    "hasClaudeMdExternalIncludesApproved": false
+                  }
+                }
+              }
+              CJEOF
               fi
               ln -sf /home/claude/.claude/.claude.json /home/claude/.claude.json
 
