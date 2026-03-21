@@ -1,0 +1,123 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: claude-code
+  namespace: claude-code
+spec:
+  serviceName: claude-code
+  replicas: 1
+  selector:
+    matchLabels:
+      app: claude-code
+  template:
+    metadata:
+      labels:
+        app: claude-code
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      initContainers:
+        - name: copy-config
+          image: busybox:1.37
+          securityContext:
+            runAsUser: 0
+          command:
+            - sh
+            - -c
+            - |
+              chown 1000:1000 /home/claude/.claude
+              mkdir -p /home/claude/.claude/channels/telegram
+              mkdir -p /home/claude/workspace/.claude/skills/media
+              cp /config-source/CLAUDE.md /home/claude/workspace/CLAUDE.md
+              cp /config-source/SKILL.md /home/claude/workspace/.claude/skills/media/SKILL.md
+              cp /config-source/mcp.json /home/claude/workspace/.mcp.json
+              chown -R 1000:1000 /home/claude/.claude/channels /home/claude/workspace
+          volumeMounts:
+            - name: claude-home
+              mountPath: /home/claude/.claude
+            - name: workspace
+              mountPath: /home/claude/workspace
+            - name: claude-config
+              mountPath: /config-source
+      containers:
+        - name: claude-code
+          image: ghcr.io/pavlenkoa/claude-code:latest
+          imagePullPolicy: Always
+          workingDir: /home/claude/workspace
+          env:
+            - name: TZ
+              value: "Europe/Kyiv"
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: claude-code-telegram
+                  key: TELEGRAM_BOT_TOKEN
+            - name: TELEGRAM_STATE_DIR
+              value: /home/claude/.claude/channels/telegram
+            - name: TOLOKA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: claude-code-toloka
+                  key: TOLOKA_USERNAME
+            - name: TOLOKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: claude-code-toloka
+                  key: TOLOKA_PASSWORD
+            - name: EMBY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claude-code-emby
+                  key: EMBY_API_KEY
+            - name: TMDB_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claude-code-tmdb
+                  key: TMDB_API_KEY
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "2"
+              memory: 2Gi
+          volumeMounts:
+            - name: claude-home
+              mountPath: /home/claude/.claude
+            - name: telegram-access
+              mountPath: /home/claude/.claude/channels/telegram/access.json
+              subPath: access.json
+            - name: workspace
+              mountPath: /home/claude/workspace
+            - name: tracking
+              mountPath: /tracking
+            - name: media
+              mountPath: /media
+              subPath: emby
+              readOnly: true
+            - name: claude-config
+              mountPath: /config-source
+      volumes:
+        - name: claude-home
+          nfs:
+            server: 192.168.88.3
+            path: /media/claude-code/dot-claude
+        - name: telegram-access
+          secret:
+            secretName: claude-code-telegram-access
+        - name: workspace
+          nfs:
+            server: 192.168.88.3
+            path: /media/claude-code/workspace
+        - name: tracking
+          nfs:
+            server: 192.168.88.3
+            path: /media/openclaw/workspace/tracking
+        - name: media
+          persistentVolumeClaim:
+            claimName: claude-code-media-nfs
+        - name: claude-config
+          configMap:
+            name: claude-code-config
