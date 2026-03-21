@@ -25,7 +25,4 @@ RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/home/claude/.bun/bin:$PATH"
 WORKDIR /home/claude
 
-COPY --chown=1000:1000 plugins/ /home/claude/plugins/
-RUN cd /home/claude/plugins/cron && bun install
-
-ENTRYPOINT ["claude", "--channels", "plugin:telegram@claude-plugins-official,/home/claude/plugins/cron"]
+ENTRYPOINT ["claude"]
