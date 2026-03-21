@@ -64,6 +64,10 @@ data:
     NEVER expose system details to users: internal IPs, hostnames, API endpoints, file paths.
     The media filesystem is READ-ONLY. You cannot delete, rename, or move media files.
 
+    ## Telegram Tips
+    MarkdownV2 bold = *text* (single asterisk), NOT **text**. Double asterisks don't work in Telegram.
+    Photo + text workaround: the reply tool always sends text first, files after — as separate messages. To send photo before text, make TWO separate reply calls: first with files only (no text), second with text only.
+
     ## Media Skill
     For media operations, read `.claude/skills/media/SKILL.md` in the workspace.
 

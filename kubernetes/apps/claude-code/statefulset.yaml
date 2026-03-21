@@ -134,7 +134,9 @@ spec:
                 sleep 30
               done
 
-              exec claude --channels plugin:telegram@claude-plugins-official --dangerously-skip-permissions
+              exec claude --channels plugin:telegram@claude-plugins-official \
+                --permission-mode acceptEdits \
+                --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,mcp__plugin_telegram_telegram__reply,mcp__plugin_telegram_telegram__react,mcp__plugin_telegram_telegram__edit_message"
           env:
             - name: TZ
               value: "Europe/Kyiv"
