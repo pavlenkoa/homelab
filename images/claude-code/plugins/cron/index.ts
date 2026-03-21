@@ -42,7 +42,7 @@ function scheduleCron(job: CronJob): void {
     activeJobs.get(job.name)!.stop();
   }
 
-  const cron = new Cron(job.schedule, { timezone: "Europe/Kyiv" }, () => {
+  const cron = new Cron(job.schedule, { timezone: "Europe/Warsaw" }, () => {
     pendingNotifications.push({ name: job.name, prompt: job.prompt });
   });
 
@@ -91,7 +91,7 @@ server.tool(
       content: [
         {
           type: "text" as const,
-          text: `Cron job "${name}" scheduled: ${schedule} (Europe/Kyiv)`,
+          text: `Cron job "${name}" scheduled: ${schedule} (Europe/Warsaw)`,
         },
       ],
     };

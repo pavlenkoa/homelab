@@ -143,7 +143,7 @@ spec:
               exec tail -f /dev/null
           env:
             - name: TZ
-              value: "Europe/Kyiv"
+              value: "Europe/Warsaw"
             - name: LANG
               value: "C.UTF-8"
             - name: TELEGRAM_BOT_TOKEN
