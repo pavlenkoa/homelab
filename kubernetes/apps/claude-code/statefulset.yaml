@@ -30,10 +30,14 @@ spec:
               chown 1000:1000 /home/claude/.claude
               mkdir -p /home/claude/.claude/channels/telegram
               mkdir -p /home/claude/workspace/.claude/skills/media
+              # .claude.json must exist at ~/. Store on NFS and symlink.
+              if [ ! -f /home/claude/.claude/.claude.json ]; then
+                echo '{}' > /home/claude/.claude/.claude.json
+              fi
               cp /config-source/CLAUDE.md /home/claude/workspace/CLAUDE.md
               cp /config-source/SKILL.md /home/claude/workspace/.claude/skills/media/SKILL.md
               cp /config-source/mcp.json /home/claude/workspace/.mcp.json
-              chown -R 1000:1000 /home/claude/.claude/channels /home/claude/workspace
+              chown -R 1000:1000 /home/claude/.claude/channels /home/claude/workspace /home/claude/.claude.json
           volumeMounts:
             - name: claude-home
               mountPath: /home/claude/.claude
@@ -46,6 +50,12 @@ spec:
           image: ghcr.io/pavlenkoa/claude-code:latest
           imagePullPolicy: Always
           workingDir: /home/claude/workspace
+          command:
+            - sh
+            - -c
+            - |
+              ln -sf /home/claude/.claude/.claude.json /home/claude/.claude.json
+              exec claude --channels "plugin:telegram@claude-plugins-official,/home/claude/plugins/cron"
           env:
             - name: TZ
               value: "Europe/Kyiv"
