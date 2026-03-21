@@ -3,7 +3,7 @@ FROM node:22-bookworm-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       curl wget unzip ca-certificates git jq \
-      ffmpeg mediainfo python3 ripgrep tree && \
+      ffmpeg mediainfo python3 ripgrep tree screen && \
     rm -rf /var/lib/apt/lists/*
 
 # Install GitHub CLI

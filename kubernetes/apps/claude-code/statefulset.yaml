@@ -23,8 +23,6 @@ spec:
           image: ghcr.io/pavlenkoa/claude-code:latest
           imagePullPolicy: Always
           workingDir: /home/claude/workspace
-          tty: true
-          stdin: true
           command:
             - sh
             - -c
@@ -134,9 +132,15 @@ spec:
                 sleep 30
               done
 
-              exec claude --channels plugin:telegram@claude-plugins-official \
+              # Start claude in a detached screen session
+              # Attach: kubectl exec -it -n claude-code claude-code-0 -- screen -r claude
+              # Detach: Ctrl+A, D
+              screen -dmS claude claude --channels plugin:telegram@claude-plugins-official \
                 --permission-mode acceptEdits \
                 --allowedTools "Bash,Read,Write,Edit,Glob,Grep,Agent,WebFetch,WebSearch,mcp__plugin_telegram_telegram__reply,mcp__plugin_telegram_telegram__react,mcp__plugin_telegram_telegram__edit_message"
+
+              # Keep container alive while screen runs
+              exec tail -f /dev/null
           env:
             - name: TZ
               value: "Europe/Kyiv"
