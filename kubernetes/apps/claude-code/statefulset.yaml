@@ -20,7 +20,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: claude-code
-          image: ghcr.io/pavlenkoa/claude-code:latest@sha256:11d8d0b629cf625e93cbaa87f72a6b112170e8ca8466fe2ce89607e6de00f74d
+          image: ghcr.io/pavlenkoa/claude-code:latest@sha256:709f3a04c60c7d842855be9d5d62a154eff29bce9e5bc539ac3f86ead3f76b6f
           imagePullPolicy: Always
           workingDir: /home/claude/workspace
           command:
