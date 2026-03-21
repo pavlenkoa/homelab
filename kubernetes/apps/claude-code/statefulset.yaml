@@ -23,6 +23,8 @@ spec:
           image: ghcr.io/pavlenkoa/claude-code:latest
           imagePullPolicy: Always
           workingDir: /home/claude/workspace
+          tty: true
+          stdin: true
           command:
             - sh
             - -c
@@ -48,6 +50,15 @@ spec:
               mkdir -p /home/claude/.claude/channels/telegram
               echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" > /home/claude/.claude/channels/telegram/.env
               chmod 600 /home/claude/.claude/channels/telegram/.env
+
+              # Enable telegram plugin in settings
+              cat > /home/claude/.claude/settings.json << 'SEOF'
+              {
+                "enabledPlugins": {
+                  "telegram@claude-plugins-official": true
+                }
+              }
+              SEOF
 
               # Auto-install/update telegram plugin from marketplace
               MARKETPLACE=/home/claude/.claude/plugins/marketplaces/claude-plugins-official
