@@ -60,11 +60,11 @@ spec:
               cp /config-source/SKILL.md /home/claude/workspace/.claude/skills/media/SKILL.md
               cp /config-source/mcp.json /home/claude/workspace/.mcp.json
 
-              # Setup GitHub auth (gh CLI + git credential helper)
-              echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null
-              gh auth setup-git
+              # Setup GitHub (GH_TOKEN env var handles gh CLI auth)
+              # gh auth setup-git configures git to use gh as credential helper for HTTPS
+              gh auth setup-git || true
               git config --global user.name "panclaude"
-              git config --global user.email "panclaude@users.noreply.github.com"
+              git config --global user.email "269990661+panclaude@users.noreply.github.com"
 
               # Create telegram .env from secret (plugin reads token from here)
               mkdir -p /home/claude/.claude/channels/telegram
