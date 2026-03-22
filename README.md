@@ -1,3 +1,4 @@
+test
 # Homelab
 
 Personal homelab infrastructure. Kubernetes (k3s) on Mac Mini M4 and Raspberry Pi 4. Traffic routes through Kyiv router via WireGuard to bypass CGNAT.
