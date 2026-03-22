@@ -205,7 +205,6 @@ spec:
             - name: media
               mountPath: /media
               subPath: emby
-              readOnly: true
             - name: claude-config
               mountPath: /config-source
       volumes:
