@@ -201,7 +201,9 @@ data:
 
     ### Torrent removal rules
     - **Deleting media** → remove from Transmission with `delete-local-data: true` (Transmission cleans up the files)
-    - **Replacing/moving media** → remove torrent first (without `delete-local-data`), then move/overwrite the files
+    - **Replacing/moving media** → last resort only; first try to fix in Emby (rename, set correct path, refresh library).
+      If moving is unavoidable: only do it when the torrent is fully downloaded (status=seeding), then remove the torrent first (without `delete-local-data`), then move/overwrite the files.
+      Never move or overwrite files while a torrent is still downloading.
 
     ### Check progress
     ```bash
