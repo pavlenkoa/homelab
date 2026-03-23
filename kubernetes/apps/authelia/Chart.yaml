@@ -6,7 +6,7 @@ appVersion: "4.39.13"
 
 dependencies:
 - name: authelia
-  version: "0.10.49"
+  version: "0.10.50"
   repository: "https://charts.authelia.com"
   condition: upstream.enabled
 

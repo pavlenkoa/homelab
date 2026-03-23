@@ -5,5 +5,5 @@ description: "Wrapper chart for victoria-metrics-single"
 
 dependencies:
   - name: victoria-metrics-single
-    version: "0.32.0"
+    version: "0.33.0"
     repository: "https://victoriametrics.github.io/helm-charts"
