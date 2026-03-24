@@ -1,0 +1,67 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: claude-code
+  namespace: claude-code
+spec:
+  endpointSelector:
+    matchLabels:
+      app: claude-code
+
+  egress:
+    # 1. DNS
+    - toEndpoints:
+        - matchLabels:
+            io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+
+    # 2. Transmission RPC
+    - toEndpoints:
+        - matchLabels:
+            io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name: transmission
+            app: transmission
+      toPorts:
+        - ports:
+            - port: "9091"
+              protocol: TCP
+
+    # 3. Kubernetes API server
+    - toCIDR:
+        - 192.168.88.2/32
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+
+    # 4. Emby on macOS host (OrbStack host.internal → 198.19.x.x range)
+    - toCIDRSet:
+        - cidr: 198.19.0.0/16
+        - cidr: 192.168.88.2/32
+      toPorts:
+        - ports:
+            - port: "8096"
+              protocol: TCP
+
+    # 5. NFS to Raspberry Pi (PV mounts)
+    - toCIDR:
+        - 192.168.88.3/32
+      toPorts:
+        - ports:
+            - port: "2049"
+              protocol: TCP
+            - port: "111"
+              protocol: TCP
+
+    # 6. Internet — block routers and unnecessary private ranges
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 192.168.88.1/32  # Wroclaw MikroTik router
+            - 192.168.1.0/24   # Kyiv LAN (including router .1)
+            - 10.77.88.0/30    # WireGuard tunnel
