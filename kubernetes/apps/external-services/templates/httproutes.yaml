@@ -10,17 +10,22 @@ metadata:
     app.kubernetes.io/component: {{ $serviceName }}
 spec:
   parentRefs:
-    - name: {{ $.Values.global.gatewayName }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ $.Values.global.gatewayName }}
       namespace: {{ $.Values.global.gatewayNamespace }}
   hostnames:
     - {{ $serviceConfig.ingress.host }}
   rules:
     - matches:
         - path:
-            type: {{ $serviceConfig.ingress.pathType | default "PathPrefix" }}
-            value: {{ $serviceConfig.ingress.path | default "/" }}
+            type: PathPrefix
+            value: /
       backendRefs:
-        - name: {{ $serviceName }}
+        - group: ""
+          kind: Service
+          name: {{ $serviceName }}
           port: {{ $serviceConfig.service.port | default 80 }}
+          weight: 1
 {{- end }}
 {{- end }}
