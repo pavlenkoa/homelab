@@ -45,10 +45,24 @@ spec:
     - {{ . }}
     {{- end }}
   destinations:
+    {{- if ($config).scopeDestinations -}}
+    {{- /* Auto-discover namespaces from children */ -}}
+    {{- $nsSet := dict "argocd" true -}}
+    {{- range (($config).children | default list) -}}
+      {{- if ne .enabled false -}}
+        {{- $nsSet = set $nsSet (.namespace | default .name) true -}}
+      {{- end -}}
+    {{- end -}}
+    {{- range $ns, $_ := $nsSet }}
+    - namespace: {{ $ns | quote }}
+      server: {{ $root.destination.server }}
+    {{- end }}
+    {{- else -}}
     {{- $destinations := ($override.destinations | default $defaults.destinations) -}}
     {{- range $destinations }}
     - namespace: {{ .namespace | quote }}
       server: {{ .server | default $root.destination.server }}
+    {{- end }}
     {{- end }}
   clusterResourceWhitelist:
     {{- $clusterWhitelist := ($override.clusterResourceWhitelist | default $defaults.clusterResourceWhitelist) -}}

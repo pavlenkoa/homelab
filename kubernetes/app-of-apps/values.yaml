@@ -179,6 +179,7 @@ parents:
 
   applications:
     description: "End-user applications and services"
+    scopeDestinations: true
     annotations:
       argocd.argoproj.io/sync-wave: "1"
     children:
