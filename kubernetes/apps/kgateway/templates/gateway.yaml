@@ -28,10 +28,13 @@ spec:
     - name: https
       protocol: HTTPS
       port: {{ .Values.gateway.listeners.https.port }}
+      hostname: "*.pavlenko.io"
       tls:
         mode: Terminate
         certificateRefs:
-          - name: homelab-gateway-tls
+          - group: ""
+            kind: Secret
+            name: homelab-gateway-tls
       allowedRoutes:
         namespaces:
           from: All
