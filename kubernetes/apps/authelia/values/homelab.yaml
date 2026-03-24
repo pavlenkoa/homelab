@@ -99,8 +99,6 @@ authelia:
           policy: 'two_factor'
         - domain: 'emby.pavlenko.io'
           policy: 'two_factor'
-        - domain: 'openclaw.pavlenko.io'
-          policy: 'two_factor'
     
     # OIDC clients for homelab services
     identity_providers:

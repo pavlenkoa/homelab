@@ -21,25 +21,6 @@ spec:
           operator: Equal
           value: media
           effect: NoSchedule
-      initContainers:
-        - name: patch-settings
-          image: busybox:1.37
-          command:
-            - sh
-            - -c
-            - |
-              SETTINGS="/config/settings.json"
-              if [ -f "$SETTINGS" ]; then
-                sed -i 's/"script-torrent-done-enabled": false/"script-torrent-done-enabled": true/' "$SETTINGS"
-                if ! grep -q '"script-torrent-done-filename"' "$SETTINGS"; then
-                  sed -i 's/}$/,"script-torrent-done-enabled": true,"script-torrent-done-filename": "\/scripts\/torrent-done.sh"}/' "$SETTINGS"
-                else
-                  sed -i 's|"script-torrent-done-filename":.*|"script-torrent-done-filename": "/scripts/torrent-done.sh",|' "$SETTINGS"
-                fi
-              fi
-          volumeMounts:
-            - name: config
-              mountPath: /config
       containers:
         - name: gluetun
           image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest
@@ -120,19 +101,9 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Kyiv"
-            - name: HOOK_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw-hook
-                  key: HOOK_TOKEN
           volumeMounts:
             - name: config
               mountPath: /config
-            - name: scripts
-              mountPath: /scripts
-              readOnly: true
-            - name: tracking
-              mountPath: /tracking/downloads
             - name: watch
               mountPath: /watch
             - name: downloads-tv
@@ -159,14 +130,6 @@ spec:
             type: FileOrCreate
         - name: gluetun-tmp
           emptyDir: {}
-        - name: scripts
-          configMap:
-            name: transmission-scripts
-            defaultMode: 0755
-        - name: tracking
-          hostPath:
-            path: /media/openclaw/workspace/tracking/downloads
-            type: DirectoryOrCreate
         - name: config
           hostPath:
             path: /home/andrii/transmission-config
