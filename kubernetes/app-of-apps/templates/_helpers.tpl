@@ -247,7 +247,7 @@ Arguments: list($valueFiles, $defaultFile, $prefix)
   {{- end }}
 {{- else if $valueFiles -}}
 - {{ $prefix }}{{ $valueFiles }}
-{{- else -}}
+{{- else if $defaultFile -}}
 - {{ $prefix }}{{ $defaultFile }}
 {{- end -}}
 {{- end -}}

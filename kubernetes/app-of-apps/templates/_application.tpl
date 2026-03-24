@@ -77,24 +77,19 @@ spec:
 {{- end }}
 {{- end }}
 {{- else }}
-    {{- /* Helm source: render helm block if there's any content */ -}}
-    {{- $hasValueFiles := and $app.helm (hasKey $app.helm "valueFiles") -}}
-    {{- $emptyValueFiles := and $hasValueFiles (kindIs "slice" ($app.helm).valueFiles) (eq (len $app.helm.valueFiles) 0) -}}
-    {{- $showValueFiles := not $emptyValueFiles -}}
-    {{- $hasValues := and $app.helm $app.helm.values -}}
-    {{- $hasParameters := and $app.helm $app.helm.parameters -}}
-    {{- if or $showValueFiles $hasValues $hasParameters }}
+    {{- $localDefault := printf "values/%s.yaml" $envName -}}
+    {{- $valueFiles := include "app-of-apps.helmValueFiles" (list (($app.helm).valueFiles) $localDefault "") -}}
+    {{- if or $valueFiles ($app.helm).values ($app.helm).parameters }}
     helm:
-      {{- if $showValueFiles }}
+      {{- if $valueFiles }}
       valueFiles:
-        {{- $localDefault := printf "values/%s.yaml" $envName -}}
-        {{- include "app-of-apps.helmValueFiles" (list (($app.helm).valueFiles) $localDefault "") | nindent 8 }}
+        {{- $valueFiles | nindent 8 }}
       {{- end }}
-      {{- if $hasValues }}
+      {{- if ($app.helm).values }}
       values: |
         {{- $app.helm.values | nindent 8 }}
       {{- end }}
-      {{- if $hasParameters }}
+      {{- if ($app.helm).parameters }}
       parameters:
         {{- range $app.helm.parameters }}
         - name: {{ .name }}
