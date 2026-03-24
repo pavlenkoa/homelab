@@ -4,19 +4,9 @@
 cilium:
   kubeProxyReplacement: true
 
-  # Keep dedicated Envoy DaemonSet disabled — RPi4 doesn't support
-  # 48-bit VA that tcmalloc requires. Gateway API uses the embedded
-  # Envoy inside cilium-agent instead.
+  # Disable envoy - RPi4 doesn't support 48-bit VA that tcmalloc requires
   envoy:
     enabled: false
-    securityContext:
-      capabilities:
-        keepCapNetBindService: true
-
-  gatewayAPI:
-    enabled: true
-    hostNetwork:
-      enabled: true
 
   operator:
     replicas: 1
