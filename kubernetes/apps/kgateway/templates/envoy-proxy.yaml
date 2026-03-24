@@ -178,6 +178,10 @@ spec:
       containers:
         - name: envoy
           image: {{ .Values.envoyProxy.image }}
+          securityContext:
+            capabilities:
+              add:
+                - NET_BIND_SERVICE
           args:
             - --disable-hot-restart
             - --service-node
