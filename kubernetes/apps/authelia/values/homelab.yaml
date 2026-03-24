@@ -93,8 +93,6 @@ authelia:
       rules:
         - domain: 'transmission.pavlenko.io'
           policy: 'two_factor'
-        - domain: 'hubble.pavlenko.io'
-          policy: 'two_factor'
     
     # OIDC clients for homelab services
     identity_providers:
