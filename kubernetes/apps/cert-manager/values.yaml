@@ -6,6 +6,10 @@ cert-manager:
   crds:
     enabled: true
 
+  # Enable Gateway API support for TLS certificate management
+  config:
+    enableGatewayAPI: true
+
   # Enable the default issuer
   ingressShim:
     defaultIssuerName: letsencrypt-prod
