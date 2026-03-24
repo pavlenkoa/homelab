@@ -121,6 +121,11 @@ parents:
       - name: cert-manager
         annotations:
           argocd.argoproj.io/sync-wave: "0"
+      - name: hubble-ui
+        namespace: kube-system
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "0"
 
   platform:
     description: "Platform services and DevOps tools"

@@ -91,13 +91,9 @@ authelia:
     access_control:
       default_policy: 'deny'
       rules:
-        - domain: 'test.pavlenko.io'
-          policy: 'two_factor'
         - domain: 'transmission.pavlenko.io'
           policy: 'two_factor'
-        - domain: 'photos.pavlenko.io'
-          policy: 'two_factor'
-        - domain: 'emby.pavlenko.io'
+        - domain: 'hubble.pavlenko.io'
           policy: 'two_factor'
     
     # OIDC clients for homelab services
