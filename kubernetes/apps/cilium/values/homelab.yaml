@@ -6,3 +6,10 @@ cilium:
   # Use Mac's LAN IP so all nodes (VM + RPi) can reach it
   k8sServiceHost: 192.168.88.2
   k8sServicePort: 6443
+
+  # Only bind Gateway API host ports on macmini (RPi4 has no ingress traffic)
+  gatewayAPI:
+    hostNetwork:
+      nodes:
+        matchLabels:
+          kubernetes.io/hostname: macmini
