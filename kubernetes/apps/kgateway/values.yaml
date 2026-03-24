@@ -1,0 +1,19 @@
+# kgateway defaults
+kgateway:
+  controller:
+    replicaCount: 1
+
+# Self-managed Envoy proxy configuration
+envoyProxy:
+  image: cr.kgateway.dev/kgateway-dev/envoy-wrapper:v2.2.1
+  nodeSelector:
+    kubernetes.io/hostname: macmini
+
+# Gateway configuration
+gateway:
+  name: homelab
+  listeners:
+    http:
+      port: 80
+    https:
+      port: 443

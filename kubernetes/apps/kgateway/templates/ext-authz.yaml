@@ -1,0 +1,13 @@
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: GatewayExtension
+metadata:
+  name: authelia
+spec:
+  type: ExtAuth
+  extAuth:
+    httpService:
+      backendRef:
+        name: authelia
+        namespace: authelia
+        port: 80
+      pathPrefix: /api/authz/ext-authz/

@@ -3,9 +3,8 @@
 
 # Global configuration
 global:
-  ingressClassName: nginx
-  clusterIssuer: letsencrypt-prod
-  tlsSecretSuffix: "-tls"
+  gatewayName: homelab
+  gatewayNamespace: kgateway-system
 
 # Services configuration
 services:

@@ -1,0 +1,12 @@
+apiVersion: v2
+name: kgateway
+version: 1.0.0
+description: "Wrapper chart for kgateway with self-managed Envoy proxy"
+
+dependencies:
+  - name: kgateway-crds
+    version: "v2.2.1"
+    repository: "oci://cr.kgateway.dev/kgateway-dev/charts"
+  - name: kgateway
+    version: "v2.2.1"
+    repository: "oci://cr.kgateway.dev/kgateway-dev/charts"

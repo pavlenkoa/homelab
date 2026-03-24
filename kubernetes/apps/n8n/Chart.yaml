@@ -7,3 +7,6 @@ dependencies:
   - name: n8n
     version: "2.0.1"
     repository: "oci://8gears.container-registry.com/library"
+  - name: httproute
+    version: "0.1.0"
+    repository: "file://../httproute"

@@ -13,19 +13,20 @@ adminUser:
 
 # Override upstream chart values for homelab
 authelia:
-  # Ingress configuration for pavlenko.io
+  # Ingress disabled — using kgateway HTTPRoute
   ingress:
-    enabled: true
-    className: 'nginx'
-    annotations:
-      cert-manager.io/cluster-issuer: letsencrypt-prod
-      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    rulesOverride:
-      - host: 'auth.pavlenko.io'
-        path: '/'
-    tls:
-      enabled: true
-      secret: 'authelia-tls'
+    enabled: false
+
+httproute:
+  routes:
+    - name: authelia
+      hostname: auth.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: authelia
+        port: 80
 
   # Main configuration overrides  
   configMap:
@@ -92,6 +93,8 @@ authelia:
       default_policy: 'deny'
       rules:
         - domain: 'transmission.pavlenko.io'
+          policy: 'two_factor'
+        - domain: 'hubble.pavlenko.io'
           policy: 'two_factor'
     
     # OIDC clients for homelab services

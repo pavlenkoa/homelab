@@ -91,16 +91,18 @@ argo-cd:
   # Server configuration
   server:
     ingress:
-      enabled: true
-      ingressClassName: "nginx"
-      hostname: "argocd.pavlenko.io"
-      pathType: ImplementationSpecific
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-      extraTls:
-      - secretName: argocd-server-tls
-        hosts:
-        - "argocd.pavlenko.io"
+      enabled: false
+
+httproute:
+  routes:
+    - name: argocd
+      hostname: argocd.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: argocd-server
+        port: 443
 
   configs:
     cm:

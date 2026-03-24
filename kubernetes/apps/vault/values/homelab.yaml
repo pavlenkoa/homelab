@@ -282,19 +282,20 @@ vault:
       create: false  # We'll use the custom service account with RBAC
       name: "vault-auto-unseal"
 
-    # Ingress configuration for Vault UI
+    # Ingress disabled — using kgateway HTTPRoute
     ingress:
-      enabled: true
-      ingressClassName: "nginx"
-      pathType: ImplementationSpecific
-      hosts:
-        - host: "vault.pavlenko.io"
-      annotations:
-        cert-manager.io/cluster-issuer: letsencrypt-prod
-      tls:
-        - secretName: vault-tls
-          hosts:
-            - "vault.pavlenko.io"
+      enabled: false
+
+httproute:
+  routes:
+    - name: vault
+      hostname: vault.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: vault
+        port: 8200
 
   # UI configuration
   ui:
