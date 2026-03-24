@@ -5,7 +5,9 @@ metadata:
   namespace: transmission
 spec:
   parentRefs:
-    - name: homelab
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab
       namespace: kgateway-system
   hostnames:
     - transmission.pavlenko.io
@@ -15,8 +17,11 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: transmission
+        - group: ""
+          kind: Service
+          name: transmission
           port: 9091
+          weight: 1
 ---
 apiVersion: gateway.kgateway.dev/v1alpha1
 kind: TrafficPolicy

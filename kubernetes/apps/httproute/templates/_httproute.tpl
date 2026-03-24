@@ -7,7 +7,9 @@ metadata:
   name: {{ .name }}
 spec:
   parentRefs:
-    - name: {{ .gateway.name }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .gateway.name }}
       namespace: {{ .gateway.namespace }}
   hostnames:
     - {{ .hostname }}
@@ -17,7 +19,10 @@ spec:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: {{ .service.name }}
+        - group: ""
+          kind: Service
+          name: {{ .service.name }}
           port: {{ .service.port }}
+          weight: 1
 {{- end }}
 {{- end -}}
