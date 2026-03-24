@@ -166,6 +166,7 @@ authelia:
         secret_name: 'authelia-secrets'
         path: 'storage_encryption_key'
       local:
+        enabled: true
         path: '/config/db.sqlite3'
         
     identity_providers:
@@ -200,6 +201,7 @@ authelia:
     notifier:
       disable_startup_check: true
       filesystem:
+        enabled: true
         filename: '/config/notification.txt'
   
   # Redis subchart configuration
