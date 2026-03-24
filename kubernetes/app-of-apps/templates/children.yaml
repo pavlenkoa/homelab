@@ -1,10 +1,6 @@
 {{/*
 Children - rendered when renderParent is set
-Creates:
-  1. AppProject for the parent
-  2. Child Applications (cilium, vault, etc.)
-
-Controlled by: childDefaults + parents.<name>.childDefaults + parents.<name>.children
+Creates: AppProject + child Applications for the specified parent
 */}}
 {{- if .Values.renderParent }}
 {{- $renderParent := .Values.renderParent }}
@@ -13,20 +9,11 @@ Controlled by: childDefaults + parents.<name>.childDefaults + parents.<name>.chi
 {{- range $parentName, $parentConfig := .Values.parents }}
 {{- if eq $parentName $renderParent }}
 {{- $prefixNames := $parentConfig.prefixNames | default $parentDefaults.prefixNames }}
-{{- $effectiveParentName := $parentName }}
-{{- if $prefixNames }}
-  {{- $effectiveParentName = printf "%s-%s" $envName $parentName }}
-{{- end }}
+{{- $effectiveName := include "app-of-apps.effectiveName" (list $parentName $prefixNames $envName) }}
 {{- $excluded := $parentConfig.excludeChildren | default list }}
 ---
-{{ include "app-of-apps.appProject" (list $effectiveParentName ($parentConfig.description | default $parentName) $parentConfig $.Values) }}
-{{- range $parentConfig.children }}
-{{- if and (ne .enabled false) (not (has .name $excluded)) }}
----
-{{ include "app-of-apps.application" (list $ . $parentName $parentConfig) }}
-{{- end }}
-{{- end }}
-{{- range ($parentConfig.extraChildren | default list) }}
+{{ include "app-of-apps.appProject" (list $effectiveName ($parentConfig.description | default $parentName) $parentConfig $.Values) }}
+{{- range concat ($parentConfig.children | default list) ($parentConfig.extraChildren | default list) }}
 {{- if and (ne .enabled false) (not (has .name $excluded)) }}
 ---
 {{ include "app-of-apps.application" (list $ . $parentName $parentConfig) }}

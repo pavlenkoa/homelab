@@ -1,15 +1,21 @@
 {{/*
 Shared helper functions for app-of-apps templates.
-Used by parents.yaml, children.yaml, and _application.tpl.
 */}}
+
+{{/*
+app-of-apps.effectiveName - Applies optional environment prefix
+Arguments: list($name, $prefixNames, $envName)
+*/}}
+{{- define "app-of-apps.effectiveName" -}}
+{{- $name := index . 0 -}}
+{{- $prefixNames := index . 1 -}}
+{{- $envName := index . 2 -}}
+{{- ternary (printf "%s-%s" $envName $name) $name $prefixNames -}}
+{{- end -}}
 
 {{/*
 app-of-apps.appProject - Renders an ArgoCD AppProject
 Arguments: list($name, $description, $config, $root)
-  $name - project name
-  $description - project description
-  $config - parent config (for sourceRepos, projectDefaults override)
-  $root - root Values object (for projectDefaults, repository, destination)
 */}}
 {{- define "app-of-apps.appProject" -}}
 {{- $name := index . 0 -}}
@@ -23,30 +29,16 @@ kind: AppProject
 metadata:
   name: {{ $name }}
   namespace: argocd
-  {{- $annotations := mergeOverwrite (deepCopy ($defaults.annotations | default dict)) ($override.annotations | default dict) -}}
-  {{- if $annotations }}
-  annotations:
-    {{- range $key, $value := $annotations }}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
-  {{- end }}
-  {{- $finalizers := ($override.finalizers | default $defaults.finalizers) -}}
-  {{- if $finalizers }}
-  finalizers:
-    {{- range $finalizers }}
-    - {{ . }}
-    {{- end }}
-  {{- end }}
+  {{- include "app-of-apps.mergedMap" (list "annotations" ($defaults.annotations | default dict) ($override.annotations | default dict)) | nindent 2 }}
+  {{- include "app-of-apps.firstNonEmptyList" (list "finalizers" ($override.finalizers) ($defaults.finalizers)) | nindent 2 }}
 spec:
   description: {{ $description | quote }}
   sourceRepos:
-    {{- $defaultRepos := list $root.repository.url -}}
-    {{- range (($config).sourceRepos | default $defaultRepos) }}
+    {{- range (($config).sourceRepos | default (list $root.repository.url)) }}
     - {{ . }}
     {{- end }}
   destinations:
     {{- if ($config).scopeDestinations -}}
-    {{- /* Auto-discover namespaces from children */ -}}
     {{- $nsSet := dict "argocd" true -}}
     {{- range (($config).children | default list) -}}
       {{- if ne .enabled false -}}
@@ -58,30 +50,24 @@ spec:
       server: {{ $root.destination.server }}
     {{- end }}
     {{- else -}}
-    {{- $destinations := ($override.destinations | default $defaults.destinations) -}}
-    {{- range $destinations }}
+    {{- range ($override.destinations | default $defaults.destinations) }}
     - namespace: {{ .namespace | quote }}
       server: {{ .server | default $root.destination.server }}
     {{- end }}
     {{- end }}
   clusterResourceWhitelist:
-    {{- $clusterWhitelist := ($override.clusterResourceWhitelist | default $defaults.clusterResourceWhitelist) -}}
-    {{- range $clusterWhitelist }}
+    {{- range ($override.clusterResourceWhitelist | default $defaults.clusterResourceWhitelist) }}
     - group: {{ .group | quote }}
       kind: {{ .kind | quote }}
     {{- end }}
   namespaceResourceWhitelist:
-    {{- $nsWhitelist := ($override.namespaceResourceWhitelist | default $defaults.namespaceResourceWhitelist) -}}
-    {{- range $nsWhitelist }}
+    {{- range ($override.namespaceResourceWhitelist | default $defaults.namespaceResourceWhitelist) }}
     - group: {{ .group | quote }}
       kind: {{ .kind | quote }}
     {{- end }}
-  {{- $roles := ($override.roles | default ($config).roles) -}}
-  {{- if $roles }}
+  {{- if ($override.roles | default ($config).roles) }}
   roles:
-    {{- toYaml $roles | nindent 4 }}
-  {{- else }}
-  roles: []
+    {{- toYaml ($override.roles | default ($config).roles) | nindent 4 }}
   {{- end }}
 {{- end -}}
 
@@ -96,26 +82,20 @@ Arguments: list($root, $parentName, $parentConfig)
 {{- $parentDefaults := $root.Values.parentDefaults -}}
 {{- $envName := $root.Values.environment -}}
 {{- $prefixNames := $parentConfig.prefixNames | default $parentDefaults.prefixNames -}}
-{{- $effectiveParentName := $parentName -}}
-{{- if $prefixNames }}
-  {{- $effectiveParentName = printf "%s-%s" $envName $parentName -}}
-{{- end }}
-{{- $parentsProjectName := "parents" -}}
-{{- if $prefixNames }}
-  {{- $parentsProjectName = printf "%s-parents" $envName -}}
-{{- end }}
+{{- $effectiveName := include "app-of-apps.effectiveName" (list $parentName $prefixNames $envName) -}}
+{{- $projectName := include "app-of-apps.effectiveName" (list "parents" $prefixNames $envName) -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ $effectiveParentName }}
+  name: {{ $effectiveName }}
   namespace: argocd
   labels:
     environment: {{ $envName }}
-  {{- include "app-of-apps.labels" (list $parentDefaults.labels $parentConfig.labels) | nindent 2 }}
-  {{- include "app-of-apps.annotations" (list $parentDefaults.annotations $parentConfig.annotations) | nindent 2 }}
-  {{- include "app-of-apps.finalizers" (list $parentConfig.finalizers $parentDefaults.finalizers) | nindent 2 }}
+  {{- include "app-of-apps.mergedMap" (list "labels" $parentDefaults.labels $parentConfig.labels) | nindent 2 }}
+  {{- include "app-of-apps.mergedMap" (list "annotations" $parentDefaults.annotations $parentConfig.annotations) | nindent 2 }}
+  {{- include "app-of-apps.firstNonEmptyList" (list "finalizers" $parentConfig.finalizers $parentDefaults.finalizers) | nindent 2 }}
 spec:
-  project: {{ $parentsProjectName }}
+  project: {{ $projectName }}
   source:
     repoURL: {{ ($parentConfig.repository).url | default $root.Values.repository.url }}
     targetRevision: {{ ($parentConfig.repository).targetRevision | default $root.Values.repository.targetRevision }}
@@ -140,14 +120,10 @@ spec:
 {{/*
 app-of-apps.syncPolicy - Renders syncPolicy block
 Arguments: list($configs, $additionalSyncOptionsList)
-  $configs - list of syncPolicy objects to merge (later overrides earlier)
-  $additionalSyncOptionsList - list of additionalSyncOptions arrays (all merged)
 */}}
 {{- define "app-of-apps.syncPolicy" -}}
-{{- $args := . -}}
-{{- $configs := index $args 0 -}}
-{{- $additionalSyncOptionsList := index $args 1 -}}
-{{- /* Merge all syncPolicy configs */ -}}
+{{- $configs := index . 0 -}}
+{{- $additionalSyncOptionsList := index . 1 -}}
 {{- $merged := dict -}}
 {{- range $configs -}}
   {{- if . -}}
@@ -164,15 +140,9 @@ syncPolicy:
     selfHeal: true
     {{- end }}
   {{- end }}
-  {{- /* Collect all syncOptions */ -}}
-  {{- $allSyncOptions := list -}}
-  {{- range ($merged.syncOptions | default list) -}}
-    {{- $allSyncOptions = append $allSyncOptions . -}}
-  {{- end -}}
+  {{- $allSyncOptions := ($merged.syncOptions | default list) -}}
   {{- range $additionalSyncOptionsList -}}
-    {{- range (. | default list) -}}
-      {{- $allSyncOptions = append $allSyncOptions . -}}
-    {{- end -}}
+    {{- $allSyncOptions = concat $allSyncOptions (. | default list) -}}
   {{- end -}}
   {{- if $allSyncOptions }}
   syncOptions:
@@ -193,25 +163,19 @@ syncPolicy:
 {{/*
 app-of-apps.ignoreDifferences - Renders ignoreDifferences block
 Arguments: list($baseConfigs, $additionalConfigs)
-  $baseConfigs - list of ignoreDifferences arrays (first non-empty wins - override)
-  $additionalConfigs - list of additionalIgnoreDifferences arrays (all merged - additive)
+  $baseConfigs - first non-empty wins (override)
+  $additionalConfigs - all merged (additive)
 */}}
 {{- define "app-of-apps.ignoreDifferences" -}}
-{{- $baseConfigs := index . 0 -}}
-{{- $additionalConfigs := index . 1 -}}
-{{- /* Find first non-empty base (override behavior) */ -}}
 {{- $base := list -}}
-{{- range $baseConfigs -}}
+{{- range (index . 0) -}}
   {{- if and (not $base) . -}}
     {{- $base = . -}}
   {{- end -}}
 {{- end -}}
-{{- /* Collect all additional (additive behavior) */ -}}
 {{- $additional := list -}}
-{{- range $additionalConfigs -}}
-  {{- range (. | default list) -}}
-    {{- $additional = append $additional . -}}
-  {{- end -}}
+{{- range (index . 1) -}}
+  {{- $additional = concat $additional (. | default list) -}}
 {{- end -}}
 {{- if or $base $additional -}}
 ignoreDifferences:
@@ -225,19 +189,20 @@ ignoreDifferences:
 {{- end -}}
 
 {{/*
-app-of-apps.annotations - Renders annotations block
-Arguments: list($annotationMaps...)
-  Merges all annotation maps, later ones override earlier
+app-of-apps.mergedMap - Merges maps and renders as a named YAML block
+Arguments: list($blockName, $maps...)
+Replaces separate annotations/labels helpers.
 */}}
-{{- define "app-of-apps.annotations" -}}
+{{- define "app-of-apps.mergedMap" -}}
+{{- $blockName := index . 0 -}}
 {{- $merged := dict -}}
-{{- range . -}}
+{{- range (slice . 1) -}}
   {{- if . -}}
     {{- $merged = mergeOverwrite $merged . -}}
   {{- end -}}
 {{- end -}}
 {{- if $merged -}}
-annotations:
+{{ $blockName }}:
 {{- range $key, $value := $merged }}
   {{ $key }}: {{ $value | quote }}
 {{- end }}
@@ -245,38 +210,44 @@ annotations:
 {{- end -}}
 
 {{/*
-app-of-apps.labels - Renders labels
-Arguments: list($labelMaps...)
-  Merges all label maps, later ones override earlier
+app-of-apps.firstNonEmptyList - Renders first non-empty list as a named YAML block
+Arguments: list($blockName, $lists...)
+Replaces separate finalizers helper.
 */}}
-{{- define "app-of-apps.labels" -}}
-{{- $merged := dict -}}
-{{- range . -}}
-  {{- if . -}}
-    {{- $merged = mergeOverwrite $merged . -}}
+{{- define "app-of-apps.firstNonEmptyList" -}}
+{{- $blockName := index . 0 -}}
+{{- $result := list -}}
+{{- range (slice . 1) -}}
+  {{- if and (not $result) . -}}
+    {{- $result = . -}}
   {{- end -}}
 {{- end -}}
-{{- range $key, $value := $merged }}
-  {{ $key }}: {{ $value | quote }}
-{{- end }}
-{{- end -}}
-
-{{/*
-app-of-apps.finalizers - Renders finalizers list
-Arguments: list($finalizerLists...)
-  Uses first non-empty list (override behavior)
-*/}}
-{{- define "app-of-apps.finalizers" -}}
-{{- $finalizers := list -}}
-{{- range . -}}
-  {{- if and (not $finalizers) . -}}
-    {{- $finalizers = . -}}
-  {{- end -}}
-{{- end -}}
-{{- if $finalizers -}}
-finalizers:
-{{- range $finalizers }}
+{{- if $result -}}
+{{ $blockName }}:
+{{- range $result }}
   - {{ . }}
 {{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+app-of-apps.helmValueFiles - Renders valueFiles list
+Arguments: list($valueFiles, $defaultFile, $prefix)
+  $valueFiles - explicit valueFiles from app config (may be nil, empty list, string, or list)
+  $defaultFile - auto-generated default value file path
+  $prefix - prefix for each entry (e.g. "$values/" for multi-source, "" for single-source)
+*/}}
+{{- define "app-of-apps.helmValueFiles" -}}
+{{- $valueFiles := index . 0 -}}
+{{- $defaultFile := index . 1 -}}
+{{- $prefix := index . 2 -}}
+{{- if kindIs "slice" $valueFiles -}}
+  {{- range $valueFiles }}
+- {{ $prefix }}{{ . }}
+  {{- end }}
+{{- else if $valueFiles -}}
+- {{ $prefix }}{{ $valueFiles }}
+{{- else -}}
+- {{ $prefix }}{{ $defaultFile }}
 {{- end -}}
 {{- end -}}

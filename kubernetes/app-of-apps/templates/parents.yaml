@@ -1,29 +1,20 @@
 {{/*
 Parents - rendered when renderParent is empty
-Creates:
-  1. AppProject for the environment
-  2. Parent Applications (system, platform, applications)
-
-Controlled by: parentDefaults + parents.<name>
+Creates: environment AppProject + parent Applications
 */}}
 {{- if not .Values.renderParent }}
 {{- $envName := .Values.environment }}
 {{- $parentDefaults := .Values.parentDefaults }}
-{{- $prefixNames := $parentDefaults.prefixNames }}
-{{- $parentsProjectName := "parents" }}
-{{- if $prefixNames }}
-  {{- $parentsProjectName = printf "%s-parents" $envName }}
-{{- end }}
-{{- /* Collect unique sourceRepos from parents for the environment project */ -}}
+{{- $projectName := include "app-of-apps.effectiveName" (list "parents" $parentDefaults.prefixNames $envName) }}
+{{- /* Collect unique sourceRepos from all parents */ -}}
 {{- $repoSet := dict .Values.repository.url true -}}
 {{- range $parentName, $parentConfig := .Values.parents -}}
   {{- range ($parentConfig.sourceRepos | default list) -}}
     {{- $repoSet = set $repoSet . true -}}
   {{- end -}}
 {{- end -}}
-{{- $envConfig := dict "sourceRepos" (keys $repoSet) }}
 ---
-{{ include "app-of-apps.appProject" (list $parentsProjectName (printf "Environment: %s" $envName) $envConfig .Values) }}
+{{ include "app-of-apps.appProject" (list $projectName (printf "Environment: %s" $envName) (dict "sourceRepos" (keys $repoSet)) .Values) }}
 {{- range $parentName, $parentConfig := .Values.parents }}
 {{- if ne $parentConfig.enabled false }}
 ---
