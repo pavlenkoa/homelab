@@ -177,9 +177,6 @@ parents:
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-      - name: n8n
-        annotations:
-          argocd.argoproj.io/sync-wave: "3"
       - name: authelia
         enabled: false
         annotations:
