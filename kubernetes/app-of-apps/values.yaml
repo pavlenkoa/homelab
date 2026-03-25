@@ -181,6 +181,7 @@ parents:
         annotations:
           argocd.argoproj.io/sync-wave: "3"
       - name: authelia
+        enabled: false
         annotations:
           argocd.argoproj.io/sync-wave: "3"
       - name: tailscale
