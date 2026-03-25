@@ -13,8 +13,8 @@ spec:
       pathPrefix: /api/authz/ext-authz
       authorizationRequest:
         headersToAdd:
-          Host: "%REQ(:AUTHORITY)%"
           X-Forwarded-Proto: "%REQ(:SCHEME)%"
+          X-Forwarded-Host: "%REQ(:AUTHORITY)%"
       authorizationResponse:
         headersToBackend:
           - Remote-User
