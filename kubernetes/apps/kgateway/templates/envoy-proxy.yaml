@@ -177,7 +177,7 @@ spec:
       {{- end }}
       containers:
         - name: envoy
-          image: {{ .Values.envoyProxy.image }}
+          image: {{ .Values.envoyProxy.imageRepository }}:{{ .Chart.AppVersion }}
           securityContext:
             runAsUser: 0
             capabilities:

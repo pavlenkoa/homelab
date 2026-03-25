@@ -1,6 +1,7 @@
 apiVersion: v2
 name: kgateway
 version: 1.0.0
+appVersion: "v2.2.1"
 description: "Wrapper chart for kgateway with self-managed Envoy proxy"
 
 dependencies:

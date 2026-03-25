@@ -5,7 +5,7 @@ kgateway:
 
 # Self-managed Envoy proxy configuration
 envoyProxy:
-  image: cr.kgateway.dev/kgateway-dev/envoy-wrapper:v2.2.1
+  imageRepository: cr.kgateway.dev/kgateway-dev/envoy-wrapper
   nodeSelector:
     kubernetes.io/hostname: macmini
 
