@@ -115,10 +115,6 @@ parents:
             namespace: kube-system
             jsonPointers:
               - /data
-      - name: ingress-nginx
-        enabled: false
-        annotations:
-          argocd.argoproj.io/sync-wave: "-2"
       - name: kgateway
         namespace: kgateway-system
         annotations:

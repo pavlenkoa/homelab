@@ -1,8 +1,0 @@
-# ingress-nginx configuration for homelab cluster
-# Environment-specific overrides only
-
-ingress-nginx:
-  controller:
-    # Pin to macmini node (the one with OrbStack LAN forwarding)
-    nodeSelector:
-      kubernetes.io/hostname: macmini
