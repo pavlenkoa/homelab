@@ -45,7 +45,7 @@ spec:
         {{- $nsSet = set $nsSet (.namespace | default .name) true -}}
       {{- end -}}
     {{- end -}}
-    {{- range $ns, $_ := $nsSet }}
+    {{- range $ns := keys $nsSet | sortAlpha }}
     - namespace: {{ $ns | quote }}
       server: {{ $root.destination.server }}
     {{- end }}
@@ -203,8 +203,8 @@ Replaces separate annotations/labels helpers.
 {{- end -}}
 {{- if $merged -}}
 {{ $blockName }}:
-{{- range $key, $value := $merged }}
-  {{ $key }}: {{ $value | quote }}
+{{- range $key := keys $merged | sortAlpha }}
+  {{ $key }}: {{ index $merged $key | quote }}
 {{- end }}
 {{- end -}}
 {{- end -}}

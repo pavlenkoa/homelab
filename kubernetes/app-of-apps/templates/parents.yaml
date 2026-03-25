@@ -14,7 +14,7 @@ Creates: environment AppProject + parent Applications
   {{- end -}}
 {{- end -}}
 ---
-{{ include "app-of-apps.appProject" (list $projectName (printf "Environment: %s" $envName) (dict "sourceRepos" (keys $repoSet)) .Values) }}
+{{ include "app-of-apps.appProject" (list $projectName (printf "Environment: %s" $envName) (dict "sourceRepos" (keys $repoSet | sortAlpha)) .Values) }}
 {{- range $parentName, $parentConfig := .Values.parents }}
 {{- if ne $parentConfig.enabled false }}
 ---
