@@ -14,6 +14,7 @@ spec:
       kind: Gateway
       name: {{ $.Values.global.gatewayName }}
       namespace: {{ $.Values.global.gatewayNamespace }}
+      sectionName: https
   hostnames:
     - {{ $serviceConfig.ingress.host }}
   rules:

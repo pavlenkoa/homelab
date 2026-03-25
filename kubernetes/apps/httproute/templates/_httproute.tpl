@@ -11,6 +11,7 @@ spec:
       kind: Gateway
       name: {{ .gateway.name }}
       namespace: {{ .gateway.namespace }}
+      sectionName: https
   hostnames:
     - {{ .hostname }}
   rules:

@@ -9,6 +9,7 @@ spec:
       kind: Gateway
       name: homelab
       namespace: kgateway-system
+      sectionName: https
   hostnames:
     - hubble.pavlenko.io
   rules:
