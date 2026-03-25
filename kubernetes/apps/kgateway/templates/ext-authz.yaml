@@ -14,3 +14,19 @@ spec:
       remoteRef:
         key: kv/kgateway
         property: htpasswd
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-basic-auth
+spec:
+  from:
+    - group: gateway.kgateway.dev
+      kind: TrafficPolicy
+      namespace: kube-system
+    - group: gateway.kgateway.dev
+      kind: TrafficPolicy
+      namespace: transmission
+  to:
+    - group: ""
+      kind: Secret
