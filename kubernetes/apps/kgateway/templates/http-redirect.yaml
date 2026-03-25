@@ -11,7 +11,11 @@ spec:
   hostnames:
     - "*.pavlenko.io"
   rules:
-    - filters:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
         - type: RequestRedirect
           requestRedirect:
             scheme: https
