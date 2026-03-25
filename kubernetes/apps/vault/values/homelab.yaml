@@ -286,17 +286,6 @@ vault:
     ingress:
       enabled: false
 
-httproute:
-  routes:
-    - name: vault
-      hostname: vault.pavlenko.io
-      gateway:
-        name: homelab
-        namespace: kgateway-system
-      service:
-        name: vault
-        port: 8200
-
   # UI configuration
   ui:
     enabled: true
@@ -309,3 +298,14 @@ httproute:
   # CSI driver (optional for homelab)
   csi:
     enabled: false
+
+httproute:
+  routes:
+    - name: vault
+      hostname: vault.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: vault
+        port: 8200

@@ -93,17 +93,6 @@ argo-cd:
     ingress:
       enabled: false
 
-httproute:
-  routes:
-    - name: argocd
-      hostname: argocd.pavlenko.io
-      gateway:
-        name: homelab
-        namespace: kgateway-system
-      service:
-        name: argocd-server
-        port: 443
-
   configs:
     cm:
       url: "https://argocd.pavlenko.io"
@@ -114,3 +103,14 @@ httproute:
         url: https://github.com/pavlenkoa/homelab.git
         type: git
         name: homelab
+
+httproute:
+  routes:
+    - name: argocd
+      hostname: argocd.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: argocd-server
+        port: 443
