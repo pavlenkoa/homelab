@@ -1,32 +1,26 @@
-apiVersion: external-secrets.io/v1
-kind: ExternalSecret
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: GatewayExtension
 metadata:
-  name: kgateway-basic-auth
+  name: authelia
 spec:
-  refreshInterval: 1h
-  secretStoreRef:
-    name: vault-backend
-    kind: ClusterSecretStore
-  target:
-    name: kgateway-basic-auth
-  data:
-    - secretKey: .htpasswd
-      remoteRef:
-        key: kv/kgateway
-        property: htpasswd
----
-apiVersion: gateway.networking.k8s.io/v1beta1
-kind: ReferenceGrant
-metadata:
-  name: allow-basic-auth
-spec:
-  from:
-    - group: gateway.kgateway.dev
-      kind: TrafficPolicy
-      namespace: kube-system
-    - group: gateway.kgateway.dev
-      kind: TrafficPolicy
-      namespace: transmission
-  to:
-    - group: ""
-      kind: Secret
+  type: ExtAuth
+  extAuth:
+    httpService:
+      backendRef:
+        name: authelia
+        namespace: authelia
+        port: 80
+      pathPrefix: /api/authz/ext-authz/
+      authorizationRequest:
+        headersToAdd:
+          X-Forwarded-Proto: "%REQ(:SCHEME)%"
+      authorizationResponse:
+        headersToBackend:
+          - Remote-User
+          - Remote-Name
+          - Remote-Email
+          - Remote-Groups
+    headersToForward:
+      - cookie
+      - authorization
+      - proxy-authorization
