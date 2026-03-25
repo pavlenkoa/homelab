@@ -12,11 +12,6 @@ adminUser:
   email: "admin@pavlenko.io"
 
 # Override upstream chart values for homelab
-authelia:
-  # Ingress disabled — using kgateway HTTPRoute
-  ingress:
-    enabled: false
-
 httproute:
   routes:
     - name: authelia
@@ -28,7 +23,12 @@ httproute:
         name: authelia
         port: 80
 
-  # Main configuration overrides  
+authelia:
+  # Ingress disabled — using kgateway HTTPRoute
+  ingress:
+    enabled: false
+
+  # Main configuration overrides
   configMap:
     theme: 'dark'
     default_2fa_method: 'webauthn'
