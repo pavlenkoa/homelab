@@ -10,7 +10,7 @@ spec:
         name: authelia
         namespace: authelia
         port: 80
-      pathPrefix: /api/authz/ext-authz
+      pathPrefix: /api/authz/ext-authz/
       authorizationRequest:
         headersToAdd:
           X-Forwarded-Proto: "%REQ(:SCHEME)%"
@@ -23,5 +23,3 @@ spec:
           - Remote-Groups
     headersToForward:
       - cookie
-      - authorization
-      - proxy-authorization
