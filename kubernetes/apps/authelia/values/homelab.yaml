@@ -35,7 +35,9 @@ authelia:
 
     webauthn:
       enable_passkey_login: true
-      experimental_enable_passkey_uv_two_factors: true
+
+    extraConfigs:
+      - /config/extra/webauthn-experimental.yaml
 
 
     identity_validation:
@@ -136,6 +138,14 @@ authelia:
   # Resource configuration for homelab (limits removed for performance)
   pod:
     resources: {}
+    extraVolumes:
+      - name: extra-config
+        configMap:
+          name: authelia-extra-config
+    extraVolumeMounts:
+      - name: extra-config
+        mountPath: /config/extra
+        readOnly: true
 
   # Redis configuration
   redis:
