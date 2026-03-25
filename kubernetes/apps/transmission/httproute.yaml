@@ -33,7 +33,7 @@ spec:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
       name: transmission
-  extAuth:
-    extensionRef:
-      name: authelia
+  basicAuth:
+    secretRef:
+      name: kgateway-basic-auth
       namespace: kgateway-system

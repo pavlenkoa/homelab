@@ -1,13 +1,16 @@
-apiVersion: gateway.kgateway.dev/v1alpha1
-kind: GatewayExtension
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
 metadata:
-  name: authelia
+  name: kgateway-basic-auth
 spec:
-  type: ExtAuth
-  extAuth:
-    httpService:
-      backendRef:
-        name: authelia
-        namespace: authelia
-        port: 80
-      pathPrefix: /api/authz/auth-request
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: kgateway-basic-auth
+  data:
+    - secretKey: .htpasswd
+      remoteRef:
+        key: kv/kgateway
+        property: htpasswd
