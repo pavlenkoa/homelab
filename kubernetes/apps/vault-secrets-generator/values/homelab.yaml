@@ -95,6 +95,16 @@ config:
       }
     }
 
+    # Loki push auth
+    secret "loki" {
+      path = "loki"
+
+      content {
+        push_password      = generate({length = 32, symbols = 0})
+        push_password_hash = bcrypt({from = "push_password"})
+      }
+    }
+
     # Grafana secrets
     secret "grafana" {
       path = "grafana"

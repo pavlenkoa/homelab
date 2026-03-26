@@ -1,6 +1,24 @@
 # Wrapper chart for Grafana Loki
 # Defaults here, environment-specific overrides in values/homelab.yaml
 
+# Vault / ExternalSecret for basic auth
+externalSecret:
+  enabled: true
+  refreshInterval: "1h"
+  secretName: loki-basic-auth
+
+vault:
+  secretPath: "kv/loki"
+  secretStoreName: "vault-backend"
+
+# Basic auth for external push endpoint
+basicAuth:
+  enabled: true
+
+# HTTPRoute configuration (empty by default, set in homelab.yaml)
+httproute:
+  routes: []
+
 loki:
   # Deploy as monolithic single-binary
   deploymentMode: SingleBinary

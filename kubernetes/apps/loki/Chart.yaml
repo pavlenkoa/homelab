@@ -7,3 +7,6 @@ dependencies:
   - name: loki
     version: "9.3.0"
     repository: "https://grafana-community.github.io/helm-charts"
+  - name: httproute
+    version: "0.1.0"
+    repository: "file://../httproute"
