@@ -1,0 +1,4 @@
+# Loki configuration for homelab cluster
+# Environment-specific overrides only
+
+loki: {}

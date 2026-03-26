@@ -1,0 +1,88 @@
+# Wrapper chart for Grafana Loki
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+loki:
+  # Deploy as monolithic single-binary
+  deploymentMode: SingleBinary
+
+  # Disable multi-tenant mode
+  loki:
+    auth_enabled: false
+
+    # Storage config - local filesystem
+    commonConfig:
+      replication_factor: 1
+
+    schemaConfig:
+      configs:
+        - from: "2024-01-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+
+    storage:
+      type: filesystem
+
+    # Retention
+    limits_config:
+      retention_period: 30d
+      max_query_series: 500
+      max_query_parallelism: 1
+
+    query_scheduler:
+      max_outstanding_requests_per_tenant: 256
+
+    frontend:
+      max_outstanding_per_tenant: 256
+
+    compactor:
+      retention_enabled: true
+
+  # Single binary deployment
+  singleBinary:
+    replicas: 1
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 100m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: ""
+
+  # Disable components not needed in monolithic mode
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+
+  # Disable monitoring
+  monitoring:
+    selfMonitoring:
+      enabled: false
+      grafanaAgent:
+        installOperator: false
+    lokiCanary:
+      enabled: false
+
+  # Disable test
+  test:
+    enabled: false
+
+  # Disable gateway (nginx) - not needed for in-cluster access
+  gateway:
+    enabled: false
+
+  # Chunk cache and results cache - disabled for low memory
+  chunksCache:
+    enabled: false
+  resultsCache:
+    enabled: false
