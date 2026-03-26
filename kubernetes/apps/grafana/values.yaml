@@ -57,6 +57,12 @@ grafana:
           url: http://loki.monitoring:3100
           editable: true
 
+  # Dashboard sidecar - watches ConfigMaps with grafana_dashboard label
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+
   # Grafana configuration
   grafana.ini:
     server:
