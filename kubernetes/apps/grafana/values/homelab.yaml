@@ -1,0 +1,18 @@
+# Grafana configuration for homelab cluster
+# Environment-specific overrides only
+
+httproute:
+  routes:
+    - name: grafana
+      hostname: grafana.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: grafana
+        port: 80
+
+grafana:
+  grafana.ini:
+    server:
+      domain: grafana.pavlenko.io

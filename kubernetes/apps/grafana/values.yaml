@@ -1,0 +1,65 @@
+# Wrapper chart for Grafana
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+# Vault / ExternalSecret configuration
+externalSecret:
+  enabled: true
+  refreshInterval: "1h"
+  secretName: grafana-admin-credentials
+
+vault:
+  secretPath: "kv/grafana"
+  secretStoreName: "vault-backend"
+
+# HTTPRoute configuration (empty by default, set in homelab.yaml)
+httproute:
+  routes: []
+
+# Upstream Grafana chart values
+grafana:
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 256Mi
+      cpu: 500m
+
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+
+  # Admin credentials from Vault ExternalSecret
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+
+  # Auto-provision datasources
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: VictoriaMetrics
+          type: prometheus
+          access: proxy
+          url: http://victoriametrics-victoria-metrics-single-server.monitoring:8428
+          isDefault: true
+          editable: true
+        - name: Loki
+          type: loki
+          access: proxy
+          url: http://loki.monitoring:3100
+          editable: true
+
+  # Grafana configuration
+  grafana.ini:
+    server:
+      root_url: "%(protocol)s://%(domain)s/"
+    auth:
+      disable_login_form: false
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+      check_for_plugin_updates: false
