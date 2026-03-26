@@ -155,17 +155,14 @@ parents:
         annotations:
           argocd.argoproj.io/sync-wave: "2"
       - name: victoriametrics
-        enabled: false
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-      - name: victorialogs
-        enabled: false
+      - name: loki
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
       - name: grafana
-        enabled: false
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
