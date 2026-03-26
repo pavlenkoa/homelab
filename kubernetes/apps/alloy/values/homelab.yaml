@@ -62,6 +62,13 @@ alloy:
           job_name   = "transmission"
         }
 
+        // macOS host metrics (node_exporter via OrbStack host.internal)
+        prometheus.scrape "macos" {
+          targets    = [{"__address__" = "host.internal:9100"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "macos"
+        }
+
         // Remote write to local VictoriaMetrics
         prometheus.remote_write "local" {
           external_labels = {
