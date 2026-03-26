@@ -6,13 +6,7 @@ argo-cd:
   nameOverride: argocd
 
   # Enable metrics services for all components
-  controller:
-    metrics:
-      enabled: true
   server:
-    metrics:
-      enabled: true
-  repoServer:
     metrics:
       enabled: true
 
@@ -85,6 +79,8 @@ argo-cd:
 
   # Controller configuration
   controller:
+    metrics:
+      enabled: true
     resources:
       limits:
         memory: 512Mi
@@ -93,6 +89,8 @@ argo-cd:
 
   # Repo server configuration
   repoServer:
+    metrics:
+      enabled: true
     resources:
       limits:
         memory: 256Mi
