@@ -20,7 +20,7 @@ alloy:
 
         prometheus.scrape "node" {
           targets    = prometheus.exporter.unix.node.targets
-          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "node"
         }
 
@@ -31,7 +31,7 @@ alloy:
 
         prometheus.scrape "kubelet" {
           targets    = discovery.kubernetes.nodes.targets
-          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "kubelet"
           scheme     = "https"
           bearer_token_file = "/var/run/secrets/kubernetes.io/serviceaccount/token"
@@ -44,7 +44,7 @@ alloy:
         // cAdvisor metrics from kubelet
         prometheus.scrape "cadvisor" {
           targets    = discovery.kubernetes.nodes.targets
-          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "cadvisor"
           scheme     = "https"
           metrics_path = "/metrics/cadvisor"
@@ -58,21 +58,17 @@ alloy:
         // Transmission exporter metrics
         prometheus.scrape "transmission" {
           targets    = [{"__address__" = "transmission.transmission:19091"}]
-          forward_to = [prometheus.remote_write.grafana_cloud.receiver]
+          forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "transmission"
         }
 
-        // Remote write to Grafana Cloud Prometheus
-        prometheus.remote_write "grafana_cloud" {
+        // Remote write to local VictoriaMetrics
+        prometheus.remote_write "local" {
           external_labels = {
             cluster = "homelab",
           }
           endpoint {
-            url = env("PROMETHEUS_ENDPOINT")
-            basic_auth {
-              username = env("PROMETHEUS_USERNAME")
-              password = env("PROMETHEUS_PASSWORD")
-            }
+            url = "http://victoriametrics-victoria-metrics-single-server.monitoring:8428/api/v1/write"
           }
         }
 
@@ -105,64 +101,15 @@ alloy:
         // Collect pod logs
         loki.source.kubernetes "pods" {
           targets    = discovery.relabel.pod_logs.output
-          forward_to = [loki.write.grafana_cloud.receiver]
+          forward_to = [loki.write.local.receiver]
         }
 
-        // Send logs to Grafana Cloud Loki
-        loki.write "grafana_cloud" {
+        // Send logs to local Loki
+        loki.write "local" {
           external_labels = {
             cluster = "homelab",
           }
           endpoint {
-            url = env("LOKI_ENDPOINT")
-            basic_auth {
-              username = env("LOKI_USERNAME")
-              password = env("LOKI_PASSWORD")
-            }
+            url = "http://loki.monitoring:3100/loki/api/v1/push"
           }
         }
-
-    envFrom:
-      - secretRef:
-          name: grafana-cloud-credentials
-
-  # ExternalSecret for Grafana Cloud credentials from Vault
-  extraObjects:
-    - apiVersion: external-secrets.io/v1
-      kind: ExternalSecret
-      metadata:
-        name: grafana-cloud-credentials
-        namespace: monitoring
-      spec:
-        refreshInterval: 1h
-        secretStoreRef:
-          name: vault-backend
-          kind: ClusterSecretStore
-        target:
-          name: grafana-cloud-credentials
-          creationPolicy: Owner
-        data:
-          - secretKey: PROMETHEUS_ENDPOINT
-            remoteRef:
-              key: grafana
-              property: prometheus_endpoint
-          - secretKey: PROMETHEUS_USERNAME
-            remoteRef:
-              key: grafana
-              property: prometheus_username
-          - secretKey: PROMETHEUS_PASSWORD
-            remoteRef:
-              key: grafana
-              property: prometheus_password
-          - secretKey: LOKI_ENDPOINT
-            remoteRef:
-              key: grafana
-              property: loki_endpoint
-          - secretKey: LOKI_USERNAME
-            remoteRef:
-              key: grafana
-              property: loki_username
-          - secretKey: LOKI_PASSWORD
-            remoteRef:
-              key: grafana
-              property: loki_password
