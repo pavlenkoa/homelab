@@ -170,6 +170,11 @@ parents:
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
+      - name: mikrotik-exporter
+        namespace: monitoring
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
       - name: authelia
         annotations:
           argocd.argoproj.io/sync-wave: "3"

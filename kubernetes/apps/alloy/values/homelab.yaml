@@ -69,6 +69,13 @@ alloy:
           job_name   = "macos"
         }
 
+        // MikroTik router metrics (mktxp exporter)
+        prometheus.scrape "mikrotik" {
+          targets    = [{"__address__" = "mktxp.monitoring:49090"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "mikrotik"
+        }
+
         // Remote write to local VictoriaMetrics
         prometheus.remote_write "local" {
           external_labels = {
