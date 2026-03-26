@@ -95,6 +95,15 @@ config:
       }
     }
 
+    # Grafana secrets
+    secret "grafana" {
+      path = "grafana"
+
+      content {
+        grafana_admin_password = generate({length = 32, symbols = 0})
+      }
+    }
+
     # Authelia secrets
     secret "authelia" {
       path  = "authelia"
