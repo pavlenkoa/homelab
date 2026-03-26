@@ -101,6 +101,18 @@ alloy:
         // Collect pod logs
         loki.source.kubernetes "pods" {
           targets    = discovery.relabel.pod_logs.output
+          forward_to = [loki.process.filter.receiver]
+        }
+
+        // Filter out known noisy errors
+        loki.process "filter" {
+          // Drop cilium envoy version check errors (RPi4 doesn't support 48-bit VA)
+          stage.drop {
+            source         = ""
+            expression     = ".*failed to retrieve Envoy version.*"
+            drop_counter_reason = "cilium-envoy-version-check"
+          }
+
           forward_to = [loki.write.local.receiver]
         }
 
