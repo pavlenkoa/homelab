@@ -83,21 +83,21 @@ alloy:
           job_name   = "kube-state-metrics"
         }
 
-        // ArgoCD metrics
+        // ArgoCD metrics (via metrics services created by chart)
         prometheus.scrape "argocd_server" {
-          targets    = [{"__address__" = "argocd-server.argocd:8083"}]
+          targets    = [{"__address__" = "argocd-server-metrics.argocd:8083"}]
           forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "argocd-server"
         }
 
         prometheus.scrape "argocd_app_controller" {
-          targets    = [{"__address__" = "argocd-application-controller.argocd:8082"}]
+          targets    = [{"__address__" = "argocd-application-controller-metrics.argocd:8082"}]
           forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "argocd-app-controller"
         }
 
         prometheus.scrape "argocd_repo_server" {
-          targets    = [{"__address__" = "argocd-repo-server.argocd:8084"}]
+          targets    = [{"__address__" = "argocd-repo-server-metrics.argocd:8084"}]
           forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "argocd-repo-server"
         }
@@ -137,7 +137,7 @@ alloy:
 
         // kgateway metrics
         prometheus.scrape "kgateway" {
-          targets    = [{"__address__" = "kgateway.kgateway-system:9092"}]
+          targets    = [{"__address__" = "kgateway-metrics.kgateway-system:9092"}]
           forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "kgateway"
         }

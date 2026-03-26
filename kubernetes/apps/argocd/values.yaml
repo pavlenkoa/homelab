@@ -5,6 +5,17 @@ argo-cd:
   # Override name to "argocd" instead of "argo-cd" for consistent naming
   nameOverride: argocd
 
+  # Enable metrics services for all components
+  controller:
+    metrics:
+      enabled: true
+  server:
+    metrics:
+      enabled: true
+  repoServer:
+    metrics:
+      enabled: true
+
   # ArgoCD configuration via configs section
   configs:
     params:
