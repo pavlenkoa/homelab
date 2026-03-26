@@ -166,6 +166,10 @@ parents:
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
+      - name: kube-state-metrics
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
       - name: alloy
         namespace: monitoring
         annotations:

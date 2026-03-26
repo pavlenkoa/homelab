@@ -1,0 +1,4 @@
+# kube-state-metrics configuration for homelab cluster
+# Environment-specific overrides only
+
+kube-state-metrics: {}

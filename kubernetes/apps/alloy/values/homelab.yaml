@@ -76,6 +76,13 @@ alloy:
           job_name   = "mikrotik"
         }
 
+        // kube-state-metrics
+        prometheus.scrape "kube_state_metrics" {
+          targets    = [{"__address__" = "kube-state-metrics.monitoring:8080"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "kube-state-metrics"
+        }
+
         // Remote write to local VictoriaMetrics
         prometheus.remote_write "local" {
           external_labels = {

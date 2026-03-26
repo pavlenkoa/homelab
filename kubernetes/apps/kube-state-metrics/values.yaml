@@ -1,0 +1,11 @@
+# Wrapper chart for kube-state-metrics
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+kube-state-metrics:
+  resources:
+    requests:
+      memory: 64Mi
+      cpu: 50m
+    limits:
+      memory: 128Mi
+      cpu: 200m
