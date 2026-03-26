@@ -97,7 +97,7 @@ config:
 
     # Loki push auth (htpasswd managed manually via vault cli until VSG supports sha1)
     secret "loki" {
-      path = "loki"
+      path = "monitoring/loki"
 
       content {
         push_password = generate({length = 32, symbols = 0})
@@ -106,7 +106,7 @@ config:
 
     # VictoriaMetrics push auth (htpasswd managed manually via vault cli until VSG supports sha1)
     secret "victoriametrics" {
-      path = "victoriametrics"
+      path = "monitoring/victoriametrics"
 
       content {
         push_password = generate({length = 32, symbols = 0})
@@ -115,7 +115,7 @@ config:
 
     # Grafana secrets
     secret "grafana" {
-      path = "grafana"
+      path = "monitoring/grafana"
 
       content {
         grafana_admin_password = generate({length = 32, symbols = 0})

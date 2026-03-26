@@ -8,7 +8,7 @@ externalSecret:
   secretName: grafana-admin-credentials
 
 vault:
-  secretPath: "kv/grafana"
+  secretPath: "kv/monitoring/grafana"
   secretStoreName: "vault-backend"
 
 # HTTPRoute configuration (empty by default, set in homelab.yaml)

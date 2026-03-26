@@ -8,7 +8,7 @@ externalSecret:
   secretName: loki-basic-auth
 
 vault:
-  secretPath: "kv/loki"
+  secretPath: "kv/monitoring/loki"
   secretStoreName: "vault-backend"
 
 # Basic auth for external push endpoint
