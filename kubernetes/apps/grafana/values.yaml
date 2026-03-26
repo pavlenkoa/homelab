@@ -30,6 +30,10 @@ grafana:
     size: 2Gi
     storageClass: ""
 
+  # Disable init-chown-data - fsGroup handles ownership
+  initChownData:
+    enabled: false
+
   # Admin credentials from Vault ExternalSecret
   admin:
     existingSecret: grafana-admin-credentials
