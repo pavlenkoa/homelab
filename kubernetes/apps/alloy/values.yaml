@@ -9,3 +9,11 @@ alloy:
     # Mount /var/log for pod logs
     mounts:
       varlog: true
+
+    resources:
+      requests:
+        memory: 856Mi
+        cpu: 100m
+      limits:
+        memory: 1843Mi
+        cpu: 1000m
