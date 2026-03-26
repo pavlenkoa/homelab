@@ -83,6 +83,65 @@ alloy:
           job_name   = "kube-state-metrics"
         }
 
+        // ArgoCD metrics
+        prometheus.scrape "argocd_server" {
+          targets    = [{"__address__" = "argocd-server.argocd:8083"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "argocd-server"
+        }
+
+        prometheus.scrape "argocd_app_controller" {
+          targets    = [{"__address__" = "argocd-application-controller.argocd:8082"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "argocd-app-controller"
+        }
+
+        prometheus.scrape "argocd_repo_server" {
+          targets    = [{"__address__" = "argocd-repo-server.argocd:8084"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "argocd-repo-server"
+        }
+
+        // Cilium agent metrics (DaemonSet on both nodes)
+        prometheus.scrape "cilium_agent" {
+          targets    = [
+            {"__address__" = "192.168.139.81:9962", "instance" = "macmini"},
+            {"__address__" = "192.168.88.3:9962", "instance" = "raspberrypi"},
+          ]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "cilium-agent"
+        }
+
+        // Cilium operator metrics
+        prometheus.scrape "cilium_operator" {
+          targets    = [{"__address__" = "cilium-operator.kube-system:9963"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "cilium-operator"
+        }
+
+        // VictoriaMetrics self-monitoring
+        prometheus.scrape "victoriametrics" {
+          targets    = [{"__address__" = "victoriametrics-victoria-metrics-single-server.monitoring:8428"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "victoriametrics"
+          metrics_path = "/metrics"
+        }
+
+        // Loki self-monitoring
+        prometheus.scrape "loki" {
+          targets    = [{"__address__" = "loki.monitoring:3100"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "loki"
+          metrics_path = "/metrics"
+        }
+
+        // kgateway metrics
+        prometheus.scrape "kgateway" {
+          targets    = [{"__address__" = "kgateway.kgateway-system:9092"}]
+          forward_to = [prometheus.remote_write.local.receiver]
+          job_name   = "kgateway"
+        }
+
         // Remote write to local VictoriaMetrics
         prometheus.remote_write "local" {
           external_labels = {
