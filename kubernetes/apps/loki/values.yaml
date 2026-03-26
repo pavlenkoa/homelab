@@ -65,13 +65,6 @@ loki:
   write:
     replicas: 0
 
-  # Disable monitoring
-  monitoring:
-    selfMonitoring:
-      enabled: false
-      grafanaAgent:
-        installOperator: false
-
   # Disable canary
   lokiCanary:
     enabled: false
