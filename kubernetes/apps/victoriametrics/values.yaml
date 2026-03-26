@@ -1,6 +1,24 @@
 # Wrapper chart for victoria-metrics-single
 # Defaults here, environment-specific overrides in values/homelab.yaml
 
+# Vault / ExternalSecret for basic auth
+externalSecret:
+  enabled: true
+  refreshInterval: "1h"
+  secretName: victoriametrics-basic-auth
+
+vault:
+  secretPath: "kv/victoriametrics"
+  secretStoreName: "vault-backend"
+
+# Basic auth for external push endpoint
+basicAuth:
+  enabled: true
+
+# HTTPRoute configuration (empty by default, set in homelab.yaml)
+httproute:
+  routes: []
+
 victoria-metrics-single:
   server:
     resources:

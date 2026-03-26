@@ -1,5 +1,15 @@
 # VictoriaMetrics configuration for homelab cluster
 # Environment-specific overrides only
-# (currently no environment-specific settings needed)
+
+httproute:
+  routes:
+    - name: victoriametrics
+      hostname: victoriametrics.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: victoriametrics-victoria-metrics-single-server
+        port: 8428
 
 victoria-metrics-single: {}

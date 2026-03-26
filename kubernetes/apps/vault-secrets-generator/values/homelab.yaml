@@ -104,6 +104,15 @@ config:
       }
     }
 
+    # VictoriaMetrics push auth (htpasswd managed manually via vault cli until VSG supports sha1)
+    secret "victoriametrics" {
+      path = "victoriametrics"
+
+      content {
+        push_password = generate({length = 32, symbols = 0})
+      }
+    }
+
     # Grafana secrets
     secret "grafana" {
       path = "grafana"
