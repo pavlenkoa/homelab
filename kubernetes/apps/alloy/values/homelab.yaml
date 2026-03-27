@@ -80,10 +80,23 @@ alloy:
         }
 
         // macOS host metrics (node_exporter via OrbStack host.internal)
+        // Route through relabel to set nodename=macmini-macos so k8s dashboards
+        // don't confuse macOS host with the macmini k8s node
         prometheus.scrape "macos" {
           targets    = [{"__address__" = "host.internal:9100", "instance" = "macmini-macos"}]
-          forward_to = [prometheus.remote_write.local.receiver]
+          forward_to = [prometheus.relabel.macos.receiver]
           job_name   = "node"
+        }
+
+        prometheus.relabel "macos" {
+          forward_to = [prometheus.remote_write.local.receiver]
+
+          rule {
+            source_labels = ["nodename"]
+            regex         = ".+"
+            target_label  = "nodename"
+            replacement   = "macmini-macos"
+          }
         }
 
         // MikroTik router metrics (mktxp exporter)
