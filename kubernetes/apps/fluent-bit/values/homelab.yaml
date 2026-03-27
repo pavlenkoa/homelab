@@ -45,6 +45,8 @@ fluent-bit-logs:
           Kube_Tag_Prefix     kube.var.log.containers.
           Merge_Log           On
           Keep_Log            Off
+          Labels              Off
+          Annotations         Off
           K8S-Logging.Parser  On
           K8S-Logging.Exclude On
 
@@ -52,6 +54,12 @@ fluent-bit-logs:
           Name    grep
           Match   kube.*
           Exclude log failed to retrieve Envoy version
+
+      [FILTER]
+          Name          modify
+          Match         kube.*
+          Remove        _p
+          Remove        time
 
     outputs: |
       [OUTPUT]
@@ -106,7 +114,11 @@ fluent-bit-k8s-events:
           Kube_URL       https://kubernetes.default.svc:443
           DB             /tmp/k8s_events.db
 
-    filters: ""
+    filters: |
+      [FILTER]
+          Name    grep
+          Match   k8s_events
+          Regex   $involvedObject['kind'] ^(Pod|Deployment|StatefulSet|DaemonSet|ReplicaSet|Job|CronJob|Node)$
 
     outputs: |
       [OUTPUT]
