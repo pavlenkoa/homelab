@@ -1,7 +1,7 @@
 # Wrapper chart for fluent-bit
 # Defaults here, environment-specific overrides in values/homelab.yaml
 
-fluent-bit:
+fluent-bit-logs:
   resources:
     requests:
       memory: 48Mi
@@ -9,3 +9,15 @@ fluent-bit:
     limits:
       memory: 256Mi
       cpu: 200m
+
+fluent-bit-k8s-events:
+  enabled: true
+  kind: Deployment
+  replicaCount: 1
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 10m
+    limits:
+      memory: 64Mi
+      cpu: 100m
