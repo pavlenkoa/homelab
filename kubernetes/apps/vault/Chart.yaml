@@ -9,6 +9,6 @@ dependencies:
   - name: vault
     version: "0.32.0"
     repository: "https://helm.releases.hashicorp.com"
-  - name: httproute
+  - name: common
     version: "0.1.0"
-    repository: "file://../httproute"
+    repository: "file://../common"

@@ -7,6 +7,6 @@ dependencies:
   - name: victoria-metrics-single
     version: "0.33.0"
     repository: "https://victoriametrics.github.io/helm-charts"
-  - name: httproute
+  - name: common
     version: "0.1.0"
-    repository: "file://../httproute"
+    repository: "file://../common"

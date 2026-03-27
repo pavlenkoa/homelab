@@ -3,7 +3,6 @@
 
 # Vault / ExternalSecret for basic auth
 externalSecret:
-  enabled: true
   refreshInterval: "1h"
   secretName: loki-basic-auth
 
@@ -14,6 +13,7 @@ vault:
 # Basic auth for external push endpoint
 basicAuth:
   enabled: true
+  targetRoute: loki
 
 # HTTPRoute configuration (empty by default, set in homelab.yaml)
 httproute:

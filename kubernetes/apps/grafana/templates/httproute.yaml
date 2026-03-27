@@ -1,1 +1,1 @@
-{{- include "httproute.routes" . }}
+{{- include "common.httproute" . }}

@@ -7,6 +7,6 @@ dependencies:
   - name: argo-cd
     version: "9.4.15"
     repository: "https://argoproj.github.io/argo-helm"
-  - name: httproute
+  - name: common
     version: "0.1.0"
-    repository: "file://../httproute"
+    repository: "file://../common"
