@@ -1,0 +1,46 @@
+{{- if .Values.vmalert.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vmalert-rules
+  namespace: {{ .Release.Namespace }}
+data:
+  recording-rules.yaml: |
+    groups:
+      {{- toYaml .Values.vmalert.rules.groups | nindent 6 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmalert
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vmalert
+  template:
+    metadata:
+      labels:
+        app: vmalert
+    spec:
+      containers:
+        - name: vmalert
+          image: "victoriametrics/vmalert:{{ .Values.vmalert.image.tag }}"
+          args:
+            - -datasource.url={{ .Values.vmalert.datasource.url }}
+            - -remoteWrite.url={{ .Values.vmalert.remoteWrite.url }}
+            - -remoteRead.url={{ .Values.vmalert.remoteRead.url }}
+            - -rule=/config/*.yaml
+            - -evaluationInterval={{ .Values.vmalert.evaluationInterval }}
+          resources:
+            {{- toYaml .Values.vmalert.resources | nindent 12 }}
+          volumeMounts:
+            - name: rules
+              mountPath: /config
+      volumes:
+        - name: rules
+          configMap:
+            name: vmalert-rules
+{{- end }}

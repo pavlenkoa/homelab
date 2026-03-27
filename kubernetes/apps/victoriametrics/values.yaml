@@ -63,3 +63,32 @@ victoria-metrics-single:
 
     serviceMonitor:
       enabled: false
+
+# vmalert for recording rules
+vmalert:
+  enabled: true
+  image:
+    tag: v1.115.0
+  evaluationInterval: 1m
+  datasource:
+    url: http://victoriametrics-victoria-metrics-single-server:8428
+  remoteWrite:
+    url: http://victoriametrics-victoria-metrics-single-server:8428
+  remoteRead:
+    url: http://victoriametrics-victoria-metrics-single-server:8428
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 10m
+    limits:
+      memory: 64Mi
+      cpu: 100m
+  rules:
+    groups:
+      - name: macos-compat
+        rules:
+          - record: node_memory_MemAvailable_bytes
+            expr: node_memory_MemFree_bytes{instance="macmini-macos"} + node_memory_inactive_bytes{instance="macmini-macos"}
+            labels:
+              instance: macmini-macos
+              job: node
