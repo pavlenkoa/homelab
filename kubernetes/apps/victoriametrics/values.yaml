@@ -87,8 +87,18 @@ vmalert:
     groups:
       - name: macos-compat
         rules:
+          # Map Darwin memory metrics to Linux equivalents for Node Exporter Full dashboard
+          - record: node_memory_MemTotal_bytes
+            expr: node_memory_total_bytes{instance="macmini-macos"}
+          - record: node_memory_MemFree_bytes
+            expr: node_memory_free_bytes{instance="macmini-macos"}
           - record: node_memory_MemAvailable_bytes
-            expr: node_memory_MemFree_bytes{instance="macmini-macos"} + node_memory_inactive_bytes{instance="macmini-macos"}
-            labels:
-              instance: macmini-macos
-              job: node
+            expr: node_memory_free_bytes{instance="macmini-macos"} + node_memory_inactive_bytes{instance="macmini-macos"}
+          - record: node_memory_Cached_bytes
+            expr: node_memory_inactive_bytes{instance="macmini-macos"}
+          - record: node_memory_Buffers_bytes
+            expr: node_memory_purgeable_bytes{instance="macmini-macos"}
+          - record: node_memory_SwapTotal_bytes
+            expr: node_memory_swap_total_bytes{instance="macmini-macos"}
+          - record: node_memory_SwapFree_bytes
+            expr: node_memory_swap_total_bytes{instance="macmini-macos"} - node_memory_swap_used_bytes{instance="macmini-macos"}

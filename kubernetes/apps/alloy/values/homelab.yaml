@@ -80,29 +80,10 @@ alloy:
         }
 
         // macOS host metrics (node_exporter via OrbStack host.internal)
-        // Route through relabel to map Darwin metric names to Linux equivalents
         prometheus.scrape "macos" {
           targets    = [{"__address__" = "host.internal:9100", "instance" = "macmini-macos"}]
-          forward_to = [prometheus.relabel.macos_compat.receiver]
-          job_name   = "node"
-        }
-
-        // Rename macOS memory metrics to Linux-compatible names for dashboard compatibility
-        prometheus.relabel "macos_compat" {
           forward_to = [prometheus.remote_write.local.receiver]
-
-          rule {
-            source_labels = ["__name__"]
-            regex         = "node_memory_total_bytes"
-            target_label  = "__name__"
-            replacement   = "node_memory_MemTotal_bytes"
-          }
-          rule {
-            source_labels = ["__name__"]
-            regex         = "node_memory_free_bytes"
-            target_label  = "__name__"
-            replacement   = "node_memory_MemFree_bytes"
-          }
+          job_name   = "node"
         }
 
         // MikroTik router metrics (mktxp exporter)
