@@ -62,7 +62,8 @@ fluent-bit-logs:
           Labels               cluster=homelab
           Label_Map_Path       /fluent-bit/etc/conf/loki-label-map.json
           Auto_Kubernetes_Labels off
-          Remove_Keys          kubernetes,stream,logtag
+          Remove_Keys          kubernetes,stream,logtag,_p,time
+          Drop_Single_Key      raw
           Line_Format          json
           Buffer_Size          256KB
 
