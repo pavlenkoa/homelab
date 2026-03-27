@@ -38,3 +38,16 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: https-apex
+      protocol: HTTPS
+      port: {{ .Values.gateway.listeners.https.port }}
+      hostname: "pavlenko.io"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: homelab-gateway-tls
+      allowedRoutes:
+        namespaces:
+          from: All
