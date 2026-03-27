@@ -4,7 +4,7 @@
 fluent-bit-logs:
   resources:
     requests:
-      memory: 48Mi
+      memory: 64Mi
       cpu: 20m
     limits:
       memory: 256Mi
