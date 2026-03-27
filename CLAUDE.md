@@ -19,30 +19,30 @@ Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4
 
 **raspberrypi (tainted):** Transmission (with Gluetun VPN sidecar) - requires toleration to schedule
 
-**Both nodes:** Alloy DaemonSet
+**Both nodes:** fluent-bit DaemonSet (log collection)
 
-**Native macOS:** Emby, Alloy
+**macmini only:** vmagent Deployment (metrics scraping)
+
+**Native macOS:** Emby, node_exporter, fluent-bit (Emby logs)
 
 ## Monitoring
 
-Metrics and logs ship to Grafana Cloud.
+Metrics and logs ship to local VictoriaMetrics and Loki.
 
 **macOS (native, outside GitOps):**
-- Alloy - host metrics, process metrics (Emby visibility), Emby logs
-- Exposes endpoint at `host.internal` for in-cluster Alloy to scrape
+- node_exporter - host metrics, exposed at `host.internal:9100` for in-cluster vmagent to scrape
+- fluent-bit - Emby logs, pushes to in-cluster Loki
 
 **k3s cluster (ArgoCD-managed):**
-- Alloy DaemonSet on both nodes
-- Collects: node metrics, K8s metrics (cAdvisor, kubelet, kube-state-metrics)
-- Scrapes macOS Alloy, remote writes to Grafana Cloud
+- vmagent Deployment (single replica) - scrapes all metrics (node, kubelet, cAdvisor, kube-state-metrics, macOS, apps)
+- fluent-bit DaemonSet on both nodes - collects pod logs, pushes to Loki
+- Remote write: VictoriaMetrics (metrics), Loki (logs)
 
 **Secrets:** Vault path `grafana` contains Grafana Cloud credentials
 
 ## TODO
 
-- [ ] Add mikrotik-exporter (mktxp) for router metrics
-- [ ] Deploy local monitoring stack (VictoriaMetrics, Loki, Grafana) with local storage
-- [ ] Install Alloy on macOS (Homebrew)
+- [ ] Install fluent-bit on macOS (Homebrew) for Emby log collection
 
 ## Project Structure
 
@@ -69,7 +69,8 @@ homelab/
     │   ├── templates/
     │   └── values.yaml
     └── apps/                   # All applications (Helm wrapper charts + raw manifests)
-        ├── alloy/
+        ├── fluent-bit/
+        ├── vmagent/
         ├── argocd/
         ├── authelia/
         ├── cert-manager/

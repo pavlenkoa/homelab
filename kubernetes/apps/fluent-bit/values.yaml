@@ -1,0 +1,11 @@
+# Wrapper chart for fluent-bit
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+fluent-bit:
+  resources:
+    requests:
+      memory: 48Mi
+      cpu: 20m
+    limits:
+      memory: 256Mi
+      cpu: 200m

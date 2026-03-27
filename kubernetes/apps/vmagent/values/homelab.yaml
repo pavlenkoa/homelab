@@ -1,0 +1,148 @@
+# vmagent configuration for homelab cluster
+# Environment-specific overrides only
+
+victoria-metrics-agent:
+  remoteWrite:
+    - url: http://victoriametrics-victoria-metrics-single-server.monitoring:8428/api/v1/write
+
+  extraArgs:
+    envflag.enable: true
+    envflag.prefix: VM_
+    loggerFormat: json
+    httpListenAddr: ":8429"
+    promscrape.suppressDuplicateScrapeTargetErrors: "true"
+
+  config:
+    global:
+      scrape_interval: 15s
+      external_labels:
+        cluster: homelab
+
+    scrape_configs:
+      # Node metrics (from prometheus-node-exporter DaemonSet)
+      - job_name: node
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - monitoring
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_endpoints_name]
+            regex: node-exporter
+            action: keep
+          - source_labels: [__meta_kubernetes_endpoint_node_name]
+            target_label: instance
+
+      # Kubelet metrics
+      - job_name: kubelet
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+
+      # cAdvisor metrics from kubelet
+      - job_name: cadvisor
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        metrics_path: /metrics/cadvisor
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          insecure_skip_verify: true
+
+      # Transmission exporter metrics
+      - job_name: transmission
+        static_configs:
+          - targets:
+              - transmission.transmission:19091
+
+      # macOS host metrics (node_exporter via OrbStack host.internal)
+      # Uses macos-node internally, relabeled to job=node in storage
+      # so k8s dashboards don't confuse macOS host with macmini k8s node
+      - job_name: macos-node
+        static_configs:
+          - targets:
+              - host.internal:9100
+            labels:
+              instance: macmini-macos
+        metric_relabel_configs:
+          - source_labels: [nodename]
+            regex: .+
+            target_label: nodename
+            replacement: macmini-macos
+          - target_label: job
+            replacement: node
+
+      # MikroTik router metrics (mktxp exporter)
+      - job_name: mikrotik
+        static_configs:
+          - targets:
+              - mktxp.monitoring:49090
+
+      # kube-state-metrics
+      - job_name: kube-state-metrics
+        static_configs:
+          - targets:
+              - kube-state-metrics.monitoring:8080
+
+      # ArgoCD metrics
+      - job_name: argocd-server
+        static_configs:
+          - targets:
+              - argocd-server-metrics.argocd:8083
+
+      - job_name: argocd-app-controller
+        static_configs:
+          - targets:
+              - argocd-application-controller-metrics.argocd:8082
+
+      - job_name: argocd-repo-server
+        static_configs:
+          - targets:
+              - argocd-repo-server-metrics.argocd:8084
+
+      # Cilium agent metrics (DaemonSet on both nodes)
+      - job_name: cilium-agent
+        static_configs:
+          - targets:
+              - 192.168.139.81:9962
+              - 192.168.88.3:9962
+        relabel_configs:
+          - source_labels: [__address__]
+            regex: "192\\.168\\.139\\.81:9962"
+            target_label: instance
+            replacement: macmini
+          - source_labels: [__address__]
+            regex: "192\\.168\\.88\\.3:9962"
+            target_label: instance
+            replacement: raspberrypi
+
+      # Cilium operator metrics
+      - job_name: cilium-operator
+        static_configs:
+          - targets:
+              - cilium-operator.kube-system:9963
+
+      # VictoriaMetrics self-monitoring
+      - job_name: victoriametrics
+        static_configs:
+          - targets:
+              - victoriametrics-victoria-metrics-single-server.monitoring:8428
+        metrics_path: /metrics
+
+      # Loki self-monitoring
+      - job_name: loki
+        static_configs:
+          - targets:
+              - loki.monitoring:3100
+        metrics_path: /metrics
+
+      # kgateway metrics
+      - job_name: kgateway
+        static_configs:
+          - targets:
+              - kgateway-metrics.kgateway-system:9092

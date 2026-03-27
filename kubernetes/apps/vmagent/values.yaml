@@ -1,0 +1,13 @@
+# Wrapper chart for victoria-metrics-agent
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+victoria-metrics-agent:
+  mode: deployment
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+    limits:
+      memory: 512Mi
+      cpu: 500m

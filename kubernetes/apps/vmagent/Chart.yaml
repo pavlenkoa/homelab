@@ -1,0 +1,9 @@
+apiVersion: v2
+name: vmagent
+version: 1.0.0
+description: "Wrapper chart for victoria-metrics-agent"
+
+dependencies:
+  - name: victoria-metrics-agent
+    version: "0.34.0"
+    repository: "https://victoriametrics.github.io/helm-charts"
