@@ -13,13 +13,30 @@ alloy:
   alloy:
     configMap:
       content: |
-        // Node metrics
-        prometheus.exporter.unix "node" {
-          disable_collectors = ["arp", "bcache", "bonding", "btrfs", "conntrack", "dmi", "edac", "entropy", "fibrechannel", "hwmon", "infiniband", "ipvs", "mdadm", "nfs", "nfsd", "nvme", "os", "powersupplyclass", "pressure", "rapl", "schedstat", "selinux", "softnet", "tapestats", "thermal_zone", "timex", "udp_queues", "watchdog", "xfs", "zfs"]
+        // Node metrics (from prometheus-node-exporter DaemonSet)
+        discovery.kubernetes "node_exporter" {
+          role = "endpoints"
+          namespaces {
+            names = ["monitoring"]
+          }
+        }
+
+        discovery.relabel "node_exporter" {
+          targets = discovery.kubernetes.node_exporter.targets
+
+          rule {
+            source_labels = ["__meta_kubernetes_endpoints_name"]
+            regex         = "node-exporter"
+            action        = "keep"
+          }
+          rule {
+            source_labels = ["__meta_kubernetes_endpoint_node_name"]
+            target_label  = "instance"
+          }
         }
 
         prometheus.scrape "node" {
-          targets    = prometheus.exporter.unix.node.targets
+          targets    = discovery.relabel.node_exporter.output
           forward_to = [prometheus.remote_write.local.receiver]
           job_name   = "node"
         }
@@ -64,9 +81,9 @@ alloy:
 
         // macOS host metrics (node_exporter via OrbStack host.internal)
         prometheus.scrape "macos" {
-          targets    = [{"__address__" = "host.internal:9100"}]
+          targets    = [{"__address__" = "host.internal:9100", "instance" = "macmini-macos"}]
           forward_to = [prometheus.remote_write.local.receiver]
-          job_name   = "macos"
+          job_name   = "node"
         }
 
         // MikroTik router metrics (mktxp exporter)

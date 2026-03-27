@@ -1,0 +1,58 @@
+# Wrapper chart for prometheus-node-exporter
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+prometheus-node-exporter:
+  fullnameOverride: node-exporter
+
+  # Run on all nodes including tainted raspberrypi
+  tolerations:
+    - key: dedicated
+      operator: Equal
+      value: media
+      effect: NoSchedule
+
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 50m
+    limits:
+      memory: 64Mi
+      cpu: 200m
+
+  # Disable collectors not needed in homelab
+  extraArgs:
+    - --no-collector.arp
+    - --no-collector.bcache
+    - --no-collector.bonding
+    - --no-collector.btrfs
+    - --no-collector.conntrack
+    - --no-collector.dmi
+    - --no-collector.edac
+    - --no-collector.entropy
+    - --no-collector.fibrechannel
+    - --no-collector.hwmon
+    - --no-collector.infiniband
+    - --no-collector.ipvs
+    - --no-collector.mdadm
+    - --no-collector.nfs
+    - --no-collector.nfsd
+    - --no-collector.nvme
+    - --no-collector.os
+    - --no-collector.powersupplyclass
+    - --no-collector.pressure
+    - --no-collector.rapl
+    - --no-collector.schedstat
+    - --no-collector.selinux
+    - --no-collector.softnet
+    - --no-collector.tapestats
+    - --no-collector.thermal_zone
+    - --no-collector.timex
+    - --no-collector.udp_queues
+    - --no-collector.watchdog
+    - --no-collector.xfs
+    - --no-collector.zfs
+
+  # Prometheus scraping disabled - Alloy handles scraping
+  prometheus:
+    monitor:
+      enabled: false

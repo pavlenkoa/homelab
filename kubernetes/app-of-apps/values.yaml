@@ -170,6 +170,10 @@ parents:
         namespace: monitoring
         annotations:
           argocd.argoproj.io/sync-wave: "2"
+      - name: node-exporter
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
       - name: alloy
         namespace: monitoring
         annotations:

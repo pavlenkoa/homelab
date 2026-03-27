@@ -1,0 +1,9 @@
+apiVersion: v2
+name: node-exporter
+version: 1.0.0
+description: "Wrapper chart for prometheus-node-exporter"
+
+dependencies:
+  - name: prometheus-node-exporter
+    version: "4.52.2"
+    repository: "https://prometheus-community.github.io/helm-charts"
