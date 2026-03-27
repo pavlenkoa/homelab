@@ -3843,7 +3843,11 @@
         "type": "datasource"
       },
       {
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "homelab",
+          "value": "homelab"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "P4169E866C3094E38"

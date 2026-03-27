@@ -2795,8 +2795,9 @@
       },
       {
         "current": {
-          "text": "",
-          "value": ""
+          "selected": true,
+          "text": "homelab",
+          "value": "homelab"
         },
         "datasource": {
           "type": "prometheus",
@@ -2908,9 +2909,9 @@
       },
       {
         "current": {
-          "selected": false,
-          "text": "kube-state-metrics",
-          "value": "kube-state-metrics"
+          "selected": true,
+          "text": "node",
+          "value": "node"
         },
         "datasource": {
           "type": "prometheus",
