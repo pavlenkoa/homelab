@@ -67,7 +67,7 @@ fluent-bit-logs:
           Match                kube.*
           Host                 loki.monitoring
           Port                 3100
-          Labels               cluster=homelab
+          Labels               job=pod-logs, cluster=homelab
           Label_Map_Path       /fluent-bit/etc/conf/loki-label-map.json
           Auto_Kubernetes_Labels off
           Remove_Keys          kubernetes,stream,logtag,_p,time
@@ -126,7 +126,7 @@ fluent-bit-k8s-events:
           Match                k8s_events
           Host                 loki.monitoring
           Port                 3100
-          Labels               job=k8s-events, cluster=homelab
+          Labels               job=kubernetes-events, cluster=homelab
           Auto_Kubernetes_Labels off
           Line_Format          json
           Buffer_Size          256KB
