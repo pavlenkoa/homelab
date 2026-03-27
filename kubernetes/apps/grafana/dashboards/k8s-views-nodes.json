@@ -3944,14 +3944,14 @@
           "type": "prometheus",
           "uid": "P4169E866C3094E38"
         },
-        "definition": "label_values(node_uname_info{nodename=~\"(?i:($node)(\\\\.[a-z0-9.-]+)?)\", cluster=\"$cluster\"}, instance)",
+        "definition": "label_values(node_uname_info{nodename=\"$node\", cluster=\"$cluster\"}, instance)",
         "hide": 2,
         "includeAll": false,
         "multi": false,
         "name": "instance",
         "options": [],
         "query": {
-          "query": "label_values(node_uname_info{nodename=~\"(?i:($node)(\\\\.[a-z0-9.-]+)?)\", cluster=\"$cluster\"}, instance)",
+          "query": "label_values(node_uname_info{nodename=\"$node\", cluster=\"$cluster\"}, instance)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
