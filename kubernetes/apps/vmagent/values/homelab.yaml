@@ -121,12 +121,6 @@ victoria-metrics-agent:
             target_label: instance
             replacement: raspberrypi
 
-      # Cilium operator metrics
-      - job_name: cilium-operator
-        static_configs:
-          - targets:
-              - cilium-operator.kube-system:9963
-
       # VictoriaMetrics self-monitoring
       - job_name: victoriametrics
         static_configs:

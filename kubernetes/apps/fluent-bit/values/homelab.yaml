@@ -66,6 +66,7 @@ fluent-bit:
           Auto_Kubernetes_Labels off
           Remove_Keys          kubernetes,stream,logtag
           Line_Format          json
+          Buffer_Size          256KB
 
     extraFiles:
       loki-label-map.json: |
