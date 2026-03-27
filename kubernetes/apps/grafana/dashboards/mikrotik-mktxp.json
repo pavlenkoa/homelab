@@ -9281,7 +9281,11 @@
   "templating": {
     "list": [
       {
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "wroclaw-hap-ax2",
+          "value": "wroclaw-hap-ax2"
+        },
         "datasource": {
           "type": "prometheus",
           "uid": "P4169E866C3094E38"
@@ -9318,7 +9322,7 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Mikrotik MKTXP Exporter",
+  "title": "MikroTik",
   "uid": "78d5fa8d-8a24-4a63-bfa7-802d55bb1637",
   "version": 3,
   "weekStart": "",

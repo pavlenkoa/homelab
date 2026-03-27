@@ -65,6 +65,8 @@ grafana:
 
   # Grafana configuration
   grafana.ini:
+    dashboards:
+      default_home_dashboard_path: /tmp/dashboards/mikrotik-mktxp.json
     server:
       root_url: "%(protocol)s://%(domain)s/"
     auth:
