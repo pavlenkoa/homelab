@@ -154,6 +154,38 @@ parents:
           targetRevision: "HEAD"
         annotations:
           argocd.argoproj.io/sync-wave: "2"
+      - name: authelia
+        annotations:
+          argocd.argoproj.io/sync-wave: "3"
+      - name: tailscale
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+
+  applications:
+    description: "End-user applications and services"
+    scopeDestinations: true
+    annotations:
+      argocd.argoproj.io/sync-wave: "1"
+    children:
+      - name: external-services
+        helm:
+          valueFiles: []
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+      - name: transmission
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+      - name: claude-code
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+
+  monitoring:
+    description: "Observability stack"
+    annotations:
+      argocd.argoproj.io/sync-wave: "1"
+    children:
       - name: victoriametrics
         namespace: monitoring
         annotations:
@@ -187,32 +219,6 @@ parents:
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-      - name: authelia
-        annotations:
-          argocd.argoproj.io/sync-wave: "3"
-      - name: tailscale
-        annotations:
-          argocd.argoproj.io/sync-wave: "2"
-
-  applications:
-    description: "End-user applications and services"
-    scopeDestinations: true
-    annotations:
-      argocd.argoproj.io/sync-wave: "1"
-    children:
-      - name: external-services
-        helm:
-          valueFiles: []
-        annotations:
-          argocd.argoproj.io/sync-wave: "4"
-      - name: transmission
-        directory: {}
-        annotations:
-          argocd.argoproj.io/sync-wave: "4"
-      - name: claude-code
-        directory: {}
-        annotations:
-          argocd.argoproj.io/sync-wave: "4"
 
   smarthome:
     description: "Smart home automation stack"
