@@ -29,10 +29,10 @@ spec:
               mountPath: /mosquitto/data
           resources:
             requests:
-              memory: 32Mi
+              memory: 8Mi
               cpu: 10m
             limits:
-              memory: 64Mi
+              memory: 32Mi
       volumes:
         - name: config
           configMap:

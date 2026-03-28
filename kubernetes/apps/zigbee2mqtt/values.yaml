@@ -14,6 +14,6 @@ zigbee2mqtt:
     resources:
       requests:
         memory: 128Mi
-        cpu: 50m
+        cpu: 20m
       limits:
         memory: 256Mi
