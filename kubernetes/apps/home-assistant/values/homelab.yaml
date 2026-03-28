@@ -49,36 +49,6 @@ home-assistant:
 
       prometheus:
 
-      light:
-        - platform: group
-          name: All Lights
-          unique_id: all_lights
-          entities:
-            - light.light_main_room_lamp
-            - light.light_bedroom_1
-            - light.light_bedroom_2
-            - light.light_kitchen_table
-            - light.light_toilet_1
-            - light.light_toilet_2
-        - platform: group
-          name: Bedroom Lights
-          unique_id: bedroom_lights
-          entities:
-            - light.light_bedroom_1
-            - light.light_bedroom_2
-        - platform: group
-          name: Toilet Lights
-          unique_id: toilet_lights
-          entities:
-            - light.light_toilet_1
-            - light.light_toilet_2
-        - platform: group
-          name: Living Lights
-          unique_id: living_lights
-          entities:
-            - light.light_main_room_lamp
-            - light.light_kitchen_table
-
       frontend:
         themes: !include_dir_merge_named themes
 
