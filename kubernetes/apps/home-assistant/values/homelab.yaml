@@ -24,6 +24,33 @@ home-assistant:
     type: ClusterIP
     port: 8123
 
+  additionalServices:
+    - name: homekit
+      port: 21064
+      targetPort: 21064
+      type: ClusterIP
+      protocol: TCP
+
+  initContainers:
+    - name: install-hacs
+      image: alpine:3.23
+      command: ["/bin/sh", "-c"]
+      args:
+        - |
+          if [ ! -d /config/custom_components/hacs ]; then
+            echo "HACS not found, installing..."
+            wget -qO /tmp/hacs.zip https://github.com/hacs/integration/releases/latest/download/hacs.zip
+            mkdir -p /config/custom_components/hacs
+            unzip -q /tmp/hacs.zip -d /config/custom_components/hacs
+            rm /tmp/hacs.zip
+            echo "HACS installed"
+          else
+            echo "HACS already present, skipping"
+          fi
+      volumeMounts:
+        - name: home-assistant
+          mountPath: /config
+
   persistence:
     enabled: true
     size: 10Gi
