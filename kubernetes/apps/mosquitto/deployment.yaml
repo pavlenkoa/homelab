@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mosquitto
-  namespace: mosquitto
+  namespace: smarthome
 spec:
   replicas: 1
   strategy:

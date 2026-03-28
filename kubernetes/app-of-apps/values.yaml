@@ -221,12 +221,15 @@ parents:
       argocd.argoproj.io/sync-wave: "2"
     children:
       - name: mosquitto
+        namespace: smarthome
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "3"
       - name: zigbee2mqtt
+        namespace: smarthome
         annotations:
           argocd.argoproj.io/sync-wave: "4"
       - name: home-assistant
+        namespace: smarthome
         annotations:
           argocd.argoproj.io/sync-wave: "5"

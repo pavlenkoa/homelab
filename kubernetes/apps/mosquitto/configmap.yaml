@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: mosquitto
-  namespace: mosquitto
+  namespace: smarthome
 data:
   mosquitto.conf: |
     listener 1883
