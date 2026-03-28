@@ -164,91 +164,75 @@
       }
     },
     {
-      "title": "Uptime",
-      "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
-      "collapsed": false,
-      "panels": [
-        {
-          "title": "Status – Live",
-          "type": "state-timeline",
-          "gridPos": { "h": 12, "w": 24, "x": 0, "y": 19 },
-          "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-          "targets": [
-            { "expr": "min_over_time(probe_success{job=\"blackbox\"}[5m])", "refId": "A", "legendFormat": "{{ instance }}", "interval": "5m" }
+      "title": "Status – Live",
+      "type": "state-timeline",
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 18 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [
+        { "expr": "min_over_time(probe_success{job=\"blackbox\"}[5m])", "refId": "A", "legendFormat": "{{ instance }}", "interval": "5m" }
+      ],
+      "maxDataPoints": 100,
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" } } },
+            { "type": "value", "options": { "1": { "text": "UP", "color": "green" } } }
           ],
-          "maxDataPoints": 100,
-          "fieldConfig": {
-            "defaults": {
-              "mappings": [
-                { "type": "value", "options": { "0": { "text": "DOWN", "color": "red" } } },
-                { "type": "value", "options": { "1": { "text": "UP", "color": "green" } } }
-              ],
-              "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
-              "custom": { "fillOpacity": 100, "lineWidth": 1 }
-            }
-          },
-          "options": { "showValue": "never", "mergeValues": false, "rowHeight": 0.7, "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
-          "transformations": [
-            { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
-          ]
-        },
-        {
-          "title": "Uptime per Monitor",
-          "type": "bargauge",
-          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 31 },
-          "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-          "targets": [{ "expr": "avg_over_time(probe_success{job=\"blackbox\"}[$__range]) * 100", "refId": "A", "instant": true, "legendFormat": "{{ instance }}" }],
-          "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } } },
-          "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "transformations": [
-            { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
-          ]
+          "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
+          "custom": { "fillOpacity": 100, "lineWidth": 1 }
         }
+      },
+      "options": { "showValue": "never", "mergeValues": false, "rowHeight": 0.7, "tooltip": { "mode": "single" }, "legend": { "displayMode": "hidden" } },
+      "transformations": [
+        { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
       ]
     },
     {
-      "title": "Response Time",
-      "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
-      "collapsed": false,
-      "panels": [
-        {
-          "title": "Response Time – Live",
-          "type": "timeseries",
-          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 20 },
-          "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-          "targets": [{ "expr": "probe_duration_seconds{job=\"blackbox\"}", "refId": "A", "legendFormat": "{{ instance }}" }],
-          "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" } } },
-          "transformations": [
-            { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
-          ],
-          "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } }
-        },
-        {
-          "title": "Avg Response Time per Monitor",
-          "type": "bargauge",
-          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 30 },
-          "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-          "targets": [{ "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox\"}[$__range]) * 1000", "refId": "A", "instant": true, "legendFormat": "{{ instance }}" }],
-          "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 2000 }] } } },
-          "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } },
-          "transformations": [
-            { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
-          ]
-        }
+      "title": "Uptime per Monitor",
+      "type": "bargauge",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "avg_over_time(probe_success{job=\"blackbox\"}[$__range]) * 100", "refId": "A", "instant": true, "legendFormat": "{{ instance }}" }],
+      "fieldConfig": { "defaults": { "unit": "percent", "decimals": 2, "min": 0, "max": 100, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 95 }, { "color": "green", "value": 99 }] } } },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "transformations": [
+        { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
       ]
+    },
+    {
+      "title": "Avg Response Time per Monitor",
+      "type": "bargauge",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox\"}[$__range]) * 1000", "refId": "A", "instant": true, "legendFormat": "{{ instance }}" }],
+      "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 2000 }] } } },
+      "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "transformations": [
+        { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
+      ]
+    },
+    {
+      "title": "Response Time – Live",
+      "type": "timeseries",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 40 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "probe_duration_seconds{job=\"blackbox\"}", "refId": "A", "legendFormat": "{{ instance }}" }],
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "lineWidth": 1, "fillOpacity": 10, "showPoints": "never" } } },
+      "transformations": [
+        { "id": "renameByRegex", "options": { "regex": "https://(.+)\\.pavlenko\\.io", "renamePattern": "$1" } }
+      ],
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] }, "tooltip": { "mode": "multi" } }
     },
     {
       "title": "SSL Certificates",
       "type": "row",
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 20 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 50 },
       "collapsed": true,
       "panels": [
         {
           "title": "Certificate Days Remaining",
           "type": "bargauge",
-          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 21 },
+          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 51 },
           "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
           "targets": [{ "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox\"} - time()) / 86400", "refId": "A", "instant": true, "legendFormat": "{{ instance }}" }],
           "fieldConfig": { "defaults": { "unit": "d", "decimals": 0, "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 7 }, { "color": "green", "value": 30 }] } } },
