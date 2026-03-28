@@ -10,7 +10,7 @@
   "panels": [
     {
       "title": "Service Status",
-      "type": "state-timeline",
+      "type": "status-history",
       "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [
@@ -30,7 +30,6 @@
       },
       "options": {
         "showValue": "never",
-        "mergeValues": true,
         "rowHeight": 0.8,
         "tooltip": { "mode": "single" },
         "legend": { "displayMode": "hidden" }
