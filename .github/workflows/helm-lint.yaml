@@ -55,6 +55,12 @@ jobs:
           for dir in $dirs; do
             chart=$(basename "$dir")
 
+            # Skip library charts — they can't be templated standalone
+            if grep -q '^type: library' "$dir/Chart.yaml"; then
+              echo "::notice::$chart — skipping library chart"
+              continue
+            fi
+
             if grep -q '^dependencies:' "$dir/Chart.yaml"; then
               echo "::group::$chart — dependency build"
               if ! helm dependency build "$dir"; then
