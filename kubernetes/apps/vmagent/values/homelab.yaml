@@ -163,7 +163,6 @@ victoria-metrics-agent:
               - https://ha.pavlenko.io
               - https://hubble.pavlenko.io
               - https://loki.pavlenko.io
-              - https://photos.pavlenko.io
               - https://transmission.pavlenko.io
               - https://vault.pavlenko.io
               - https://victoriametrics.pavlenko.io
