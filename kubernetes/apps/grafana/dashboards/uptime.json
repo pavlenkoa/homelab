@@ -10,12 +10,13 @@
   "panels": [
     {
       "title": "Service Status",
-      "type": "status-history",
+      "type": "state-timeline",
       "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [
         { "expr": "min_over_time(probe_success{job=\"blackbox\"}[2m])", "refId": "A", "legendFormat": "{{ instance }}", "interval": "2m" }
       ],
+      "maxDataPoints": 500,
       "fieldConfig": {
         "defaults": {
           "mappings": [
@@ -29,6 +30,7 @@
       },
       "options": {
         "showValue": "never",
+        "mergeValues": true,
         "rowHeight": 0.8,
         "tooltip": { "mode": "single" },
         "legend": { "displayMode": "hidden" }
