@@ -4,6 +4,9 @@
 victoria-metrics-agent:
   mode: deployment
 
+  remoteWrite:
+    - url: http://localhost:8428/api/v1/write
+
   resources:
     requests:
       memory: 128Mi
