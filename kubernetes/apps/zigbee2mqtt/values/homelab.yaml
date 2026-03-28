@@ -51,5 +51,4 @@ zigbee2mqtt:
       channel: 11
       log_level: info
       last_seen: ISO_8601
-      network_key: GENERATE
       transmit_power: 20
