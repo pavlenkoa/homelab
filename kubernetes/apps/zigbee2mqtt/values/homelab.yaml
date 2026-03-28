@@ -21,7 +21,7 @@ zigbee2mqtt:
     port: 8080
 
   configmap:
-    enabled: true
+    enabled: false
 
   statefulset:
     storage:
