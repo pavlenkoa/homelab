@@ -1,5 +1,5 @@
 {{- define "common.httproute" -}}
-{{- range .Values.httproute.routes }}
+{{- range ((.Values.httproute).routes) }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

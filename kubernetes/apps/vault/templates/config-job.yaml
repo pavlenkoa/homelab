@@ -1,4 +1,4 @@
-{{- if and .Values.autoUnseal.enabled .Values.vaultConfig.enabled }}
+{{- if and .Values.autoUnseal.enabled ((.Values.vaultConfig).enabled) }}
 ---
 # Vault configuration job for external services (helm hook)
 apiVersion: batch/v1
