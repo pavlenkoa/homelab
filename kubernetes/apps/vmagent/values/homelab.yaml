@@ -34,6 +34,8 @@ victoria-metrics-agent:
             target_label: instance
 
       # Kubelet metrics
+      # node role sets instance=nodename; copy to node label for
+      # kube-prometheus-stack dashboard compatibility (they expect node label)
       - job_name: kubelet
         kubernetes_sd_configs:
           - role: node
@@ -42,6 +44,9 @@ victoria-metrics-agent:
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           insecure_skip_verify: true
+        metric_relabel_configs:
+          - source_labels: [instance]
+            target_label: node
 
       # cAdvisor metrics from kubelet
       - job_name: cadvisor
@@ -53,6 +58,9 @@ victoria-metrics-agent:
         tls_config:
           ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
           insecure_skip_verify: true
+        metric_relabel_configs:
+          - source_labels: [instance]
+            target_label: node
 
       # Transmission exporter metrics
       - job_name: transmission
