@@ -17,34 +17,34 @@
     {
       "title": "Total Monitors",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "count(probe_success{job=\"blackbox\"})", "refId": "A", "instant": true }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "purple", "value": null }] } } },
       "options": { "reduceOptions": { "calcs": ["last"] }, "colorMode": "background", "textMode": "value" }
     },
     {
-      "title": "Monitors UP",
+      "title": "UP",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "count(probe_success{job=\"blackbox\"} == 1)", "refId": "A", "instant": true }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }] } } },
       "options": { "reduceOptions": { "calcs": ["last"] }, "colorMode": "background", "textMode": "value" }
     },
     {
-      "title": "Monitors DOWN",
+      "title": "DOWN",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "count(probe_success{job=\"blackbox\"} == 0) OR vector(0)", "refId": "A", "instant": true }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } } },
       "options": { "reduceOptions": { "calcs": ["last"] }, "colorMode": "background", "textMode": "value" }
     },
     {
-      "title": "Certs Expiring ≤ 7d",
+      "title": "Certs ≤ 7d",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox\"} - time()) / 86400 <= 7) OR vector(0)", "refId": "A", "instant": true }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }] } } },
@@ -53,7 +53,7 @@
     {
       "title": "Avg Response",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "avg(probe_duration_seconds{job=\"blackbox\"}) * 1000", "refId": "A", "instant": true }],
       "fieldConfig": { "defaults": { "unit": "ms", "decimals": 0, "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 500 }, { "color": "red", "value": 2000 }] } } },
@@ -62,9 +62,27 @@
     {
       "title": "Avg Uptime",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 1 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "avg(avg_over_time(probe_success{job=\"blackbox\"}[$__range]))", "refId": "A", "instant": true }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.95 }, { "color": "green", "value": 0.99 }] } } },
+      "options": { "reduceOptions": { "calcs": ["last"] }, "colorMode": "background", "textMode": "value" }
+    },
+    {
+      "title": "Uptime 7d",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "avg(avg_over_time(probe_success{job=\"blackbox\"}[7d]))", "refId": "A", "instant": true }],
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.95 }, { "color": "green", "value": 0.99 }] } } },
+      "options": { "reduceOptions": { "calcs": ["last"] }, "colorMode": "background", "textMode": "value" }
+    },
+    {
+      "title": "Uptime 30d",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 3, "x": 21, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "avg(avg_over_time(probe_success{job=\"blackbox\"}[30d]))", "refId": "A", "instant": true }],
       "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2, "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.95 }, { "color": "green", "value": 0.99 }] } } },
       "options": { "reduceOptions": { "calcs": ["last"] }, "colorMode": "background", "textMode": "value" }
     },
@@ -149,7 +167,7 @@
       "title": "Uptime",
       "type": "row",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
-      "collapsed": true,
+      "collapsed": false,
       "panels": [
         {
           "title": "Status – Live",
@@ -193,7 +211,7 @@
       "title": "Response Time",
       "type": "row",
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 19 },
-      "collapsed": true,
+      "collapsed": false,
       "panels": [
         {
           "title": "Response Time – Live",
