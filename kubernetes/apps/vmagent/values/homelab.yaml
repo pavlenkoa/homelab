@@ -148,3 +148,30 @@ victoria-metrics-agent:
         static_configs:
           - targets:
               - kgateway-metrics.kgateway-system:9092
+
+      # Blackbox endpoint probing
+      - job_name: blackbox
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+              - https://argocd.pavlenko.io
+              - https://auth.pavlenko.io
+              - https://emby.pavlenko.io
+              - https://grafana.pavlenko.io
+              - https://ha.pavlenko.io
+              - https://hubble.pavlenko.io
+              - https://loki.pavlenko.io
+              - https://photos.pavlenko.io
+              - https://transmission.pavlenko.io
+              - https://vault.pavlenko.io
+              - https://victoriametrics.pavlenko.io
+              - https://z2m.pavlenko.io
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter.monitoring:9115

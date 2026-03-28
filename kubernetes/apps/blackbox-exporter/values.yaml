@@ -1,0 +1,13 @@
+prometheus-blackbox-exporter:
+  fullnameOverride: blackbox-exporter
+
+  resources:
+    requests:
+      memory: 32Mi
+      cpu: 10m
+    limits:
+      memory: 64Mi
+      cpu: 100m
+
+  serviceMonitor:
+    enabled: false

@@ -219,6 +219,10 @@ parents:
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "2"
+      - name: blackbox-exporter
+        namespace: monitoring
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
 
   smarthome:
     description: "Smart home automation stack"
