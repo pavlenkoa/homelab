@@ -11,7 +11,7 @@
     {
       "title": "Download Speed",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "gridPos": { "h": 4, "w": 3, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "transmission_session_stats_download_speed_bytes", "refId": "A" }],
       "fieldConfig": { "defaults": { "unit": "Bps", "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
@@ -19,31 +19,31 @@
     {
       "title": "Upload Speed",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "gridPos": { "h": 4, "w": 3, "x": 3, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "transmission_session_stats_upload_speed_bytes", "refId": "A" }],
       "fieldConfig": { "defaults": { "unit": "Bps", "thresholds": { "steps": [{ "color": "blue", "value": null }] } } }
     },
     {
-      "title": "Active Torrents",
+      "title": "Active",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "gridPos": { "h": 4, "w": 3, "x": 6, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "transmission_session_stats_torrents_active", "refId": "A" }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
     },
     {
-      "title": "Paused Torrents",
+      "title": "Paused",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "gridPos": { "h": 4, "w": 3, "x": 9, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "transmission_session_stats_torrents_paused", "refId": "A" }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "yellow", "value": null }] } } }
     },
     {
-      "title": "Total Torrents",
+      "title": "Total",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "gridPos": { "h": 4, "w": 3, "x": 12, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "transmission_session_stats_torrents_total", "refId": "A" }],
       "fieldConfig": { "defaults": { "thresholds": { "steps": [{ "color": "purple", "value": null }] } } }
@@ -51,32 +51,37 @@
     {
       "title": "Free Space",
       "type": "stat",
-      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "gridPos": { "h": 4, "w": 3, "x": 15, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "transmission_free_space", "refId": "A" }],
       "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 107374182400 }, { "color": "green", "value": 536870912000 }] } } }
     },
     {
+      "title": "Total Downloaded",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 3, "x": 18, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "transmission_session_stats_downloaded_bytes{type=\"cumulative\"}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "steps": [{ "color": "green", "value": null }] } } }
+    },
+    {
+      "title": "Total Uploaded",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 3, "x": 21, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "transmission_session_stats_uploaded_bytes{type=\"cumulative\"}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "steps": [{ "color": "blue", "value": null }] } } }
+    },
+    {
       "title": "Transfer Speed",
       "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [
         { "expr": "transmission_session_stats_download_speed_bytes", "legendFormat": "Download", "refId": "A" },
         { "expr": "transmission_session_stats_upload_speed_bytes", "legendFormat": "Upload", "refId": "B" }
       ],
       "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10 } } }
-    },
-    {
-      "title": "Total Transferred",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-      "targets": [
-        { "expr": "transmission_session_stats_downloaded_bytes", "legendFormat": "Downloaded", "refId": "A" },
-        { "expr": "transmission_session_stats_uploaded_bytes", "legendFormat": "Uploaded", "refId": "B" }
-      ],
-      "fieldConfig": { "defaults": { "unit": "bytes", "custom": { "fillOpacity": 10 } } }
     },
     {
       "title": "Active Torrent Download Speed",
@@ -99,21 +104,9 @@
       "fieldConfig": { "defaults": { "unit": "Bps", "custom": { "fillOpacity": 10 } } }
     },
     {
-      "title": "Torrent Count",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
-      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-      "targets": [
-        { "expr": "transmission_session_stats_torrents_active", "legendFormat": "Active", "refId": "A" },
-        { "expr": "transmission_session_stats_torrents_paused", "legendFormat": "Paused", "refId": "B" },
-        { "expr": "transmission_session_stats_torrents_total", "legendFormat": "Total", "refId": "C" }
-      ],
-      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 10 } } }
-    },
-    {
       "title": "Top Torrents by Ratio",
       "type": "table",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "topk(15, transmission_torrent_ratio)", "format": "table", "instant": true, "refId": "A" }],
       "transformations": [
@@ -122,21 +115,21 @@
       "fieldConfig": { "defaults": { "custom": { "align": "left" } }, "overrides": [{ "matcher": { "id": "byName", "options": "Ratio" }, "properties": [{ "id": "custom.width", "value": 80 }] }] }
     },
     {
-      "title": "Peers Connected per Torrent",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 28 },
-      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
-      "targets": [{ "expr": "topk(10, transmission_torrent_peers_connected > 0)", "legendFormat": "{{name}}", "refId": "A" }],
-      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 10 } } }
-    },
-    {
       "title": "Per-Torrent Download Size",
       "type": "bargauge",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 28 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [{ "expr": "topk(15, transmission_torrent_total_size)", "instant": true, "legendFormat": "{{name}}", "refId": "A" }],
       "fieldConfig": { "defaults": { "unit": "bytes", "thresholds": { "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 5368709120 }, { "color": "red", "value": 53687091200 }] } } },
       "options": { "orientation": "horizontal", "displayMode": "gradient", "reduceOptions": { "calcs": ["lastNotNull"] } }
+    },
+    {
+      "title": "Peers Connected per Torrent",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
+      "targets": [{ "expr": "topk(10, transmission_torrent_peers_connected > 0)", "legendFormat": "{{name}}", "refId": "A" }],
+      "fieldConfig": { "defaults": { "custom": { "fillOpacity": 10 } } }
     }
   ],
   "schemaVersion": 39
