@@ -1,0 +1,18 @@
+{{- if .Values.authPolicy.enabled }}
+{{- range .Values.httproute.routes }}
+---
+apiVersion: gateway.kgateway.dev/v1alpha1
+kind: TrafficPolicy
+metadata:
+  name: {{ .name }}-auth
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ .name }}
+  extAuth:
+    extensionRef:
+      name: authelia
+      namespace: kgateway-system
+{{- end }}
+{{- end }}

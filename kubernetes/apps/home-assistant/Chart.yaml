@@ -1,0 +1,12 @@
+apiVersion: v2
+name: home-assistant
+version: 1.0.0
+description: "Wrapper chart for Home Assistant"
+
+dependencies:
+  - name: home-assistant
+    version: "0.3.51"
+    repository: "http://pajikos.github.io/home-assistant-helm-chart/"
+  - name: common
+    version: "0.1.0"
+    repository: "file://../common"

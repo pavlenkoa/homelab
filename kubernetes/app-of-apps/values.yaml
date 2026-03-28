@@ -213,3 +213,20 @@ parents:
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "4"
+
+  smarthome:
+    description: "Smart home automation stack"
+    scopeDestinations: true
+    annotations:
+      argocd.argoproj.io/sync-wave: "2"
+    children:
+      - name: mosquitto
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "3"
+      - name: zigbee2mqtt
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+      - name: home-assistant
+        annotations:
+          argocd.argoproj.io/sync-wave: "5"

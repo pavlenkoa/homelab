@@ -1,0 +1,57 @@
+# Home Assistant configuration for homelab cluster
+# Environment-specific overrides only
+
+httproute:
+  routes:
+    - name: home-assistant
+      hostname: ha.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: home-assistant
+        port: 8123
+
+authPolicy:
+  enabled: false
+
+home-assistant:
+  env:
+    - name: TZ
+      value: "Europe/Warsaw"
+
+  service:
+    type: ClusterIP
+    port: 8123
+
+  persistence:
+    enabled: true
+    size: 10Gi
+    accessMode: ReadWriteOnce
+
+  configuration:
+    enabled: true
+    forceInit: true
+    trusted_proxies:
+      - 10.42.0.0/16
+      - 10.43.0.0/16
+    templateConfig: |-
+      default_config:
+
+      http:
+        use_x_forwarded_for: true
+        trusted_proxies:
+          {{- range .Values.configuration.trusted_proxies }}
+          - {{ . }}
+          {{- end }}
+
+      mqtt:
+
+      prometheus:
+
+      frontend:
+        themes: !include_dir_merge_named themes
+
+      automation: !include automations.yaml
+      script: !include scripts.yaml
+      scene: !include scenes.yaml

@@ -1,0 +1,18 @@
+# Wrapper chart for Home Assistant
+# Defaults here, environment-specific overrides in values/homelab.yaml
+
+# HTTPRoute configuration (empty by default, set in homelab.yaml)
+httproute:
+  routes: []
+
+# Authelia extAuth TrafficPolicy (empty by default, set in homelab.yaml)
+authPolicy:
+  enabled: false
+
+home-assistant:
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi

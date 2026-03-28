@@ -56,6 +56,9 @@ docker-compose/**/*-config
 **/redis-data/
 **/upload/
 
+# Superpowers specs (working docs, not committed)
+docs/superpowers/
+
 # System files
 .DS_Store
 Thumbs.db

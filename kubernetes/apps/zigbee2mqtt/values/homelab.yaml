@@ -1,0 +1,55 @@
+# Zigbee2MQTT configuration for homelab cluster
+# Environment-specific overrides only
+
+httproute:
+  routes:
+    - name: zigbee2mqtt
+      hostname: z2m.pavlenko.io
+      gateway:
+        name: homelab
+        namespace: kgateway-system
+      service:
+        name: zigbee2mqtt
+        port: 8080
+
+authPolicy:
+  enabled: true
+
+zigbee2mqtt:
+  service:
+    type: ClusterIP
+    port: 8080
+
+  configmap:
+    enabled: true
+
+  statefulset:
+    storage:
+      enabled: true
+      size: 2Gi
+      storageClassName: ""
+    securityContext:
+      privileged: false
+      capabilities:
+        drop:
+          - ALL
+
+  zigbee2mqtt:
+    homeassistant:
+      enabled: true
+      discovery_topic: homeassistant
+      status_topic: hass/status
+    permit_join: false
+    mqtt:
+      server: "mqtt://mosquitto.mosquitto:1883"
+    serial:
+      port: "tcp://192.168.88.154:6638"
+      adapter: ember
+    frontend:
+      port: 8080
+    advanced:
+      channel: 11
+      log_level: info
+      last_seen: ISO_8601
+      network_key: GENERATE
+      transmit_power: 20
