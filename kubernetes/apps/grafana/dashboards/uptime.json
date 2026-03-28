@@ -10,7 +10,7 @@
   "panels": [
     {
       "title": "Service Status",
-      "type": "status-history",
+      "type": "state-timeline",
       "gridPos": { "h": 14, "w": 24, "x": 0, "y": 0 },
       "datasource": { "type": "prometheus", "uid": "P4169E866C3094E38" },
       "targets": [
@@ -24,12 +24,13 @@
             { "type": "value", "options": { "1": { "text": "UP", "color": "green" } } }
           ],
           "thresholds": { "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] },
-          "custom": { "fillOpacity": 100 }
+          "custom": { "fillOpacity": 100, "lineWidth": 1 }
         },
         "overrides": []
       },
       "options": {
         "showValue": "never",
+        "mergeValues": false,
         "rowHeight": 0.8,
         "tooltip": { "mode": "single" },
         "legend": { "displayMode": "hidden" }
