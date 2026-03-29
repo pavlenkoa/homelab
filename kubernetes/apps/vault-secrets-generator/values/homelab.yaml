@@ -95,21 +95,23 @@ config:
       }
     }
 
-    # Loki push auth (htpasswd managed manually via vault cli until VSG supports sha1)
+    # Loki push auth
     secret "loki" {
       path = "monitoring/loki"
 
       content {
         push_password = generate({length = 32, symbols = 0})
+        htpasswd      = sha1_htpasswd({from = "push_password", username = "promtail"})
       }
     }
 
-    # VictoriaMetrics push auth (htpasswd managed manually via vault cli until VSG supports sha1)
+    # VictoriaMetrics push auth
     secret "victoriametrics" {
       path = "monitoring/victoriametrics"
 
       content {
         push_password = generate({length = 32, symbols = 0})
+        htpasswd      = sha1_htpasswd({from = "push_password", username = "vmagent"})
       }
     }
 
