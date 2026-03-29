@@ -149,6 +149,15 @@ victoria-metrics-agent:
           - targets:
               - kgateway-metrics.kgateway-system:9092
 
+      # Vault metrics
+      - job_name: vault
+        metrics_path: /v1/sys/metrics
+        params:
+          format: [prometheus]
+        static_configs:
+          - targets:
+              - vault.vault:8200
+
       # Blackbox endpoint probing
       - job_name: blackbox
         metrics_path: /probe
