@@ -2,6 +2,11 @@
 # Environment-specific overrides only
 
 cert-manager:
+  prometheus:
+    enabled: true
+    servicemonitor:
+      enabled: false
+
   # Extra objects - ExternalSecret for Cloudflare API token and ClusterIssuer
   extraObjects:
     - |
