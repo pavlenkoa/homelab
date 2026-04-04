@@ -114,6 +114,8 @@ Same as toilet but:
 - Uses Bedroom Lights group topic
 
 ### Time-based (Living Room)
+**ID:** `morning_reading_mode` — At 06:00, if living lights on → scene_recall 3 (reading_slow) to individual bulbs
+
 **ID:** `sunset_reading_mode` — At sunset, if living lights on → scene_recall 3 (reading_slow) to individual bulbs
 
 **ID:** `red_mode` — At 22:00, if living lights on → scene_recall 4 (red_slow) to individual bulbs
