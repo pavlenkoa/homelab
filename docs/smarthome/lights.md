@@ -113,6 +113,17 @@ Same as toilet but:
 - Time triggers are 22:00 and 09:00 (not 06:00)
 - Uses Bedroom Lights group topic
 
+### Presence-based (Home/Away)
+**ID:** `presence_lights`
+
+| Trigger | Action |
+|---------|--------|
+| Leaving home | light.turn_off all lights |
+| Arriving home (after dark, 06:00–22:00) | scene_recall 1 (reading, 2s) to all group topics |
+| Arriving home (after dark, 22:00–06:00) | scene_recall 2 (red, 2s) to all group topics |
+
+Uses `person.andrii` state transitions. Arriving action uses scene_recall via group topics (Living Lights, Bedroom Lights, Toilet Lights) for atomic turn-on without color flash.
+
 ### Time-based (Living Room)
 **ID:** `morning_reading_mode` — At 06:00, if living lights on → scene_recall 3 (reading_slow) to individual bulbs
 
