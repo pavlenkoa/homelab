@@ -116,7 +116,7 @@ Same as toilet but:
 ### Time-based (Living Room)
 **ID:** `morning_reading_mode` — At 06:00, if living lights on → scene_recall 3 (reading_slow) to individual bulbs
 
-**ID:** `sunset_reading_mode` — At sunset, if living lights on → scene_recall 3 (reading_slow) to individual bulbs
+**ID:** `sunset_reading_mode` — At sunset, if home → scene_recall 3 (reading_slow) via group topic (turns on or transitions)
 
 **ID:** `red_mode` — At 22:00, if living lights on → scene_recall 4 (red_slow) to individual bulbs
 
@@ -124,7 +124,7 @@ Same as toilet but:
 - 06:00–22:00 → scene_recall 1 (reading, 2s)
 - 22:00–06:00 → scene_recall 2 (red, 2s)
 
-**Note:** Living room has no presence sensor. Lights are controlled by knob (toggle/brightness) and time-based automations. The `living_lights_on_scene` automation corrects the color when lights are turned on by the knob (since the knob restores last state via Zigbee). There is a brief flash of the old color before the scene takes effect (~200-300ms HA delay), but the 2s scene transition makes it smooth and acceptable.
+**Note:** Living room has no presence sensor. Lights are turned on automatically at sunset (if home) and controlled by knob (toggle/brightness) and time-based automations. The `living_lights_on_scene` automation corrects the color when lights are turned on by the knob (since the knob restores last state via Zigbee). There is a brief flash of the old color before the scene takes effect (~200-300ms HA delay), but the 2s scene transition makes it smooth and acceptable.
 
 ## Known Issues & Solutions
 
