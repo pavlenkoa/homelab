@@ -88,7 +88,7 @@ spec:
               if [ -d "$MARKETPLACE/.git" ]; then
                 git -C "$MARKETPLACE" pull --ff-only 2>/dev/null || true
               else
-                git clone https://github.com/anthropics/claude-plugins-official "$MARKETPLACE"
+                git clone https://github.com/pavlenkoa/claude-plugins-official "$MARKETPLACE"
               fi
 
               LATEST_VER=$(cat "$PLUGIN_SRC/.claude-plugin/plugin.json" | grep '"version"' | head -1 | sed 's/.*"version".*"\([^"]*\)".*/\1/')
