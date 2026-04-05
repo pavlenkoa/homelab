@@ -31,6 +31,33 @@ data:
     - TMDB API — key in `$TMDB_API_KEY`
     - Shared tracking dir at `/tracking/` (shared with Pan Tolik)
 
+    ## Media Library Layout
+
+    Files live on NFS mounted at `/media`. Use these exact paths — NEVER guess:
+
+    | Path | Content |
+    |------|---------|
+    | `/media/movies` | Movies |
+    | `/media/tv` | TV series |
+    | `/media/animation` | Animated movies |
+    | `/media/tvanimation` | Animated TV series (anime) |
+
+    Transmission download dirs mirror these: `/downloads/movies`, `/downloads/tv`, `/downloads/animation`, `/downloads/tvanimation`.
+
+    Before adding a torrent: always use one of these four dirs. Never invent paths like `/media/anime` or `/downloads/anime`.
+
+    ## Release Selection Rules
+
+    1. **Most seeders wins.** 0 seeders = useless.
+    2. After adding a torrent, verify it's downloading (peers > 0). If 0 peers after a minute, remove and find better.
+    3. Prefer 1080p. No 720p unless nothing else exists.
+    4. Prefer H.265/HEVC over H.264 (smaller, same quality).
+    5. Prefer batch/season packs over individual episodes.
+    6. Toloka: prefer Ukrainian audio. [Hurtom] releases are trusted.
+    7. Nyaa: prefer SubsPlease, then Erai-raws, ASW, EMBER.
+    8. Movie size sweet spot: 6-10 GB.
+    9. When showing options: ALWAYS include seeder count, sort by seeders descending.
+
     ## Tracker Search Order
     When user asks to find/download media:
     1. **Try Toloka first** (Ukrainian content, quality, familiar interface)
@@ -121,28 +148,14 @@ data:
   SKILL.md: |
     # Media Management Skill
 
-    ## Media Library Layout
+    Core rules (library layout, release selection, tracker search order) are in CLAUDE.md — always loaded.
+    This skill covers the detailed API recipes for each source.
 
-    All media is on NFS from a Raspberry Pi with 8TB storage:
-
-    | Path | Content | Example |
-    |------|---------|---------|
-    | `/media/movies` | Movie files | `Inception (2010) BDRip 1080p H.265 [2xUKR_ENG] [Hurtom].mkv` |
-    | `/media/tv` | TV series | `Shogun (Season 1) (2024) WEB-DL 1080p [Ukr.Eng] [Sub Eng]/` |
-    | `/media/animation` | Animated movies | `Inside Out 2 (2024) WEB-DL 1080p Ukr Eng [Hurtom].mkv` |
-    | `/media/tvanimation` | Animated TV series | `Arcane.S01.1080p.NF.WEB-DL/` |
-
-    ## Release Selection Rules (ALL sources)
-
-    1. **MOST SEEDERS WINS** — always pick the release with the most active seeders. 0 seeders = useless.
-    2. After adding a torrent, verify it's downloading (peers > 0). If 0 peers after a minute, remove and find better.
-    3. Prefer 1080p. No 720p unless nothing else exists.
-    4. Prefer H.265/HEVC over H.264 (smaller, same quality).
-    5. Prefer batch/season packs over individual episodes.
-    6. For Toloka: prefer Ukrainian audio. [Hurtom] releases are trusted.
-    7. For Nyaa: prefer SubsPlease, then Erai-raws, ASW, EMBER.
-    8. Movie size sweet spot: 6-10 GB.
-    9. When showing options, ALWAYS include seeder count. Sort by seeders descending.
+    Example filename patterns per dir (from /media/):
+    - movies: `Inception (2010) BDRip 1080p H.265 [2xUKR_ENG] [Hurtom].mkv`
+    - tv: `Shogun (Season 1) (2024) WEB-DL 1080p [Ukr.Eng] [Sub Eng]/`
+    - animation: `Inside Out 2 (2024) WEB-DL 1080p Ukr Eng [Hurtom].mkv`
+    - tvanimation: `Arcane.S01.1080p.NF.WEB-DL/`
 
     ## Toloka.to — Ukrainian Torrent Tracker
 
