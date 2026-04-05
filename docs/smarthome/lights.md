@@ -54,30 +54,41 @@ Active knob HA automations (for features Z2M can't handle):
 - `knob_bedroom_color_toggle` (on) — long press (hue_move) toggles between reading (2890K) and red
 - `knob_living_room_color_toggle` (on) — same for living room
 
-## Zigbee Scenes (stored on bulb firmware)
+## Zigbee Scenes
 
-Scenes are stored directly on each bulb. The scene_recall command turns the light on AND sets color/brightness/transition atomically — no flash.
+Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. The scene_recall command turns the light on AND sets color/brightness/transition atomically — no flash.
 
 | Scene ID | Name | Color | Brightness | Transition | Use Case |
 |----------|------|-------|------------|------------|----------|
-| 1 | reading | 2890K (color_temp: 345) | 254 | 2s | Presence on / knob toggle during daytime |
-| 2 | red | xy 0.69/0.31 | 254 | 2s | Presence on / knob toggle during nighttime |
+| 1 | reading | 2890K (color_temp: 345) | 254 | 1.5s | Presence on / knob toggle during daytime |
+| 2 | red | xy 0.69/0.31 | 254 | 1.5s | Presence on / knob toggle during nighttime |
 | 3 | reading_slow | 2890K (color_temp: 345) | 254 | 30s | Time-based transition (sunset, 6AM/9AM) |
 | 4 | red_slow | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
 
-Scenes 1-4 are stored on ALL bulbs (toilet, bedroom, living room).
+Scenes 1–4 are stored in each room's z2m group on every bulb that belongs to that group: Bedroom Lights (group 2), Toilet Lights (group 3), Living Lights (group 4). No group-0 (individual-bulb) scenes exist.
 
-**Adding a scene via MQTT:**
+### Storage rule (important)
+
+Which scene gets recalled depends on the MQTT topic the command was published to:
+
+- **Group topic** (`zigbee2mqtt/Bedroom Lights/set`) → uses scenes in that group's table (group 2 for Bedroom, etc).
+- **Individual bulb topic** (`zigbee2mqtt/Light Bedroom 1/set`) → uses scenes in **group 0** on that bulb.
+
+All current automations publish to group topics only. Publishing scene_add/scene_recall to an individual bulb topic will create/read group-0 scenes, which nothing else touches — avoid doing this by mistake (it silently drifts the state).
+
+**Adding a scene via MQTT** (publish to the group topic):
 ```json
-{"scene_add": {"ID": 1, "name": "reading", "color_temp": 345, "brightness": 254, "transition": 2, "state": "ON"}}
-{"scene_add": {"ID": 2, "name": "red", "color": {"x": 0.69, "y": 0.31}, "brightness": 254, "transition": 2, "state": "ON"}}
+{"scene_add": {"ID": 1, "name": "reading", "color_temp": 345, "brightness": 254, "transition": 1.5, "state": "ON"}}
+{"scene_add": {"ID": 2, "name": "red", "color": {"x": 0.69, "y": 0.31}, "brightness": 254, "transition": 1.5, "state": "ON"}}
 ```
 
-**Recalling:** `{"scene_recall": 1}` — note: scene_recall does NOT accept a transition parameter; transition is embedded in the scene definition.
+`scene_add` with an existing ID overwrites.
 
-**Removing:** `{"scene_remove": 5}`
+**Recalling:** `{"scene_recall": 1}` — transition is baked into the scene; scene_recall does not accept a transition parameter.
 
-**Capacity:** Hue bulbs support ~16 scene slots.
+**Removing:** `{"scene_remove": 5}` — removes from the scope implied by the topic (group topic → that group's table, individual topic → group 0).
+
+**Capacity:** Hue bulbs support ~16 scene slots per group.
 
 ## Light Schedule
 
@@ -98,11 +109,11 @@ Sunset ──── Reading mode continues ────────────�
 
 | Trigger | Time | Action |
 |---------|------|--------|
-| Presence ON | 06:00–22:00 | scene_recall 1 (reading, 2s) via group topic |
-| Presence ON | 22:00–06:00 | scene_recall 2 (red, 2s) via group topic |
+| Presence ON | 06:00–22:00 | scene_recall 1 (reading, 1.5s) via group topic |
+| Presence ON | 22:00–06:00 | scene_recall 2 (red, 1.5s) via group topic |
 | 22:00 hits | if presence ON | scene_recall 4 (red_slow, 30s) |
 | 06:00 hits | if presence ON | scene_recall 3 (reading_slow, 30s) |
-| Presence OFF | any | light.turn_off |
+| Presence OFF | any | `{"state": "OFF", "transition": 3}` via group topic (3s fade) |
 
 ### Presence-based (Bedroom)
 **ID:** `bedroom_lights_presence`
@@ -112,24 +123,31 @@ Same as toilet but:
 - **Blackout period 00:00–09:00** — entire automation has condition `after: 09:00, before: 00:00`
 - Time triggers are 22:00 and 09:00 (not 06:00)
 - Uses Bedroom Lights group topic
+- Presence-OFF fades over 3s via group topic payload `{"state": "OFF", "transition": 3}`
 
-**ID:** `bedroom_lights_on_scene` — When bedroom lights turn on (off→on) during the blackout window (00:00–09:00), recall scene 2 (red) to individual bulbs. Covers manual knob activations in blackout, when the presence automation is blocked and the bulb would otherwise restore its last-used scene. Restricted to the blackout window to avoid double-firing alongside the presence automation (which caused a visible transition-interrupt flash).
+**ID:** `bedroom_lights_on_scene` — When bedroom lights turn on (off→on) during the blackout window (00:00–09:00), recall scene 2 (red) via the Bedroom Lights group topic. Covers manual knob activations in blackout, when the presence automation is blocked and the bulb would otherwise restore its last-used scene. Restricted to the blackout window to avoid double-firing alongside the presence automation (which caused a visible transition-interrupt flash).
 
 ### Disabled: Presence-based (Home/Away)
 **ID:** `presence_lights` — **disabled.** Relied on `person.andrii` state transitions, but `ha.pavlenko.io` is only reachable from home, so the iPhone companion app can't post the `not_home` transition from outside. Kept for reference.
 
 ### Time-based (Living Room)
-**ID:** `morning_reading_mode` — At 06:00, if living lights on → scene_recall 3 (reading_slow) to individual bulbs
+**ID:** `morning_reading_mode` — At 06:00, if living lights on → scene_recall 3 (reading_slow) via Living Lights group topic
 
 **ID:** `sunset_reading_mode` — At sunset → scene_recall 3 (reading_slow) via group topic (turns on or transitions). Fires unconditionally — the `person.andrii` home condition was removed since home/away detection is unreliable (see disabled `presence_lights`).
 
-**ID:** `red_mode` — At 22:00, if living lights on → scene_recall 4 (red_slow) to individual bulbs
+**ID:** `red_mode` — At 22:00, if living lights on → scene_recall 4 (red_slow) via Living Lights group topic
 
-**ID:** `living_lights_on_scene` — When living lights turn on (off→on), recall correct scene for time of day:
-- 06:00–22:00 → scene_recall 1 (reading, 2s)
-- 22:00–06:00 → scene_recall 2 (red, 2s)
+**ID:** `living_lights_on_scene` — When living lights turn on (off→on), recall correct scene for time of day via Living Lights group topic:
+- 06:00–22:00 → scene_recall 1 (reading, 1.5s)
+- 22:00–06:00 → scene_recall 2 (red, 1.5s)
 
-**Note:** Living room has no presence sensor. Lights are turned on automatically at sunset (if home) and controlled by knob (toggle/brightness) and time-based automations. The `living_lights_on_scene` automation corrects the color when lights are turned on by the knob (since the knob restores last state via Zigbee). There is a brief flash of the old color before the scene takes effect (~200-300ms HA delay), but the 2s scene transition makes it smooth and acceptable.
+**Note:** Living room has no presence sensor. Lights are turned on automatically at sunset and controlled by knob (toggle/brightness) and time-based automations. The `living_lights_on_scene` automation corrects the color when lights are turned on by the knob (since the knob restores last state via Zigbee). There is a brief flash of the old color before the scene takes effect (~200-300ms HA delay), but the 1.5s scene transition masks it.
+
+### Safety net
+**ID:** `lights_off_2am` — At 02:00, turns off `light.all_lights` with a 10s transition. Catches anything still on.
+
+### Knob-initiated off
+Knobs are in z2m "command" mode and send Zigbee on/off commands directly to bulbs (bound at the Zigbee level), bypassing both HA and z2m. The bulb uses its firmware default `onOffTransitionTime` (~0.4s on Philips Hue) and cannot be overridden through standard Zigbee attributes on Hue bulbs.
 
 ## Known Issues & Solutions
 
@@ -138,14 +156,12 @@ Same as toilet but:
 
 **Solution:** Use Zigbee scenes (`scene_recall`). Scenes are stored on bulb firmware and apply color + brightness + transition atomically. The scene also turns the light on, so no separate `light.turn_on` is needed.
 
-**Caveat for living room:** The knob toggles lights directly at the Zigbee level (command mode), so the bulb restores last state before HA can react. The `living_lights_on_scene` automation then corrects via scene_recall. Brief old-color flash is unavoidable but acceptable with 2s transition.
+**Caveat for living room:** The knob toggles lights directly at the Zigbee level (command mode), so the bulb restores last state before HA can react. The `living_lights_on_scene` automation then corrects via scene_recall. Brief old-color flash is unavoidable but acceptable with the 1.5s transition.
 
 ### Bulbs turning on one-by-one (SOLVED)
 **Problem:** Publishing scene_recall to individual bulb topics sequentially caused visible staggered turn-on.
 
 **Solution:** Publish to the Z2M group topic (e.g. `zigbee2mqtt/Toilet Lights/set`). The group command is sent as a single Zigbee broadcast.
-
-**Note:** Living room time-based automations still publish to individual bulbs (not group topic). This is fine because lights are already on and the 30s transition masks any stagger.
 
 ### Bedroom sensor not detecting lying on side (SOLVED)
 **Problem:** FP300 Sensor 2 stopped detecting user lying on their side in bed.
