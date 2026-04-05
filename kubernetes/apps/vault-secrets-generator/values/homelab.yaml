@@ -124,13 +124,14 @@ config:
       }
     }
 
-    # Soju IRC bouncer admin password
-    secret "soju" {
-      path  = "soju"
-      prune = true
+    # IRC bouncer credentials
+    # soju_username is set manually via `vault kv patch kv/irc soju_username=...`
+    # (not in git, not managed by VSG - prune is off so it survives)
+    secret "irc" {
+      path = "irc"
 
       content {
-        admin_password = generate({length = 32, symbols = 0})
+        soju_password = generate({length = 32, symbols = 0})
       }
     }
 

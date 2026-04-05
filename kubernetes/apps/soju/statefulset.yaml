@@ -24,12 +24,15 @@ spec:
               name: soju-ws
           env:
             - name: SOJU_ADMIN_USER
-              value: admin
+              valueFrom:
+                secretKeyRef:
+                  name: soju-bootstrap
+                  key: soju_username
             - name: SOJU_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: soju-bootstrap
-                  key: admin_password
+                  key: soju_password
           lifecycle:
             postStart:
               exec:
