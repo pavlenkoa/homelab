@@ -33,18 +33,26 @@ data:
 
     ## Media Library Layout
 
-    Files live on NFS mounted at `/media`. Use these exact paths — NEVER guess:
+    **Two sets of paths — pick the RIGHT one:**
 
-    | Path | Content |
-    |------|---------|
-    | `/media/movies` | Movies |
-    | `/media/tv` | TV series |
-    | `/media/animation` | Animated movies |
-    | `/media/tvanimation` | Animated TV series (anime) |
+    **For Transmission RPC (`download-dir` argument) — use `/downloads/*`:**
+    - `/downloads/movies`
+    - `/downloads/tv`
+    - `/downloads/animation`
+    - `/downloads/tvanimation`
 
-    Transmission download dirs mirror these: `/downloads/movies`, `/downloads/tv`, `/downloads/animation`, `/downloads/tvanimation`.
+    **For reading/ls/cat (claude-code's filesystem view) — use `/media/*`:**
+    - `/media/movies`, `/media/tv`, `/media/animation`, `/media/tvanimation`
 
-    Before adding a torrent: always use one of these four dirs. Never invent paths like `/media/anime` or `/downloads/anime`.
+    Both point to the same storage. Transmission does NOT have `/media/*` mounted — passing `/media/X` to transmission RPC fails with "Permission denied". When calling Transmission's RPC, use `/downloads/*`. Period.
+
+    NEVER invent paths like `/media/anime`, `/downloads/anime`, `/media/anime/*`. These are the only four content types.
+
+    ## MANDATORY: invoke media skill before ANY media action
+
+    Before adding/removing torrents, calling Transmission RPC, searching trackers, touching Emby, or working with subscriptions — you MUST invoke the `/media` skill first to load the detailed recipes. Do NOT guess API calls, paths, or auth formats. Open the skill, follow the documented commands exactly.
+
+    This is non-negotiable. Two path mistakes already cost time. Read the skill every time, even if you think you remember.
 
     ## Release Selection Rules
 
