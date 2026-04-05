@@ -113,6 +113,12 @@ Same as toilet but:
 - Time triggers are 22:00 and 09:00 (not 06:00)
 - Uses Bedroom Lights group topic
 
+**ID:** `bedroom_lights_on_scene` — When bedroom lights turn on (off→on), recall correct scene for time of day. Covers manual knob activations during the blackout period (presence automation is blocked 00:00–09:00, so without this, a knob press at 2am would restore the bulb's last-used scene instead of red).
+- 06:00–22:00 → scene_recall 1 (reading, 2s) to individual bulbs
+- 22:00–06:00 → scene_recall 2 (red, 2s) to individual bulbs
+
+Harmless duplicate scene_recall when bedroom presence fires (both send the same scene for a given time window).
+
 ### Presence-based (Home/Away)
 **ID:** `presence_lights`
 
