@@ -33,20 +33,23 @@ data:
 
     ## Media Library Layout
 
-    **Two sets of paths — pick the RIGHT one:**
+    **Physical storage:** Raspberry Pi, directory `/media/emby/` with four subdirs (movies, tv, animation, tvanimation).
 
-    **For Transmission RPC (`download-dir` argument) — use `/downloads/*`:**
-    - `/downloads/movies`
-    - `/downloads/tv`
-    - `/downloads/animation`
-    - `/downloads/tvanimation`
+    **Two clients mount the SAME storage under DIFFERENT paths:**
 
-    **For reading/ls/cat (claude-code's filesystem view) — use `/media/*`:**
-    - `/media/movies`, `/media/tv`, `/media/animation`, `/media/tvanimation`
+    | Client | Mount point | Mount type |
+    |--------|-------------|------------|
+    | claude-code (you) | `/media/*` | NFS from `192.168.88.3:/media/emby` |
+    | Transmission | `/downloads/*` | hostPath from rpi's `/media/emby/X` |
 
-    Both point to the same storage. Transmission does NOT have `/media/*` mounted — passing `/media/X` to transmission RPC fails with "Permission denied". When calling Transmission's RPC, use `/downloads/*`. Period.
+    So `/media/movies` (your view) and `/downloads/movies` (Transmission's view) are literally the same directory on the rpi — just mounted under different names in each pod.
 
-    NEVER invent paths like `/media/anime`, `/downloads/anime`, `/media/anime/*`. These are the only four content types.
+    **Rules:**
+    - For ls/cat/find/grep — use `/media/*` (you run as user `claude`, have NFS read/write there)
+    - For Transmission RPC `download-dir` argument — use `/downloads/*` (Transmission's pod has no `/media` mount)
+    - Passing `/media/*` to Transmission fails with "Permission denied" (dir doesn't exist in its namespace)
+
+    The four valid content dirs: `movies`, `tv`, `animation`, `tvanimation`. NEVER invent paths like `anime` — there's no `/media/anime` or `/downloads/anime`.
 
     ## MANDATORY: invoke media skill before ANY media action
 
