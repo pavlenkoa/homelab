@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gamja
+  namespace: irc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gamja
+  template:
+    metadata:
+      labels:
+        app: gamja
+    spec:
+      containers:
+        - name: gamja
+          image: ghcr.io/pavlenkoa/gamja:latest
+          ports:
+            - containerPort: 8081
+              name: http
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/conf.d
+            - name: app-config
+              mountPath: /usr/share/nginx/html/config.json
+              subPath: config.json
+      volumes:
+        - name: nginx-conf
+          configMap:
+            name: gamja-config
+            items:
+              - key: default.conf
+                path: default.conf
+        - name: app-config
+          configMap:
+            name: gamja-config
+            items:
+              - key: config.json
+                path: config.json

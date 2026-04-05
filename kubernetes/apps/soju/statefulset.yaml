@@ -56,18 +56,6 @@ spec:
             - name: admin-sock
               mountPath: /var/run/soju
 
-        - name: gamja
-          image: ghcr.io/pavlenkoa/gamja:latest
-          ports:
-            - containerPort: 8081
-              name: http
-          volumeMounts:
-            - name: gamja-nginx-conf
-              mountPath: /etc/nginx/conf.d
-            - name: gamja-app-config
-              mountPath: /usr/share/nginx/html/config.json
-              subPath: config.json
-
       volumes:
         - name: soju-config
           configMap:
@@ -75,18 +63,6 @@ spec:
             items:
               - key: soju.cfg
                 path: soju.cfg
-        - name: gamja-nginx-conf
-          configMap:
-            name: gamja-config
-            items:
-              - key: default.conf
-                path: default.conf
-        - name: gamja-app-config
-          configMap:
-            name: gamja-config
-            items:
-              - key: config.json
-                path: config.json
         - name: admin-sock
           emptyDir: {}
         - name: data
