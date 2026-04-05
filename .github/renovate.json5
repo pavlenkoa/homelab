@@ -12,6 +12,11 @@
     "fileMatch": ["kubernetes/apps/.*/Chart\\.yaml$"]
   },
 
+  // Raw K8s manifests - scan image: references in directory apps (transmission, soju, gamja, etc.)
+  "kubernetes": {
+    "fileMatch": ["kubernetes/apps/.*\\.ya?ml$"]
+  },
+
   // Schedule & Limits
   "schedule": ["before 6am on monday"],
   "timezone": "Europe/Kyiv",
