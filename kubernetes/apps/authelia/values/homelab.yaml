@@ -103,6 +103,8 @@ authelia:
           policy: 'two_factor'
         - domain: 'z2m.pavlenko.io'
           policy: 'two_factor'
+        - domain: 'irc.pavlenko.io'
+          policy: 'two_factor'
     
     # OIDC clients for homelab services
     identity_providers:
