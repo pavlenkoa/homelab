@@ -21,6 +21,19 @@ spec:
           operator: Equal
           value: media
           effect: NoSchedule
+      # Pod initiates traffic only to public endpoints via VPN — never to cluster services.
+      # Skip cluster DNS injection: k8s default ClusterFirst adds search domains + ndots:5,
+      # causing every public hostname lookup to fan out into multiple NXDOMAIN queries against
+      # .cluster.local variants. Under sustained external DNS load this amplification burns
+      # significant CPU on ARM hardware. Empty searches eliminates the expansion.
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 127.0.0.1
+        searches: []
+        options:
+          - name: ndots
+            value: "1"
       containers:
         - name: gluetun
           image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest
@@ -57,8 +70,14 @@ spec:
               value: "on"
             - name: FIREWALL_INPUT_PORTS
               value: "9091,19091"
-            - name: FIREWALL_OUTBOUND_SUBNETS
-              value: "10.0.0.0/16,10.43.0.0/16"
+            # Use embedded Unbound with caching — cache hits avoid upstream queries
+            # under high-frequency hostname lookup patterns.
+            - name: DNS_UPSTREAM_RESOLVER_TYPE
+              value: "dot"
+            - name: DNS_UPSTREAM_RESOLVERS
+              value: "quad9"
+            - name: DNS_CACHING
+              value: "on"
           volumeMounts:
             - name: tun-device
               mountPath: /dev/net/tun
