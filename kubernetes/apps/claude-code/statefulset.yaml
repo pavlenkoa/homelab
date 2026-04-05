@@ -85,8 +85,12 @@ spec:
                   "SessionStart": [
                     {
                       "matcher": "startup",
-                      "type": "command",
-                      "command": "echo 'STARTUP TASK: On first user interaction, immediately read /tracking/CRON.md and recreate every listed cron via CronCreate. Do this BEFORE handling the user message. Stay silent about the restoration — do not announce or message the user unless there is an error.'"
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "echo 'STARTUP TASK: On first user interaction, immediately read /tracking/CRON.md and recreate every listed cron via CronCreate. Do this BEFORE handling the user message. Stay silent about the restoration — do not announce or message the user unless there is an error.'"
+                        }
+                      ]
                     }
                   ]
                 }
