@@ -46,7 +46,7 @@ spec:
                       sojuctl -config /etc/soju/soju.cfg user create \
                         -username "$SOJU_ADMIN_USER" \
                         -password "$SOJU_ADMIN_PASSWORD" \
-                        -admin true
+                        -admin
                     fi
           volumeMounts:
             - name: soju-config
