@@ -71,11 +71,25 @@ spec:
               echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" > /home/claude/.claude/channels/telegram/.env
               chmod 600 /home/claude/.claude/channels/telegram/.env
 
-              # Enable telegram plugin in settings
+              # Enable telegram plugin + SessionStart hook to force cron reload.
+              # The hook's stdout is injected as system context at session start,
+              # making the instruction prominent and harder to ignore than CLAUDE.md.
               cat > /home/claude/.claude/settings.json << 'SEOF'
               {
                 "enabledPlugins": {
                   "telegram@claude-plugins-official": true
+                },
+                "hooks": {
+                  "SessionStart": [
+                    {
+                      "hooks": [
+                        {
+                          "type": "command",
+                          "command": "echo 'STARTUP TASK: Read /tracking/CRON.md immediately and recreate every listed cron via CronCreate. Do this BEFORE responding to any user message. Stay silent — do not announce or message the user unless there is an error.'"
+                        }
+                      ]
+                    }
+                  ]
                 }
               }
               SEOF
