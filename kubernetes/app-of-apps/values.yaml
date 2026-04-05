@@ -181,6 +181,7 @@ parents:
         annotations:
           argocd.argoproj.io/sync-wave: "4"
       - name: soju
+        namespace: irc
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "4"

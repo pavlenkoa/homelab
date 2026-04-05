@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: soju-config
-  namespace: soju
+  namespace: irc
 data:
   soju.cfg: |
     hostname irc.pavlenko.io
@@ -17,7 +17,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: gamja-config
-  namespace: soju
+  namespace: irc
 data:
   default.conf: |
     server {
