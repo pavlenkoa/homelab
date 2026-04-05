@@ -185,6 +185,11 @@ spec:
                 secretKeyRef:
                   name: claude-code-github
                   key: GH_TOKEN
+            - name: SEEDPOOL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claude-code-seedpool
+                  key: SEEDPOOL_API_KEY
           resources:
             requests:
               cpu: 100m
