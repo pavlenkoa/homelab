@@ -124,6 +124,16 @@ config:
       }
     }
 
+    # Soju IRC bouncer admin password
+    secret "soju" {
+      path  = "soju"
+      prune = true
+
+      content {
+        admin_password = generate({length = 32, symbols = 0})
+      }
+    }
+
     # Authelia secrets
     secret "authelia" {
       path  = "authelia"

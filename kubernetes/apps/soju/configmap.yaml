@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: soju-config
+  namespace: soju
+data:
+  soju.cfg: |
+    hostname irc.pavlenko.io
+    title "pavlenko.io IRC"
+    listen ws+insecure://0.0.0.0:8080
+    listen unix+admin:///var/run/soju/admin.sock
+    db sqlite3 /data/main.db
+    message-store db
+    http-origin "https://irc.pavlenko.io"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gamja-config
+  namespace: soju
+data:
+  default.conf: |
+    server {
+      listen 8081;
+      server_name _;
+      root /usr/share/nginx/html;
+      index index.html;
+
+      location /socket {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 600s;
+      }
+
+      location / {
+        try_files $uri /index.html;
+      }
+    }
+  config.json: |
+    {
+      "server": {
+        "url": "/socket",
+        "auth": "mandatory"
+      }
+    }

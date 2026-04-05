@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: soju
+  namespace: soju
+spec:
+  serviceName: soju
+  replicas: 1
+  selector:
+    matchLabels:
+      app: soju
+  template:
+    metadata:
+      labels:
+        app: soju
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: soju
+          image: ghcr.io/pavlenkoa/soju:latest
+          ports:
+            - containerPort: 8080
+              name: soju-ws
+          env:
+            - name: SOJU_ADMIN_USER
+              value: admin
+            - name: SOJU_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: soju-bootstrap
+                  key: admin_password
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    set -e
+                    for i in $(seq 1 30); do
+                      [ -S /var/run/soju/admin.sock ] && break
+                      sleep 1
+                    done
+                    if ! sojuctl -config /etc/soju/soju.cfg user status | grep -qE "^${SOJU_ADMIN_USER}( |:)"; then
+                      sojuctl -config /etc/soju/soju.cfg user create \
+                        -username "$SOJU_ADMIN_USER" \
+                        -password "$SOJU_ADMIN_PASSWORD" \
+                        -admin true
+                    fi
+          volumeMounts:
+            - name: soju-config
+              mountPath: /etc/soju
+            - name: data
+              mountPath: /data
+            - name: admin-sock
+              mountPath: /var/run/soju
+
+        - name: gamja
+          image: ghcr.io/pavlenkoa/gamja:latest
+          ports:
+            - containerPort: 8081
+              name: http
+          volumeMounts:
+            - name: gamja-nginx-conf
+              mountPath: /etc/nginx/conf.d
+            - name: gamja-app-config
+              mountPath: /usr/share/nginx/html/config.json
+              subPath: config.json
+
+      volumes:
+        - name: soju-config
+          configMap:
+            name: soju-config
+            items:
+              - key: soju.cfg
+                path: soju.cfg
+        - name: gamja-nginx-conf
+          configMap:
+            name: gamja-config
+            items:
+              - key: default.conf
+                path: default.conf
+        - name: gamja-app-config
+          configMap:
+            name: gamja-config
+            items:
+              - key: config.json
+                path: config.json
+        - name: admin-sock
+          emptyDir: {}
+        - name: data
+          nfs:
+            server: 192.168.88.3
+            path: /media/soju-data
