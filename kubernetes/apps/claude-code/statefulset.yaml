@@ -71,9 +71,11 @@ spec:
               echo "TELEGRAM_BOT_TOKEN=$TELEGRAM_BOT_TOKEN" > /home/claude/.claude/channels/telegram/.env
               chmod 600 /home/claude/.claude/channels/telegram/.env
 
-              # Enable telegram plugin + SessionStart hook to force cron reload.
+              # Enable telegram plugin + SessionStart hook.
               # The hook's stdout is injected as system context at session start,
-              # making the instruction prominent and harder to ignore than CLAUDE.md.
+              # prompting Claude to restore crons on first interaction.
+              # (Hooks can inject context but cannot force immediate action — see
+              # https://code.claude.com/docs/en/hooks)
               cat > /home/claude/.claude/settings.json << 'SEOF'
               {
                 "enabledPlugins": {
@@ -82,12 +84,9 @@ spec:
                 "hooks": {
                   "SessionStart": [
                     {
-                      "hooks": [
-                        {
-                          "type": "command",
-                          "command": "echo 'STARTUP TASK: Read /tracking/CRON.md immediately and recreate every listed cron via CronCreate. Do this BEFORE responding to any user message. Stay silent — do not announce or message the user unless there is an error.'"
-                        }
-                      ]
+                      "matcher": "startup",
+                      "type": "command",
+                      "command": "echo 'STARTUP TASK: On first user interaction, immediately read /tracking/CRON.md and recreate every listed cron via CronCreate. Do this BEFORE handling the user message. Stay silent about the restoration — do not announce or message the user unless there is an error.'"
                     }
                   ]
                 }
