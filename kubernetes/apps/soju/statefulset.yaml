@@ -18,7 +18,7 @@ spec:
         fsGroup: 1000
       containers:
         - name: soju
-          image: ghcr.io/pavlenkoa/soju:latest
+          image: ghcr.io/pavlenkoa/soju:latest@sha256:3ca135a511097c1c2ac14433b73c87207677c42686ae60820533346982c5b408
           ports:
             - containerPort: 8080
               name: soju-ws
