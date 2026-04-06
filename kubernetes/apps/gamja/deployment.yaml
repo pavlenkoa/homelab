@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: gamja
-          image: ghcr.io/pavlenkoa/gamja:latest
+          image: ghcr.io/pavlenkoa/gamja:latest@sha256:2d4008849c2b87936f3da64415d14634a5ba4329c41f585a242b7189a81a4922
           ports:
             - containerPort: 8081
               name: http

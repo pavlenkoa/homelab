@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: vmalert
-          image: "victoriametrics/vmalert:{{ .Values.vmalert.image.tag }}"
+          image: "victoriametrics/vmalert@sha256:26f877d5de545e9d7a9a80be10efcc5f3928ee36572d55281363efcc616cb3ad:{{ .Values.vmalert.image.tag }}"
           args:
             - -datasource.url={{ .Values.vmalert.datasource.url }}
             - -remoteWrite.url={{ .Values.vmalert.remoteWrite.url }}

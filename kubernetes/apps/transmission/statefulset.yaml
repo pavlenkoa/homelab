@@ -36,7 +36,7 @@ spec:
             value: "1"
       containers:
         - name: gluetun
-          image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest
+          image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest@sha256:54b23be02297c7ddfe2813d3e30fd9771bb1b38febd5acd2a593afa120e5eef1
           securityContext:
             capabilities:
               add:
@@ -101,7 +101,7 @@ spec:
             timeoutSeconds: 10
 
         - name: transmission-exporter
-          image: ghcr.io/pavlenkoa/transmission-exporter:latest
+          image: ghcr.io/pavlenkoa/transmission-exporter:latest@sha256:6b9fc25b20c9e78baa8b2e73a2f33f4393e86b8a05b97e69e6a2c8a3df38db06
           env:
             - name: TRANSMISSION_ADDR
               value: "http://localhost:9091"
@@ -112,7 +112,7 @@ spec:
               name: metrics
 
         - name: transmission
-          image: lscr.io/linuxserver/transmission:4.1.1
+          image: lscr.io/linuxserver/transmission:4.1.1@sha256:215b62e0c51e139ec7237a21d44c6ace14bbf36bff4c092465803d5c974a531e
           env:
             - name: PUID
               value: "1000"
