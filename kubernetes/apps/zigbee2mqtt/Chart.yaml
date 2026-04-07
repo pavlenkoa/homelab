@@ -5,7 +5,7 @@ description: "Wrapper chart for Zigbee2MQTT"
 
 dependencies:
   - name: zigbee2mqtt
-    version: "2.9.1"
+    version: "2.9.2"
     repository: "https://charts.zigbee2mqtt.io/"
   - name: common
     version: "0.1.0"

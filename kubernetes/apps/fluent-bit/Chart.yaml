@@ -6,10 +6,10 @@ description: "Wrapper chart for fluent-bit"
 dependencies:
   - name: fluent-bit
     alias: fluent-bit-logs
-    version: "0.56.0"
+    version: "0.57.2"
     repository: "https://fluent.github.io/helm-charts"
   - name: fluent-bit
     alias: fluent-bit-k8s-events
-    version: "0.56.0"
+    version: "0.57.2"
     repository: "https://fluent.github.io/helm-charts"
     condition: fluent-bit-k8s-events.enabled
