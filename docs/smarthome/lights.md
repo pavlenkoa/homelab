@@ -71,8 +71,8 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 | 2 | red_presence | xy 0.69/0.31 | 254 | 1.5s | Presence sensor on |
 | 3 | reading_transition | 2890K (color_temp: 345) | 254 | 30s | Time-based transition (sunset, 06:00/09:00) |
 | 4 | red_transition | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
-| 5 | reading_toggle | 2890K (color_temp: 345) | 254 | 0.5s | Knob/button toggle on |
-| 6 | red_toggle | xy 0.69/0.31 | 254 | 0.5s | Knob/button toggle on |
+| 5 | reading_toggle | 2890K (color_temp: 345) | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
+| 6 | red_toggle | xy 0.69/0.31 | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
 
 - Scenes 1–4 exist on all three room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4).
 - Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom has no knob).
@@ -130,13 +130,15 @@ Handles all knob actions for living room via group MQTT topic:
 
 | Action | Time | Result |
 |--------|------|--------|
-| Toggle (lights off) | 06:00–22:00 | scene_recall 5 (reading_toggle, 0.5s) |
-| Toggle (lights off) | 22:00–06:00 | scene_recall 6 (red_toggle, 0.5s) |
+| Toggle (lights off) | 06:00–22:00 | scene_recall 5 (reading_toggle) → brightness fade-in 0.5s |
+| Toggle (lights off) | 22:00–06:00 | scene_recall 6 (red_toggle) → brightness fade-in 0.5s |
 | Toggle (lights on) | any | `{"state": "OFF", "transition": 0.5}` via group topic |
 | Brightness rotation | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step) |
 | Long press (hue_move) | any | Toggle between reading (2890K) and red (0.69/0.31) via group topic |
 
-**Brightness tracking:** Uses `input_number.living_room_brightness` helper to track current brightness locally. Each rotation tick updates the helper immediately (no waiting for z2m state), then publishes the new value to the group. On toggle-on, helper resets to 254 (scene default). This prevents the "spring-back" effect caused by calculating brightness from stale z2m state.
+**Toggle-on sequence:** Scene_recall (brightness 1, correct color, 0s transition) instantly sets the right color at minimal brightness, then a second command fades brightness to the helper value over 0.5s. This gives a smooth fade-in with correct color from the start — no wrong-color flash, no full-brightness flash.
+
+**Brightness tracking:** Uses `input_number.living_room_brightness` helper to track current brightness locally. Each rotation tick updates the helper immediately (no waiting for z2m state), then publishes the new value to the group. This prevents the "spring-back" effect caused by calculating brightness from stale z2m state.
 
 **Mode:** restart (rapid rotations cancel previous)
 
