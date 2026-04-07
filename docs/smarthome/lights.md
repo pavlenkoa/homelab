@@ -133,7 +133,7 @@ Handles all knob actions for living room via group MQTT topic:
 | Toggle (lights off) | 06:00–22:00 | scene_recall 5 (reading_toggle) → brightness fade-in 0.5s |
 | Toggle (lights off) | 22:00–06:00 | scene_recall 6 (red_toggle) → brightness fade-in 0.5s |
 | Toggle (lights on) | any | `{"state": "OFF", "transition": 0.5}` via group topic |
-| Brightness rotation | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step) |
+| Brightness rotation (lights on) | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step). Ignored when lights are off. |
 | Long press (hue_move) | any | Toggle between reading (2890K) and red (0.69/0.31) via group topic |
 
 **Toggle-on sequence:** Scene_recall (brightness 1, correct color, 0s transition) instantly sets the right color at minimal brightness, then a second command fades brightness to the helper value over 0.5s. This gives a smooth fade-in with correct color from the start — no wrong-color flash, no full-brightness flash.
