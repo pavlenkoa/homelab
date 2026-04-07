@@ -242,3 +242,15 @@ for line in sys.stdin:
             print(d.get('ieeeAddr'), scenes)"
 ```
 Scene keys in metadata are formatted `<sceneID>_<groupID>` (e.g. `1_2` = scene 1 in group 2).
+
+## Configuration Files
+
+Source of truth for HA config is stored in git at `kubernetes/apps/home-assistant/files/`:
+- `configuration.yaml` — HA config (input_number helpers, integrations)
+- `automations.yaml` — all automations
+
+**Update workflow:**
+1. Edit the file in the git repo
+2. Copy to the HA pod: `kubectl -n smarthome cp <file> home-assistant-0:/config/<file>`
+3. Reload automations: call `automation.reload` via HA API. For `configuration.yaml` changes, restart HA.
+4. Test, then commit and push.

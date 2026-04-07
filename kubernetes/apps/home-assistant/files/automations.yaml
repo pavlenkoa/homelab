@@ -1,0 +1,434 @@
+- id: living_room_sunset_reading
+  alias: Living Room - Sunset Reading Mode
+  description: Turn on or transition living lights to reading at sunset via Zigbee scene.
+  triggers:
+  - platform: sun
+    event: sunset
+  conditions: []
+  actions:
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Living Room Lights/set
+      payload: '{"scene_recall": 3}'
+  mode: single
+- id: living_room_red_mode
+  alias: Living Room - 22:00 Red Mode
+  description: Living lights transition to red at 22:00 via Zigbee scene, only if on.
+  triggers:
+  - platform: time
+    at: '22:00:00'
+  conditions:
+  - condition: state
+    entity_id: light.living_room_lights
+    state: 'on'
+  actions:
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Living Room Lights/set
+      payload: '{"scene_recall": 4}'
+  mode: single
+- id: lights_off_2am
+  alias: 02:00 - Lights Off
+  description: Safety net - all lights off at 2am via group MQTT topics.
+  triggers:
+  - platform: time
+    at: 02:00:00
+  conditions: []
+  actions:
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Living Room Lights/set
+      payload: '{"state": "OFF", "transition": 10}'
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Bedroom Lights/set
+      payload: '{"state": "OFF", "transition": 10}'
+  mode: single
+- id: living_room_morning_reading
+  alias: Living Room - 06:00 Reading Mode
+  description: Living lights transition to reading at 6AM via Zigbee scene, only if on.
+  triggers:
+  - platform: time
+    at: 06:00:00
+  conditions:
+  - condition: state
+    entity_id: light.living_room_lights
+    state: 'on'
+  actions:
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Living Room Lights/set
+      payload: '{"scene_recall": 3}'
+  mode: single
+- id: living_room_knob
+  alias: Living Room - Knob Controller
+  description: Handles all knob actions for living room. Knob is removed from z2m group,
+    all commands go through HA to group MQTT topic. Toggle recalls correct scene for
+    time of day or turns off with fade. Rotation controls brightness. Long press toggles
+    color.
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Living Room Knob
+    id: knob_action
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.payload_json.action in ["toggle", "brightness_step_up",
+      "brightness_step_down", "hue_move"] }}'
+  actions:
+  - variables:
+      command: '{{ trigger.payload_json.action }}'
+      raw_step: '{{ trigger.payload_json.action_step_size | default(0) }}'
+      step: '{% if raw_step not in [None, "", "None"] %}{{ [((raw_step | int(0)) *
+        3 / 13) | round(0) | int, 2] | max }}{% else %}3{% endif %}'
+      current: '{{ states("input_number.living_room_brightness") | int(254) }}'
+      new_up: '{{ [current + (step * 255 / 100) | int, 255] | min | int }}'
+      new_down: '{{ [current - (step * 255 / 100) | int, 0] | max | int }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "toggle" }}'
+      - condition: state
+        entity_id: light.living_room_lamp
+        state: 'off'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: 06:00:00
+            before: '22:00:00'
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Living Room Lights/set
+              payload: '{"scene_recall": 5}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Living Room Lights/set
+            payload: '{"scene_recall": 6}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"brightness": {{ current }}, "transition": 0.5}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "toggle" }}'
+      - condition: state
+        entity_id: light.living_room_lamp
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"state": "OFF", "transition": 0.5}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "brightness_step_up" }}'
+      - condition: state
+        entity_id: light.living_room_lamp
+        state: 'on'
+      sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.living_room_brightness
+        data:
+          value: '{{ new_up }}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"brightness": {{ new_up }}, "transition": 0.3}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "brightness_step_down" }}'
+      - condition: state
+        entity_id: light.living_room_lamp
+        state: 'on'
+      sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.living_room_brightness
+        data:
+          value: '{{ new_down }}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"brightness": {{ new_down }}, "transition": 0.3}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "hue_move" }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ state_attr("light.living_room_lamp", "color_mode")
+              == "xy" }}'
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Living Room Lights/set
+              payload: '{"color_temp": 345, "transition": 1}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Living Room Lights/set
+            payload: '{"color": {"x": 0.69, "y": 0.31}, "transition": 1}'
+  mode: restart
+- id: bedroom_knob
+  alias: Bedroom - Knob Controller
+  description: Handles all knob actions for bedroom. Knob is removed from z2m group,
+    all commands go through HA to group MQTT topic. Toggle recalls correct scene for
+    time of day or turns off with fade. Rotation controls brightness. Long press toggles
+    color.
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Bedroom Knob
+    id: knob_action
+  conditions:
+  - condition: template
+    value_template: '{{ trigger.payload_json.action in ["toggle", "brightness_step_up",
+      "brightness_step_down", "hue_move"] }}'
+  actions:
+  - variables:
+      command: '{{ trigger.payload_json.action }}'
+      raw_step: '{{ trigger.payload_json.action_step_size | default(0) }}'
+      step: '{% if raw_step not in [None, "", "None"] %}{{ [((raw_step | int(0)) *
+        3 / 13) | round(0) | int, 2] | max }}{% else %}3{% endif %}'
+      current: '{{ states("input_number.bedroom_brightness") | int(254) }}'
+      new_up: '{{ [current + (step * 255 / 100) | int, 255] | min | int }}'
+      new_down: '{{ [current - (step * 255 / 100) | int, 0] | max | int }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "toggle" }}'
+      - condition: state
+        entity_id: light.bedroom_light_1
+        state: 'off'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: 09:00:00
+            before: '22:00:00'
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Bedroom Lights/set
+              payload: '{"scene_recall": 5}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Bedroom Lights/set
+            payload: '{"scene_recall": 6}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"brightness": {{ current }}, "transition": 0.5}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "toggle" }}'
+      - condition: state
+        entity_id: light.bedroom_light_1
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"state": "OFF", "transition": 0.5}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "brightness_step_up" }}'
+      - condition: state
+        entity_id: light.bedroom_light_1
+        state: 'on'
+      sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.bedroom_brightness
+        data:
+          value: '{{ new_up }}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"brightness": {{ new_up }}, "transition": 0.3}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "brightness_step_down" }}'
+      - condition: state
+        entity_id: light.bedroom_light_1
+        state: 'on'
+      sequence:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.bedroom_brightness
+        data:
+          value: '{{ new_down }}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"brightness": {{ new_down }}, "transition": 0.3}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "hue_move" }}'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ state_attr("light.bedroom_light_1", "color_mode")
+              == "xy" }}'
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Bedroom Lights/set
+              payload: '{"color_temp": 345, "transition": 1}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Bedroom Lights/set
+            payload: '{"color": {"x": 0.69, "y": 0.31}, "transition": 1}'
+  mode: restart
+- id: bathroom_presence
+  alias: Bathroom - Presence
+  description: 'Bathroom lights via Zigbee scenes. Scene 1/2: 1.5s fade. Scene 3/4:
+    30s fade for time transitions.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.bathroom_sensor_presence
+    to: 'on'
+    id: presence_on
+  - trigger: state
+    entity_id: binary_sensor.bathroom_sensor_presence
+    to: 'off'
+    id: presence_off
+  - trigger: time
+    at: '22:00:00'
+    id: time_22
+  - trigger: time
+    at: 06:00:00
+    id: time_06
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: presence_on
+      - condition: time
+        after: 06:00:00
+        before: '22:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"scene_recall": 1}'
+    - conditions:
+      - condition: trigger
+        id: presence_on
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"scene_recall": 2}'
+    - conditions:
+      - condition: trigger
+        id: time_22
+      - condition: state
+        entity_id: binary_sensor.bathroom_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"scene_recall": 4}'
+    - conditions:
+      - condition: trigger
+        id: time_06
+      - condition: state
+        entity_id: binary_sensor.bathroom_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"scene_recall": 3}'
+    - conditions:
+      - condition: trigger
+        id: presence_off
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"state": "OFF", "transition": 3}'
+  mode: single
+- id: bedroom_presence
+  alias: Bedroom - Presence
+  description: 'Bedroom lights via Zigbee scenes. Does nothing 00:00-09:00. Scene
+    1/2: 1.5s fade. Scene 3/4: 30s fade for time transitions.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.bedroom_sensor_presence
+    to: 'on'
+    id: presence_on
+  - trigger: state
+    entity_id: binary_sensor.bedroom_sensor_presence
+    to: 'off'
+    id: presence_off
+  - trigger: time
+    at: '22:00:00'
+    id: time_22
+  - trigger: time
+    at: 09:00:00
+    id: time_09
+  conditions:
+  - condition: time
+    after: 09:00:00
+    before: 00:00:00
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: presence_on
+      - condition: time
+        after: 09:00:00
+        before: '22:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"scene_recall": 1}'
+    - conditions:
+      - condition: trigger
+        id: presence_on
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"scene_recall": 2}'
+    - conditions:
+      - condition: trigger
+        id: time_22
+      - condition: state
+        entity_id: binary_sensor.bedroom_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"scene_recall": 4}'
+    - conditions:
+      - condition: trigger
+        id: time_09
+      - condition: state
+        entity_id: binary_sensor.bedroom_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"scene_recall": 3}'
+    - conditions:
+      - condition: trigger
+        id: presence_off
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"state": "OFF", "transition": 3}'
+  mode: single

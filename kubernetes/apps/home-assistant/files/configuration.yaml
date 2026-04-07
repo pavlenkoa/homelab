@@ -1,0 +1,28 @@
+default_config:
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 10.0.0.0/8
+    - 192.168.0.0/16
+mqtt:
+prometheus:
+frontend:
+  themes: !include_dir_merge_named themes
+input_number:
+  living_room_brightness:
+    name: Living Room Brightness
+    min: 0
+    max: 255
+    step: 1
+    initial: 254
+    mode: slider
+  bedroom_brightness:
+    name: Bedroom Brightness
+    min: 0
+    max: 255
+    step: 1
+    initial: 254
+    mode: slider
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
