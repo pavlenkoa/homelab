@@ -59,7 +59,7 @@ This design:
 - **Eliminates the color flash** on toggle (scene_recall is the only command, no race with direct Zigbee toggle)
 - **Fixes group state tracking** (knob's permanent `state: ON` no longer poisons the group entity)
 - **Allows time-aware scene selection** (HA picks the correct scene for the time of day)
-- **Trade-off:** Brightness rotation goes through HA→MQTT→z2m instead of direct Zigbee, adding some latency. The step size is scaled down (raw * 3/13) and uses absolute brightness with 0.3s transition.
+- **Trade-off:** Brightness rotation goes through HA→MQTT→z2m instead of direct Zigbee, adding some latency. The step size is scaled down (raw * 3/13) and uses absolute brightness with 0.3s transition. Brightness is tracked via `input_number` helpers to avoid spring-back from stale z2m state.
 
 ## Zigbee Scenes
 
@@ -100,6 +100,15 @@ All current automations publish to group topics only. Publishing scene_add/scene
 
 **Removing:** `{"scene_remove": 5}` — removes from the scope implied by the topic (group topic → that group's table, individual topic → group 0).
 
+## HA Helpers
+
+| Helper | Type | Range | Purpose |
+|--------|------|-------|---------|
+| `input_number.living_room_brightness` | input_number | 0–255 | Tracks living room brightness for knob rotation (avoids stale z2m state) |
+| `input_number.bedroom_brightness` | input_number | 0–255 | Tracks bedroom brightness for knob rotation |
+
+Defined in `configuration.yaml`. Reset to 254 on each toggle-on (scene default brightness).
+
 ## Light Schedule
 
 ```
@@ -125,7 +134,9 @@ Handles all knob actions for living room via group MQTT topic:
 | Toggle (lights off) | 22:00–06:00 | scene_recall 6 (red_toggle, 0.5s) |
 | Toggle (lights on) | any | `{"state": "OFF", "transition": 0.5}` via group topic |
 | Brightness rotation | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step) |
-| Long press (hue_move) | any | Toggle between reading (2890K) and red (0.69/0.31) |
+| Long press (hue_move) | any | Toggle between reading (2890K) and red (0.69/0.31) via group topic |
+
+**Brightness tracking:** Uses `input_number.living_room_brightness` helper to track current brightness locally. Each rotation tick updates the helper immediately (no waiting for z2m state), then publishes the new value to the group. On toggle-on, helper resets to 254 (scene default). This prevents the "spring-back" effect caused by calculating brightness from stale z2m state.
 
 **Mode:** restart (rapid rotations cancel previous)
 
@@ -137,6 +148,7 @@ Same as living room but:
 - Uses Bedroom Lights group topic
 - Time boundary is 09:00 (not 06:00) — aligned with blackout window
 - Checks `light.bedroom_light_1` for state
+- Uses `input_number.bedroom_brightness` helper for brightness tracking
 
 ### Living Room - Time-based
 **ID:** `living_room_sunset_reading` — At sunset → scene_recall 3 (reading_transition) via group topic. Fires unconditionally.
@@ -188,10 +200,10 @@ During the blackout window (00:00–09:00), the `bedroom_knob` automation handle
 
 **Solution:** Removed knobs from z2m groups. The knob's state no longer affects group state calculation. All knob control goes through HA automations.
 
-### Knob brightness through HA (KNOWN LIMITATION)
-**Problem:** With knobs removed from z2m groups, brightness rotation goes through HA (knob → z2m → MQTT → HA → MQTT → z2m → Zigbee). This adds latency compared to direct Zigbee binding. Fast rotation can cause "spring-back" effect where brightness bounces.
+### Knob brightness spring-back (SOLVED)
+**Problem:** With knobs removed from z2m groups, brightness rotation goes through HA. Fast rotation caused "spring-back" — brightness would jump then bounce back — because each tick read the current brightness from z2m state, which lagged behind the actual bulb state.
 
-**Mitigation:** Step size is scaled down (raw * 3/13), absolute brightness is used (not relative steps), 0.3s transition smooths the visual. `mode: restart` ensures rapid rotations cancel previous commands. Not as smooth as direct Zigbee but acceptable for occasional use.
+**Solution:** Track brightness locally via `input_number` helpers (`input_number.living_room_brightness`, `input_number.bedroom_brightness`). Each rotation tick updates the helper immediately, then publishes the helper value to the group MQTT topic. The helper is always up-to-date, eliminating stale-state calculations. On toggle-on, the helper resets to 254 (scene default brightness).
 
 ### Bulbs turning on one-by-one (SOLVED)
 **Problem:** Publishing scene_recall to individual bulb topics sequentially caused visible staggered turn-on.
