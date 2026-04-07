@@ -68,7 +68,8 @@ victoria-metrics-single:
 vmalert:
   enabled: true
   image:
-    tag: v1.115.0
+    repository: victoriametrics/vmalert
+    tag: v1.139.0
   evaluationInterval: 1m
   datasource:
     url: http://victoriametrics-victoria-metrics-single-server:8428

@@ -13,8 +13,10 @@
   },
 
   // Raw K8s manifests - scan image: references in directory apps (transmission, soju, gamja, etc.)
+  // Skip Helm templates — Go template interpolation breaks digest pinning
   "kubernetes": {
-    "fileMatch": ["kubernetes/apps/.*\\.ya?ml$"]
+    "fileMatch": ["kubernetes/apps/.*\\.ya?ml$"],
+    "ignorePaths": ["**/templates/**"]
   },
 
   // Schedule & Limits
@@ -66,8 +68,9 @@
       "automerge": false
     },
     {
-      "description": "Disable helm-values manager - digest pinning incompatible with template concatenation",
+      "description": "Skip kgateway envoy-wrapper - version must match chart appVersion",
       "matchManagers": ["helm-values"],
+      "matchFileNames": ["kubernetes/apps/kgateway/**"],
       "enabled": false
     },
     {
