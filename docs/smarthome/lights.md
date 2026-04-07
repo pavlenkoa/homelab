@@ -5,7 +5,9 @@
 All lights are Philips Hue bulbs connected via Zigbee2MQTT (z2m.pavlenko.io).
 Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication layer.
 
-**Key design decision:** All "turn on" actions use **Zigbee scenes stored on bulb firmware** (`scene_recall`) instead of `light.turn_on` with color parameters. This prevents the color flash problem (see Known Issues).
+**Key design decisions:**
+- All "turn on" actions use **Zigbee scenes stored on bulb firmware** (`scene_recall`) instead of `light.turn_on` with color parameters. This prevents the color flash problem (see Known Issues).
+- Smart knobs are **removed from z2m groups** and operate in command mode. All knob actions (toggle, brightness, color) are intercepted by HA automations and published to group MQTT topics. This prevents the knob's stuck `state: ON` from poisoning group state and eliminates the race condition between direct Zigbee commands and HA scene recalls.
 
 ## Devices
 
@@ -13,20 +15,23 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 
 | Z2M Name | HA Entity | Room | Group |
 |----------|-----------|------|-------|
-| Light Kitchen Table | light.light_kitchen_table | Living room | Living Lights |
-| Light Living Lamp | light.light_living_lamp | Living room | Living Lights |
-| Light Toilet 1 | light.light_toilet_1 | Bathroom | Toilet Lights |
-| Light Toilet 2 | light.light_toilet_2 | Bathroom | Toilet Lights |
-| Light Bedroom 1 | light.light_bedroom_1 | Bedroom | Bedroom Lights |
-| Light Bedroom 2 | light.light_bedroom_2 | Bedroom | Bedroom Lights |
+| Living Room Lamp | light.living_room_lamp | Living room | Living Room Lights |
+| Kitchen Table Light | light.kitchen_table_light | Living room (kitchen area) | Living Room Lights |
+| Bedroom Light 1 | light.bedroom_light_1 | Bedroom | Bedroom Lights |
+| Bedroom Light 2 | light.bedroom_light_2 | Bedroom | Bedroom Lights |
+| Bathroom Light 1 | light.bathroom_light_1 | Bathroom | Bathroom Lights |
+| Bathroom Light 2 | light.bathroom_light_2 | Bathroom | Bathroom Lights |
 
 ### Z2M Groups
 
-| Group Name | Members | MQTT Topic |
-|------------|---------|------------|
-| Living Lights | Light Kitchen Table, Light Living Lamp | zigbee2mqtt/Living Lights/set |
-| Toilet Lights | Light Toilet 1, Light Toilet 2 | zigbee2mqtt/Toilet Lights/set |
-| Bedroom Lights | Light Bedroom 1, Light Bedroom 2 | zigbee2mqtt/Bedroom Lights/set |
+| Group Name | ID | Members | MQTT Topic |
+|------------|-----|---------|------------|
+| All Lights | 1 | Living Room Lamp, Kitchen Table Light, Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/All Lights/set |
+| Bedroom Lights | 2 | Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/Bedroom Lights/set |
+| Bathroom Lights | 3 | Bathroom Light 1, Bathroom Light 2 | zigbee2mqtt/Bathroom Lights/set |
+| Living Room Lights | 4 | Living Room Lamp, Kitchen Table Light | zigbee2mqtt/Living Room Lights/set |
+
+**Note:** All Lights excludes bathroom (bathroom is fully sensor-controlled). Knobs are NOT members of any group — they are controlled through HA automations only.
 
 **Important:** Use group topics for simultaneous control. Publishing to individual bulbs sequentially causes visible one-by-one turn-on.
 
@@ -34,25 +39,27 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 
 | Name | HA Entity | Room | Placement |
 |------|-----------|------|-----------|
-| Aqara FP300 Sensor 1 | binary_sensor.aqara_fp300_sensor_1_presence | Bathroom | Battery powered, mmWave + PIR |
-| Aqara FP300 Sensor 2 | binary_sensor.aqara_fp300_sensor_2_presence | Bedroom | Ceiling-mounted, center of room above the bed. Battery powered, mmWave + PIR |
+| Bathroom Sensor | binary_sensor.bathroom_sensor_presence | Bathroom | Battery powered, mmWave + PIR |
+| Bedroom Sensor | binary_sensor.bedroom_sensor_presence | Bedroom | Ceiling-mounted, center of room above the bed. Battery powered, mmWave + PIR |
 
 **Sensor settings:**
-- Sensor 1 (bathroom): motion_sensitivity=medium, ai_adaptive=on, absence_delay=10s
-- Sensor 2 (bedroom): motion_sensitivity=high, ai_adaptive=off (disabled to fix detection issues), absence_delay=10s, spatial_learning triggered 2026-04-01
+- Bathroom Sensor: motion_sensitivity=medium, ai_adaptive=on, absence_delay=10s
+- Bedroom Sensor: motion_sensitivity=high, ai_adaptive=off (disabled to fix detection issues), absence_delay=10s, spatial_learning triggered 2026-04-01
 
 ### Smart Knobs (Tuya ERS-10TZBVK-AA)
 
-| Name | MQTT Topic | Room | Group | Operation Mode |
-|------|------------|------|-------|----------------|
-| Light Switch 1 | zigbee2mqtt/Light Switch 1 | Bedroom | Bedroom Lights | command |
-| Light Switch 2 | zigbee2mqtt/Light Switch 2 | Living room | Living Lights | command |
+| Name | MQTT Topic | Room | Operation Mode |
+|------|------------|------|----------------|
+| Bedroom Knob | zigbee2mqtt/Bedroom Knob | Bedroom | command |
+| Living Room Knob | zigbee2mqtt/Living Room Knob | Living room | command |
 
-**Both knobs run in Z2M "command" mode** — toggle and brightness rotation are handled directly at the Zigbee level, bypassing HA. This gives smooth, lag-free brightness control. The HA knob automations (`knob_living_room`, `knob_bedroom`) are **disabled**.
+**Knob architecture:** Knobs are in **command mode** but **removed from z2m groups**. In command mode, z2m still reports all actions (toggle, brightness_step_up/down, hue_move) to MQTT. HA automations (`living_room_knob`, `bedroom_knob`) intercept these actions and publish commands to the appropriate group MQTT topic.
 
-Active knob HA automations (for features Z2M can't handle):
-- `knob_bedroom_color_toggle` (on) — long press (hue_move) toggles between reading (2890K) and red
-- `knob_living_room_color_toggle` (on) — same for living room
+This design:
+- **Eliminates the color flash** on toggle (scene_recall is the only command, no race with direct Zigbee toggle)
+- **Fixes group state tracking** (knob's permanent `state: ON` no longer poisons the group entity)
+- **Allows time-aware scene selection** (HA picks the correct scene for the time of day)
+- **Trade-off:** Brightness rotation goes through HA→MQTT→z2m instead of direct Zigbee, adding some latency. The step size is scaled down (raw * 3/13) and uses absolute brightness with 0.3s transition.
 
 ## Zigbee Scenes
 
@@ -60,26 +67,31 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 
 | Scene ID | Name | Color | Brightness | Transition | Use Case |
 |----------|------|-------|------------|------------|----------|
-| 1 | reading | 2890K (color_temp: 345) | 254 | 1.5s | Presence on / knob toggle during daytime |
-| 2 | red | xy 0.69/0.31 | 254 | 1.5s | Presence on / knob toggle during nighttime |
-| 3 | reading_slow | 2890K (color_temp: 345) | 254 | 30s | Time-based transition (sunset, 6AM/9AM) |
-| 4 | red_slow | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
+| 1 | reading_presence | 2890K (color_temp: 345) | 254 | 1.5s | Presence sensor on |
+| 2 | red_presence | xy 0.69/0.31 | 254 | 1.5s | Presence sensor on |
+| 3 | reading_transition | 2890K (color_temp: 345) | 254 | 30s | Time-based transition (sunset, 06:00/09:00) |
+| 4 | red_transition | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
+| 5 | reading_toggle | 2890K (color_temp: 345) | 254 | 0.5s | Knob/button toggle on |
+| 6 | red_toggle | xy 0.69/0.31 | 254 | 0.5s | Knob/button toggle on |
 
-Scenes 1–4 are stored in each room's z2m group on every bulb that belongs to that group: Bedroom Lights (group 2), Toilet Lights (group 3), Living Lights (group 4). No group-0 (individual-bulb) scenes exist.
+- Scenes 1–4 exist on all three room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4).
+- Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom has no knob).
+- No group-0 (individual-bulb) scenes exist.
+- Hue bulbs support ~16 scene slots per group.
 
 ### Storage rule (important)
 
 Which scene gets recalled depends on the MQTT topic the command was published to:
 
 - **Group topic** (`zigbee2mqtt/Bedroom Lights/set`) → uses scenes in that group's table (group 2 for Bedroom, etc).
-- **Individual bulb topic** (`zigbee2mqtt/Light Bedroom 1/set`) → uses scenes in **group 0** on that bulb.
+- **Individual bulb topic** (`zigbee2mqtt/Bedroom Light 1/set`) → uses scenes in **group 0** on that bulb.
 
 All current automations publish to group topics only. Publishing scene_add/scene_recall to an individual bulb topic will create/read group-0 scenes, which nothing else touches — avoid doing this by mistake (it silently drifts the state).
 
 **Adding a scene via MQTT** (publish to the group topic):
 ```json
-{"scene_add": {"ID": 1, "name": "reading", "color_temp": 345, "brightness": 254, "transition": 1.5, "state": "ON"}}
-{"scene_add": {"ID": 2, "name": "red", "color": {"x": 0.69, "y": 0.31}, "brightness": 254, "transition": 1.5, "state": "ON"}}
+{"scene_add": {"ID": 1, "name": "reading_presence", "color_temp": 345, "brightness": 254, "transition": 1.5, "state": "ON"}}
+{"scene_add": {"ID": 2, "name": "red_presence", "color": {"x": 0.69, "y": 0.31}, "brightness": 254, "transition": 1.5, "state": "ON"}}
 ```
 
 `scene_add` with an existing ID overwrites.
@@ -87,8 +99,6 @@ All current automations publish to group topics only. Publishing scene_add/scene
 **Recalling:** `{"scene_recall": 1}` — transition is baked into the scene; scene_recall does not accept a transition parameter.
 
 **Removing:** `{"scene_remove": 5}` — removes from the scope implied by the topic (group topic → that group's table, individual topic → group 0).
-
-**Capacity:** Hue bulbs support ~16 scene slots per group.
 
 ## Light Schedule
 
@@ -104,50 +114,62 @@ Sunset ──── Reading mode continues ────────────�
 
 ## Automations
 
-### Presence-based (Toilet)
-**ID:** `toilet_lights_presence`
+### Living Room - Knob Controller
+**ID:** `living_room_knob`
+
+Handles all knob actions for living room via group MQTT topic:
+
+| Action | Time | Result |
+|--------|------|--------|
+| Toggle (lights off) | 06:00–22:00 | scene_recall 5 (reading_toggle, 0.5s) |
+| Toggle (lights off) | 22:00–06:00 | scene_recall 6 (red_toggle, 0.5s) |
+| Toggle (lights on) | any | `{"state": "OFF", "transition": 0.5}` via group topic |
+| Brightness rotation | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step) |
+| Long press (hue_move) | any | Toggle between reading (2890K) and red (0.69/0.31) |
+
+**Mode:** restart (rapid rotations cancel previous)
+
+### Bedroom - Knob Controller
+**ID:** `bedroom_knob`
+
+Same as living room but:
+- Uses Bedroom Knob MQTT topic
+- Uses Bedroom Lights group topic
+- Time boundary is 09:00 (not 06:00) — aligned with blackout window
+- Checks `light.bedroom_light_1` for state
+
+### Living Room - Time-based
+**ID:** `living_room_sunset_reading` — At sunset → scene_recall 3 (reading_transition) via group topic. Fires unconditionally.
+
+**ID:** `living_room_red_mode` — At 22:00, if living lights on → scene_recall 4 (red_transition) via group topic.
+
+**ID:** `living_room_morning_reading` — At 06:00, if living lights on → scene_recall 3 (reading_transition) via group topic. Transitions already-on lights from red to reading.
+
+### Presence-based (Bathroom)
+**ID:** `bathroom_presence`
 
 | Trigger | Time | Action |
 |---------|------|--------|
-| Presence ON | 06:00–22:00 | scene_recall 1 (reading, 1.5s) via group topic |
-| Presence ON | 22:00–06:00 | scene_recall 2 (red, 1.5s) via group topic |
-| 22:00 hits | if presence ON | scene_recall 4 (red_slow, 30s) |
-| 06:00 hits | if presence ON | scene_recall 3 (reading_slow, 30s) |
+| Presence ON | 06:00–22:00 | scene_recall 1 (reading_presence, 1.5s) via group topic |
+| Presence ON | 22:00–06:00 | scene_recall 2 (red_presence, 1.5s) via group topic |
+| 22:00 hits | if presence ON | scene_recall 4 (red_transition, 30s) |
+| 06:00 hits | if presence ON | scene_recall 3 (reading_transition, 30s) |
 | Presence OFF | any | `{"state": "OFF", "transition": 3}` via group topic (3s fade) |
 
 ### Presence-based (Bedroom)
-**ID:** `bedroom_lights_presence`
+**ID:** `bedroom_presence`
 
-Same as toilet but:
-- Uses Sensor 2 instead of Sensor 1
+Same as bathroom but:
+- Uses Bedroom Sensor instead of Bathroom Sensor
 - **Blackout period 00:00–09:00** — entire automation has condition `after: 09:00, before: 00:00`
 - Time triggers are 22:00 and 09:00 (not 06:00)
 - Uses Bedroom Lights group topic
 - Presence-OFF fades over 3s via group topic payload `{"state": "OFF", "transition": 3}`
 
-**ID:** `bedroom_lights_on_scene` — When bedroom lights turn on (off→on) during the blackout window (00:00–09:00), recall scene 2 (red) via the Bedroom Lights group topic. Covers manual knob activations in blackout, when the presence automation is blocked and the bulb would otherwise restore its last-used scene. Restricted to the blackout window to avoid double-firing alongside the presence automation (which caused a visible transition-interrupt flash).
-
-### Disabled: Presence-based (Home/Away)
-**ID:** `presence_lights` — **disabled.** Relied on `person.andrii` state transitions, but `ha.pavlenko.io` is only reachable from home, so the iPhone companion app can't post the `not_home` transition from outside. Kept for reference.
-
-### Time-based (Living Room)
-**ID:** `morning_reading_mode` — At 06:00, if living lights on → scene_recall 3 (reading_slow) via Living Lights group topic
-
-**ID:** `sunset_reading_mode` — At sunset → scene_recall 3 (reading_slow) via group topic (turns on or transitions). Fires unconditionally — the `person.andrii` home condition was removed since home/away detection is unreliable (see disabled `presence_lights`).
-
-**ID:** `red_mode` — At 22:00, if living lights on → scene_recall 4 (red_slow) via Living Lights group topic
-
-**ID:** `living_lights_on_scene` — When living lights turn on (off→on), recall correct scene for time of day via Living Lights group topic:
-- 06:00–22:00 → scene_recall 1 (reading, 1.5s)
-- 22:00–06:00 → scene_recall 2 (red, 1.5s)
-
-**Note:** Living room has no presence sensor. Lights are turned on automatically at sunset and controlled by knob (toggle/brightness) and time-based automations. The `living_lights_on_scene` automation corrects the color when lights are turned on by the knob (since the knob restores last state via Zigbee). There is a brief flash of the old color before the scene takes effect (~200-300ms HA delay), but the 1.5s scene transition masks it.
+During the blackout window (00:00–09:00), the `bedroom_knob` automation handles manual knob presses — it always recalls scene 6 (red_toggle) in that period.
 
 ### Safety net
-**ID:** `lights_off_2am` — At 02:00, turns off `light.all_lights` with a 10s transition. Catches anything still on.
-
-### Knob-initiated off
-Knobs are in z2m "command" mode and send Zigbee on/off commands directly to bulbs (bound at the Zigbee level), bypassing both HA and z2m. The bulb uses its firmware default `onOffTransitionTime` (~0.4s on Philips Hue) and cannot be overridden through standard Zigbee attributes on Hue bulbs.
+**ID:** `lights_off_2am` — At 02:00, publishes `{"state": "OFF", "transition": 10}` directly to Living Room Lights and Bedroom Lights group topics. Does not touch bathroom (sensor-controlled). Uses group MQTT topics instead of `light.all_lights` to ensure proper state sync.
 
 ## Known Issues & Solutions
 
@@ -156,22 +178,53 @@ Knobs are in z2m "command" mode and send Zigbee on/off commands directly to bulb
 
 **Solution:** Use Zigbee scenes (`scene_recall`). Scenes are stored on bulb firmware and apply color + brightness + transition atomically. The scene also turns the light on, so no separate `light.turn_on` is needed.
 
-**Caveat for living room:** The knob toggles lights directly at the Zigbee level (command mode), so the bulb restores last state before HA can react. The `living_lights_on_scene` automation then corrects via scene_recall. Brief old-color flash is unavoidable but acceptable with the 1.5s transition.
+### Knob race condition / color flash (SOLVED)
+**Problem:** When knobs were in the z2m group (direct Zigbee binding), pressing toggle caused the bulb to turn on with last state via direct Zigbee, then HA's scene_recall arrived ~200ms later causing a visible flash of wrong color.
+
+**Solution:** Removed knobs from z2m groups. Knobs stay in command mode (z2m still reports actions via MQTT) but no longer send direct Zigbee commands to bulbs. All commands go through HA automations → group MQTT topic. Scene_recall is the only command that reaches the bulb, so no race condition.
+
+### Knob poisoning group state (SOLVED)
+**Problem:** Tuya TS004F knobs in command mode permanently report `state: ON`. When the knob was a group member, z2m calculated the group state as ON (because one member was ON), even when all bulbs were off. This broke state-based automation triggers.
+
+**Solution:** Removed knobs from z2m groups. The knob's state no longer affects group state calculation. All knob control goes through HA automations.
+
+### Knob brightness through HA (KNOWN LIMITATION)
+**Problem:** With knobs removed from z2m groups, brightness rotation goes through HA (knob → z2m → MQTT → HA → MQTT → z2m → Zigbee). This adds latency compared to direct Zigbee binding. Fast rotation can cause "spring-back" effect where brightness bounces.
+
+**Mitigation:** Step size is scaled down (raw * 3/13), absolute brightness is used (not relative steps), 0.3s transition smooths the visual. `mode: restart` ensures rapid rotations cancel previous commands. Not as smooth as direct Zigbee but acceptable for occasional use.
 
 ### Bulbs turning on one-by-one (SOLVED)
 **Problem:** Publishing scene_recall to individual bulb topics sequentially caused visible staggered turn-on.
 
-**Solution:** Publish to the Z2M group topic (e.g. `zigbee2mqtt/Toilet Lights/set`). The group command is sent as a single Zigbee broadcast.
+**Solution:** Publish to the Z2M group topic (e.g. `zigbee2mqtt/Bathroom Lights/set`). The group command is sent as a single Zigbee broadcast.
 
 ### Bedroom sensor not detecting lying on side (SOLVED)
-**Problem:** FP300 Sensor 2 stopped detecting user lying on their side in bed.
+**Problem:** FP300 Bedroom Sensor stopped detecting user lying on their side in bed.
 
 **Solution:**
-1. Triggered spatial learning (recalibration) via `button.aqara_fp300_sensor_2_spatial_learning`
+1. Triggered spatial learning (recalibration) via `button.bedroom_sensor_spatial_learning`
 2. Disabled AI adaptive sensitivity (`ai_sensitivity_adaptive` = off) — the adaptive algorithm was reducing sensitivity over time
 3. Set motion sensitivity to "high"
 
-### Knob brightness sync issues (SOLVED)
-**Problem:** When knob brightness was handled through HA automations, there were sync issues between HA state and actual bulb state.
+### lights_off_2am not properly turning off lights (SOLVED)
+**Problem:** `lights_off_2am` used `light.turn_off` on `light.all_lights` (HA group entity). The z2m state for individual room groups didn't always update, causing `light.living_room_lights` to appear "on" even after bulbs were off. This cascaded: `morning_reading_mode` falsely triggered at 06:00.
 
-**Solution:** Keep knobs in Z2M "command" mode — brightness rotation handled directly at Zigbee level. HA knob automations (`knob_living_room`, `knob_bedroom`) are disabled. Only special actions (color toggle on long press) go through HA.
+**Solution:** Changed `lights_off_2am` to publish `{"state": "OFF", "transition": 10}` directly to each room's group MQTT topic. This ensures z2m updates the state for each group properly.
+
+### Knob-initiated off transition
+Knob turn-off uses `{"state": "OFF", "transition": 0.5}` via the group MQTT topic (handled by HA automation). Presence sensor turn-off uses 3s fade. The `lights_off_2am` safety net uses 10s fade.
+
+## Inspecting Scenes
+
+```bash
+kubectl -n smarthome exec zigbee2mqtt-0 -- cat /app/data/database.db | python3 -c "
+import json, sys
+for line in sys.stdin:
+    try: d = json.loads(line)
+    except: continue
+    for ep_id, ep in (d.get('endpoints') or {}).items():
+        scenes = ep.get('meta', {}).get('scenes', {})
+        if scenes:
+            print(d.get('ieeeAddr'), scenes)"
+```
+Scene keys in metadata are formatted `<sceneID>_<groupID>` (e.g. `1_2` = scene 1 in group 2).
