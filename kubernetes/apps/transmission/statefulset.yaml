@@ -34,6 +34,10 @@ spec:
         options:
           - name: ndots
             value: "1"
+      securityContext:
+        sysctls:
+          - name: net.ipv6.conf.all.disable_ipv6
+            value: "1"
       containers:
         - name: gluetun
           image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest@sha256:54b23be02297c7ddfe2813d3e30fd9771bb1b38febd5acd2a593afa120e5eef1
