@@ -107,7 +107,7 @@ All current automations publish to group topics only. Publishing scene_add/scene
 | `input_number.living_room_brightness` | input_number | 0–255 | Tracks living room brightness for knob rotation (avoids stale z2m state) |
 | `input_number.bedroom_brightness` | input_number | 0–255 | Tracks bedroom brightness for knob rotation |
 
-Defined in `configuration.yaml`. Reset to 254 on each toggle-on (scene default brightness).
+Defined in `configuration.yaml`. On toggle-on, brightness fades to the helper value (minimum floor of 2). On dim-to-off, helper retains its last value above the threshold so toggle-on restores a meaningful brightness. On rotation-on from off, helper resets to the first step value and climbs from there.
 
 ## Light Schedule
 
@@ -135,10 +135,17 @@ Handles all knob actions for living room via group MQTT topic:
 | Toggle (lights off) | 06:00–22:00 | scene_recall 5 (reading_toggle) → brightness fade-in 0.5s |
 | Toggle (lights off) | 22:00–06:00 | scene_recall 6 (red_toggle) → brightness fade-in 0.5s |
 | Toggle (lights on) | any | `{"state": "OFF", "transition": 0.5}` via group topic |
-| Brightness rotation (lights on) | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step). Ignored when lights are off. |
+| Rotation up (lights off) | 06:00–22:00 | scene_recall 5 → climb brightness from zero |
+| Rotation up (lights off) | 22:00–06:00 | scene_recall 6 → climb brightness from zero |
+| Rotation up (lights on) | any | `{"brightness": X, "transition": 0.3}` via group topic (absolute value, scaled step) |
+| Rotation down (lights on) | any | `{"brightness": X, "transition": 0.3}` via group topic. Dims to off when brightness ≤ 2 (sends OFF with 0.5s fade, helper retains last value). |
 | Long press (hue_move) | any | Toggle between reading (2890K) and red (0.69/0.31) via group topic |
 
-**Toggle-on sequence:** Scene_recall (brightness 1, correct color, 0s transition) instantly sets the right color at minimal brightness, then a second command fades brightness to the helper value over 0.5s. This gives a smooth fade-in with correct color from the start — no wrong-color flash, no full-brightness flash.
+**Toggle-on sequence:** Scene_recall (brightness 1, correct color, 0s transition) instantly sets the right color at minimal brightness, then a second command fades brightness to the helper value over 0.5s (minimum brightness floor of 2). This gives a smooth fade-in with correct color from the start — no wrong-color flash, no full-brightness flash.
+
+**Rotation-on sequence:** When rotating up while lights are off, recalls the correct scene for time of day (sets color), then starts climbing brightness from zero. Each subsequent tick increases normally.
+
+**Dim-to-off:** Rotating down past brightness 2 sends OFF (0.5s fade) instead of reaching brightness 0. The helper keeps its last value above the threshold, so toggle-on has a meaningful brightness to restore.
 
 **Brightness tracking:** Uses `input_number.living_room_brightness` helper to track current brightness locally. Each rotation tick updates the helper immediately (no waiting for z2m state), then publishes the new value to the group. This prevents the "spring-back" effect caused by calculating brightness from stale z2m state.
 
@@ -234,7 +241,7 @@ During the blackout window (00:00–09:00), the `bedroom_knob` automation handle
 **Solution:** Changed `lights_off_2am` to publish `{"state": "OFF", "transition": 10}` directly to each room's group MQTT topic. This ensures z2m updates the state for each group properly.
 
 ### Knob-initiated off transition
-Knob turn-off uses `{"state": "OFF", "transition": 0.5}` via the group MQTT topic (handled by HA automation). Presence sensor turn-off uses 3s fade. The `lights_off_2am` safety net uses 10s fade.
+Knob turn-off (toggle or dim-to-off) uses `{"state": "OFF", "transition": 0.5}` via the group MQTT topic (handled by HA automation). Presence sensor turn-off uses 3s fade. The `lights_off_2am` safety net uses 10s fade.
 
 ## Inspecting Scenes
 

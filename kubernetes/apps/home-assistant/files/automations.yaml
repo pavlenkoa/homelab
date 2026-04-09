@@ -143,6 +143,7 @@
       current: '{{ states("input_number.living_room_brightness") | int(254) }}'
       new_up: '{{ [current + (step * 255 / 100) | int, 255] | min | int }}'
       new_down: '{{ [current - (step * 255 / 100) | int, 0] | max | int }}'
+      start_brightness: '{{ [(step * 255 / 100) | int, 2] | max }}'
   - choose:
     - conditions:
       - condition: template
@@ -169,7 +170,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Living Room Lights/set
-          payload: '{"brightness": {{ current }}, "transition": 0.5}'
+          payload: '{"brightness": {{ [current, 2] | max }}, "transition": 0.5}'
     - conditions:
       - condition: template
         value_template: '{{ command == "toggle" }}'
@@ -181,6 +182,37 @@
         data:
           topic: zigbee2mqtt/Living Room Lights/set
           payload: '{"state": "OFF", "transition": 0.5}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "brightness_step_up" }}'
+      - condition: state
+        entity_id: light.living_room_lamp
+        state: 'off'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: 06:00:00
+            before: '22:00:00'
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Living Room Lights/set
+              payload: '{"scene_recall": 5}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Living Room Lights/set
+            payload: '{"scene_recall": 6}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.living_room_brightness
+        data:
+          value: '{{ start_brightness }}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"brightness": {{ start_brightness }}, "transition": 0.3}'
     - conditions:
       - condition: template
         value_template: '{{ command == "brightness_step_up" }}'
@@ -204,15 +236,25 @@
         entity_id: light.living_room_lamp
         state: 'on'
       sequence:
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.living_room_brightness
-        data:
-          value: '{{ new_down }}'
-      - action: mqtt.publish
-        data:
-          topic: zigbee2mqtt/Living Room Lights/set
-          payload: '{"brightness": {{ new_down }}, "transition": 0.3}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ new_down > 2 }}'
+          sequence:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.living_room_brightness
+            data:
+              value: '{{ new_down }}'
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Living Room Lights/set
+              payload: '{"brightness": {{ new_down }}, "transition": 0.3}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Living Room Lights/set
+            payload: '{"state": "OFF", "transition": 0.5}'
     - conditions:
       - condition: template
         value_template: '{{ command == "hue_move" }}'
@@ -256,6 +298,7 @@
       current: '{{ states("input_number.bedroom_brightness") | int(254) }}'
       new_up: '{{ [current + (step * 255 / 100) | int, 255] | min | int }}'
       new_down: '{{ [current - (step * 255 / 100) | int, 0] | max | int }}'
+      start_brightness: '{{ [(step * 255 / 100) | int, 2] | max }}'
   - choose:
     - conditions:
       - condition: template
@@ -282,7 +325,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Bedroom Lights/set
-          payload: '{"brightness": {{ current }}, "transition": 0.5}'
+          payload: '{"brightness": {{ [current, 2] | max }}, "transition": 0.5}'
     - conditions:
       - condition: template
         value_template: '{{ command == "toggle" }}'
@@ -294,6 +337,37 @@
         data:
           topic: zigbee2mqtt/Bedroom Lights/set
           payload: '{"state": "OFF", "transition": 0.5}'
+    - conditions:
+      - condition: template
+        value_template: '{{ command == "brightness_step_up" }}'
+      - condition: state
+        entity_id: light.bedroom_light_1
+        state: 'off'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: time
+            after: 09:00:00
+            before: '22:00:00'
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Bedroom Lights/set
+              payload: '{"scene_recall": 5}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Bedroom Lights/set
+            payload: '{"scene_recall": 6}'
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.bedroom_brightness
+        data:
+          value: '{{ start_brightness }}'
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"brightness": {{ start_brightness }}, "transition": 0.3}'
     - conditions:
       - condition: template
         value_template: '{{ command == "brightness_step_up" }}'
@@ -317,15 +391,25 @@
         entity_id: light.bedroom_light_1
         state: 'on'
       sequence:
-      - action: input_number.set_value
-        target:
-          entity_id: input_number.bedroom_brightness
-        data:
-          value: '{{ new_down }}'
-      - action: mqtt.publish
-        data:
-          topic: zigbee2mqtt/Bedroom Lights/set
-          payload: '{"brightness": {{ new_down }}, "transition": 0.3}'
+      - choose:
+        - conditions:
+          - condition: template
+            value_template: '{{ new_down > 2 }}'
+          sequence:
+          - action: input_number.set_value
+            target:
+              entity_id: input_number.bedroom_brightness
+            data:
+              value: '{{ new_down }}'
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Bedroom Lights/set
+              payload: '{"brightness": {{ new_down }}, "transition": 0.3}'
+        default:
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Bedroom Lights/set
+            payload: '{"state": "OFF", "transition": 0.5}'
     - conditions:
       - condition: template
         value_template: '{{ command == "hue_move" }}'
