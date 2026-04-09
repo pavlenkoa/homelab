@@ -118,6 +118,8 @@ Sunset ──── Reading mode continues ────────────�
                                                       │
 22:00  ──── Red mode (xy 0.69/0.31) ─────────── 00:00
                                                       │
+00:00  ──── Red dim 45% (brightness 115) ─────── 02:00
+                                                      │
 00:00  ──── Bedroom blackout (no lights) ─────── 09:00
 ```
 
@@ -153,9 +155,12 @@ Same as living room but:
 - Uses `input_number.bedroom_brightness` helper for brightness tracking
 
 ### Living Room - Time-based
-**ID:** `living_room_sunset_reading` — At sunset → scene_recall 3 (reading_transition) via group topic. Fires unconditionally.
+**ID:** `living_room_sunset_reading` — At sunset, if iPhone is home → scene_recall 3 (reading_transition) via group topic.
 
 **ID:** `living_room_red_mode` — At 22:00, if living lights on → scene_recall 4 (red_transition) via group topic.
+
+### Living Room - Arrival
+**ID:** `living_room_arrival` — When iPhone arrives home (device_tracker.andriis_iphone → home) after sunset → scene_recall 1 (reading_presence, 1.5s) before 22:00, scene_recall 2 (red_presence, 1.5s) after 22:00. Presence scenes for quick fade-in on arrival.
 
 **ID:** `living_room_morning_reading` — At 06:00, if living lights on → scene_recall 3 (reading_transition) via group topic. Transitions already-on lights from red to reading.
 
@@ -181,6 +186,9 @@ Same as bathroom but:
 - Presence-OFF fades over 3s via group topic payload `{"state": "OFF", "transition": 3}`
 
 During the blackout window (00:00–09:00), the `bedroom_knob` automation handles manual knob presses — it always recalls scene 6 (red_toggle) in that period.
+
+### Late Night Dim
+**ID:** `late_night_dim` — At 00:00, if living room or bedroom lights are on → dim to 45% brightness (115/255) with 30s transition via group MQTT topics. Aligns with bedroom sensor blackout window start.
 
 ### Safety net
 **ID:** `lights_off_2am` — At 02:00, publishes `{"state": "OFF", "transition": 10}` directly to Living Room Lights and Bedroom Lights group topics. Does not touch bathroom (sensor-controlled). Uses group MQTT topics instead of `light.all_lights` to ensure proper state sync.

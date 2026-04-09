@@ -1,15 +1,45 @@
 - id: living_room_sunset_reading
   alias: Living Room - Sunset Reading Mode
-  description: Turn on or transition living lights to reading at sunset via Zigbee scene.
+  description: Turn on or transition living lights to reading at sunset via Zigbee scene,
+    only if iPhone is home.
   triggers:
   - platform: sun
     event: sunset
-  conditions: []
+  conditions:
+  - condition: state
+    entity_id: device_tracker.andriis_iphone
+    state: home
   actions:
   - action: mqtt.publish
     data:
       topic: zigbee2mqtt/Living Room Lights/set
       payload: '{"scene_recall": 3}'
+  mode: single
+- id: living_room_arrival
+  alias: Living Room - Arrival Lights
+  description: Turn on living room lights when iPhone arrives home after sunset.
+  triggers:
+  - trigger: state
+    entity_id: device_tracker.andriis_iphone
+    to: home
+  conditions:
+  - condition: sun
+    after: sunset
+  actions:
+  - choose:
+    - conditions:
+      - condition: time
+        before: '22:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"scene_recall": 1}'
+    default:
+    - action: mqtt.publish
+      data:
+        topic: zigbee2mqtt/Living Room Lights/set
+        payload: '{"scene_recall": 2}'
   mode: single
 - id: living_room_red_mode
   alias: Living Room - 22:00 Red Mode
@@ -26,6 +56,36 @@
     data:
       topic: zigbee2mqtt/Living Room Lights/set
       payload: '{"scene_recall": 4}'
+  mode: single
+- id: late_night_dim
+  alias: 00:00 - Red Dim 45%
+  description: Dim living room and bedroom to 45% red at midnight, only if on. Aligns
+    with bedroom sensor blackout window.
+  triggers:
+  - platform: time
+    at: '00:00:00'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.living_room_lights
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"brightness": 115, "transition": 30}'
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.bedroom_lights
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bedroom Lights/set
+          payload: '{"brightness": 115, "transition": 30}'
   mode: single
 - id: lights_off_2am
   alias: 02:00 - Lights Off
