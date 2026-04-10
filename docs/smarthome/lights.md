@@ -167,7 +167,7 @@ Same as living room but:
 **ID:** `living_room_red_mode` — At 22:00, if living lights on → scene_recall 4 (red_transition) via group topic.
 
 ### Living Room - Arrival
-**ID:** `living_room_arrival` — When iPhone arrives home (device_tracker.andriis_iphone → home) after sunset → scene_recall 1 (reading_presence, 1.5s) before 22:00, scene_recall 2 (red_presence, 1.5s) after 22:00. Presence scenes for quick fade-in on arrival.
+**ID:** `living_room_arrival` — When iPhone arrives home (device_tracker.andriis_iphone → home) and sun elevation < 3° → scene_recall 1 (reading_presence, 1.5s) before 22:00, scene_recall 2 (red_presence, 1.5s) after 22:00. Presence scenes for quick fade-in on arrival. Elevation threshold (vs fixed sunset offset) adapts to season automatically.
 
 **ID:** `living_room_morning_reading` — At 06:00, if living lights on → scene_recall 3 (reading_transition) via group topic. Transitions already-on lights from red to reading.
 

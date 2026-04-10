@@ -17,14 +17,17 @@
   mode: single
 - id: living_room_arrival
   alias: Living Room - Arrival Lights
-  description: Turn on living room lights when iPhone arrives home after sunset.
+  description: Turn on living room lights when iPhone arrives home and sun elevation
+    is below 3° (adaptive threshold that works year-round).
   triggers:
   - trigger: state
     entity_id: device_tracker.andriis_iphone
     to: home
   conditions:
-  - condition: sun
-    after: sunset
+  - condition: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 3
   actions:
   - choose:
     - conditions:
