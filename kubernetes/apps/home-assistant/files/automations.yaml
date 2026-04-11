@@ -32,27 +32,42 @@
   - choose:
     - conditions:
       - condition: time
+        after: '06:00:00'
         before: '22:00:00'
       sequence:
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Living Room Lights/set
           payload: '{"scene_recall": 1}'
+    - conditions:
+      - condition: time
+        after: '22:00:00'
+        before: '00:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"scene_recall": 2}'
     default:
     - action: mqtt.publish
       data:
         topic: zigbee2mqtt/Living Room Lights/set
         payload: '{"scene_recall": 2}'
+    - action: mqtt.publish
+      data:
+        topic: zigbee2mqtt/Living Room Lights/set
+        payload: '{"brightness": 115, "transition": 1.5}'
   mode: single
 - id: living_room_departure
   alias: Living Room - Departure
-  description: Turn off living room lights after iPhone has been away 2 minutes.
-    Router has a 10-min consider-home TTL, so quick walks never reach this.
+  description: Turn off living room lights after iPhone has been away 5 minutes.
+    Router flips the tracker to not_home within seconds of the phone leaving
+    Wi-Fi range, so the 5-min debounce is the sole safeguard against quick walks.
   triggers:
   - trigger: state
     entity_id: device_tracker.andriis_iphone
     to: not_home
-    for: '00:02:00'
+    for: '00:05:00'
   conditions:
   - condition: state
     entity_id: light.living_room_lights
