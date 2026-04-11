@@ -44,6 +44,25 @@
         topic: zigbee2mqtt/Living Room Lights/set
         payload: '{"scene_recall": 2}'
   mode: single
+- id: living_room_departure
+  alias: Living Room - Departure
+  description: Turn off living room lights after iPhone has been away 2 minutes.
+    Router has a 10-min consider-home TTL, so quick walks never reach this.
+  triggers:
+  - trigger: state
+    entity_id: device_tracker.andriis_iphone
+    to: not_home
+    for: '00:02:00'
+  conditions:
+  - condition: state
+    entity_id: light.living_room_lights
+    state: 'on'
+  actions:
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Living Room Lights/set
+      payload: '{"state": "OFF", "transition": 3}'
+  mode: single
 - id: living_room_red_mode
   alias: Living Room - 22:00 Red Mode
   description: Living lights transition to red at 22:00 via Zigbee scene, only if on.
