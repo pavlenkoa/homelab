@@ -538,6 +538,77 @@
           topic: zigbee2mqtt/Bathroom Lights/set
           payload: '{"state": "OFF", "transition": 3}'
   mode: single
+- id: hallway_presence
+  alias: Hallway - Presence
+  description: 'Hallway lights via Zigbee scenes. Scene 1/2: 1.5s fade. Scene 3/4:
+    30s fade for time transitions.'
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.hallway_sensor_presence
+    to: 'on'
+    id: presence_on
+  - trigger: state
+    entity_id: binary_sensor.hallway_sensor_presence
+    to: 'off'
+    id: presence_off
+  - trigger: time
+    at: '22:00:00'
+    id: time_22
+  - trigger: time
+    at: 06:00:00
+    id: time_06
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: presence_on
+      - condition: time
+        after: 06:00:00
+        before: '22:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"scene_recall": 1}'
+    - conditions:
+      - condition: trigger
+        id: presence_on
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"scene_recall": 2}'
+    - conditions:
+      - condition: trigger
+        id: time_22
+      - condition: state
+        entity_id: binary_sensor.hallway_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"scene_recall": 4}'
+    - conditions:
+      - condition: trigger
+        id: time_06
+      - condition: state
+        entity_id: binary_sensor.hallway_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"scene_recall": 3}'
+    - conditions:
+      - condition: trigger
+        id: presence_off
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"state": "OFF", "transition": 3}'
+  mode: single
 - id: bedroom_presence
   alias: Bedroom - Presence
   description: 'Bedroom lights via Zigbee scenes. Does nothing 00:00-09:00. Scene

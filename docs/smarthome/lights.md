@@ -21,6 +21,9 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 | Bedroom Light 2 | light.bedroom_light_2 | Bedroom | Bedroom Lights |
 | Bathroom Light 1 | light.bathroom_light_1 | Bathroom | Bathroom Lights |
 | Bathroom Light 2 | light.bathroom_light_2 | Bathroom | Bathroom Lights |
+| Hallway Light 1 | light.hallway_light_1 | Hallway | Hallway Lights |
+| Hallway Light 2 | light.hallway_light_2 | Hallway | Hallway Lights |
+| Hallway Light 3 | light.hallway_light_3 | Hallway | Hallway Lights |
 
 ### Z2M Groups
 
@@ -30,8 +33,9 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 | Bedroom Lights | 2 | Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/Bedroom Lights/set |
 | Bathroom Lights | 3 | Bathroom Light 1, Bathroom Light 2 | zigbee2mqtt/Bathroom Lights/set |
 | Living Room Lights | 4 | Living Room Lamp, Kitchen Table Light | zigbee2mqtt/Living Room Lights/set |
+| Hallway Lights | 5 | Hallway Light 1, Hallway Light 2, Hallway Light 3 | zigbee2mqtt/Hallway Lights/set |
 
-**Note:** All Lights excludes bathroom (bathroom is fully sensor-controlled). Knobs are NOT members of any group — they are controlled through HA automations only.
+**Note:** All Lights excludes bathroom and hallway (both are fully sensor-controlled). Knobs are NOT members of any group — they are controlled through HA automations only.
 
 **Important:** Use group topics for simultaneous control. Publishing to individual bulbs sequentially causes visible one-by-one turn-on.
 
@@ -41,10 +45,12 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 |------|-----------|------|-----------|
 | Bathroom Sensor | binary_sensor.bathroom_sensor_presence | Bathroom | Battery powered, mmWave + PIR |
 | Bedroom Sensor | binary_sensor.bedroom_sensor_presence | Bedroom | Ceiling-mounted, center of room above the bed. Battery powered, mmWave + PIR |
+| Hallway Sensor | binary_sensor.hallway_sensor_presence | Hallway | Battery powered, mmWave + PIR |
 
 **Sensor settings:**
 - Bathroom Sensor: motion_sensitivity=medium, ai_adaptive=on, absence_delay=10s
 - Bedroom Sensor: motion_sensitivity=high, ai_adaptive=off (disabled to fix detection issues), absence_delay=10s, spatial_learning triggered 2026-04-01
+- Hallway Sensor: motion_sensitivity=medium, ai_adaptive=on, absence_delay=10s
 
 ### Smart Knobs (Tuya ERS-10TZBVK-AA)
 
@@ -74,8 +80,8 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 | 5 | reading_toggle | 2890K (color_temp: 345) | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
 | 6 | red_toggle | xy 0.69/0.31 | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
 
-- Scenes 1–4 exist on all three room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4).
-- Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom has no knob).
+- Scenes 1–4 exist on all four room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4, Hallway Lights group 5).
+- Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom and hallway have no knob).
 - No group-0 (individual-bulb) scenes exist.
 - Hue bulbs support ~16 scene slots per group.
 
@@ -181,6 +187,11 @@ Same as living room but:
 | 22:00 hits | if presence ON | scene_recall 4 (red_transition, 30s) |
 | 06:00 hits | if presence ON | scene_recall 3 (reading_transition, 30s) |
 | Presence OFF | any | `{"state": "OFF", "transition": 3}` via group topic (3s fade) |
+
+### Presence-based (Hallway)
+**ID:** `hallway_presence`
+
+Identical to `bathroom_presence` but uses Hallway Sensor and Hallway Lights group topic.
 
 ### Presence-based (Bedroom)
 **ID:** `bedroom_presence`
