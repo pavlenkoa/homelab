@@ -17,6 +17,7 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 |----------|-----------|------|-------|
 | Living Room Lamp | light.living_room_lamp | Living room | Living Room Lights |
 | Kitchen Table Light | light.kitchen_table_light | Living room (kitchen area) | Living Room Lights |
+| Living Room Monitor Light | light.living_room_monitor_light | Living room | Living Room Lights |
 | Bedroom Light 1 | light.bedroom_light_1 | Bedroom | Bedroom Lights |
 | Bedroom Light 2 | light.bedroom_light_2 | Bedroom | Bedroom Lights |
 | Bathroom Light 1 | light.bathroom_light_1 | Bathroom | Bathroom Lights |
@@ -29,10 +30,10 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 
 | Group Name | ID | Members | MQTT Topic |
 |------------|-----|---------|------------|
-| All Lights | 1 | Living Room Lamp, Kitchen Table Light, Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/All Lights/set |
+| All Lights | 1 | Living Room Lamp, Kitchen Table Light, Living Room Monitor Light, Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/All Lights/set |
 | Bedroom Lights | 2 | Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/Bedroom Lights/set |
 | Bathroom Lights | 3 | Bathroom Light 1, Bathroom Light 2 | zigbee2mqtt/Bathroom Lights/set |
-| Living Room Lights | 4 | Living Room Lamp, Kitchen Table Light | zigbee2mqtt/Living Room Lights/set |
+| Living Room Lights | 4 | Living Room Lamp, Kitchen Table Light, Living Room Monitor Light | zigbee2mqtt/Living Room Lights/set |
 | Hallway Lights | 5 | Hallway Light 1, Hallway Light 2, Hallway Light 3 | zigbee2mqtt/Hallway Lights/set |
 
 **Note:** All Lights excludes bathroom and hallway (both are fully sensor-controlled). Knobs are NOT members of any group — they are controlled through HA automations only.
