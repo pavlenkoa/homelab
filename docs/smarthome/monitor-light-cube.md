@@ -18,18 +18,18 @@ After removal, the living-room knob and all living-room scene automations affect
 
 ### What it does
 
-A small Python daemon listening to systemd-logind dbus signals and POSTing state changes to an HA webhook.
+A small Python daemon listening on dbus for session events and POSTing state changes to an HA webhook. Uses systemd-logind (system bus) for suspend/wake and KDE's `org.freedesktop.ScreenSaver` (session bus) for lock/unlock — logind's own Lock/Unlock signals do not fire under KDE Plasma, since the Plasma screen locker only emits on the session-bus ScreenSaver interface.
 
 **State transitions → payload:**
 
-| PC event | POST payload |
-|----------|--------------|
-| Agent started (login, session becomes active) | `{"state": "on"}` |
-| Session `Lock` signal | `{"state": "off"}` |
-| Session `Unlock` signal | `{"state": "on"}` |
-| `PrepareForSleep(true)` — entering suspend | `{"state": "off"}` |
-| `PrepareForSleep(false)` — resumed from suspend | `{"state": "on"}` |
-| Agent stopped (logout / shutdown / SIGTERM) | `{"state": "off"}` |
+| PC event | Source | POST payload |
+|----------|--------|--------------|
+| Agent started (login, session becomes active) | (startup) | `{"state": "on"}` |
+| Screen locked | `org.freedesktop.ScreenSaver.ActiveChanged(true)` (session bus) | `{"state": "off"}` |
+| Screen unlocked | `org.freedesktop.ScreenSaver.ActiveChanged(false)` (session bus) | `{"state": "on"}` |
+| Entering suspend | logind `PrepareForSleep(true)` (system bus) | `{"state": "off"}` |
+| Resumed from suspend | logind `PrepareForSleep(false)` (system bus) | `{"state": "on"}` |
+| Agent stopped (logout / shutdown / SIGTERM) | (signal handler) | `{"state": "off"}` |
 
 ### Files
 
@@ -186,5 +186,5 @@ PC-side files (outside the homelab repo, but the agent script + unit should be c
 ## Known risks / verification required during implementation
 
 - **Aqara LED Strip T1 color memory:** design assumes the strip remembers its last color through OFF/ON (only state toggles, no color republished on power-gate events). If it doesn't, the power-gate automation will need to re-publish color. Verify with: cube → side_2 (red) → PC suspend → PC wake → expect strip back to red. If it comes up wrong, add color storage to `input_text.monitor_light_color` and republish on power-on.
-- **logind Lock/Unlock signals under KDE Plasma Wayland:** Plasma uses its own screen locker. Confirm it invokes logind `LockSession` (it does in recent Plasma versions, but verify with `busctl monitor` during implementation).
+- **KDE Plasma lock/unlock detection:** resolved by listening on the session bus `org.freedesktop.ScreenSaver.ActiveChanged` signal (emitted by `kwin_wayland`) instead of logind's Lock/Unlock (which Plasma does not emit).
 - **Cube rotate angle magnitude:** verify `action_angle` values and tune the 3/13 scaling if rotation feels too fast or too slow.
