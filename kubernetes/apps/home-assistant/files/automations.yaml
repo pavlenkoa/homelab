@@ -684,3 +684,174 @@
           topic: zigbee2mqtt/Bedroom Lights/set
           payload: '{"state": "OFF", "transition": 3}'
   mode: single
+- id: monitor_light_power
+  alias: Monitor Light - Power (webhook)
+  description: PC agent on tiny reports session state; strip follows.
+  triggers:
+  - trigger: webhook
+    webhook_id: !secret monitor_light_webhook_id
+    allowed_methods:
+      - POST
+    local_only: false
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: "{{ trigger.json.state == 'on' }}"
+      sequence:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.tiny_online
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"state":"ON","brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.5}
+    - conditions:
+      - condition: template
+        value_template: "{{ trigger.json.state == 'off' }}"
+      sequence:
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.tiny_online
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: '{"state":"OFF","transition":0.5}'
+  mode: queued
+  max: 10
+- id: monitor_light_ping_watchdog
+  alias: Monitor Light - Ping watchdog
+  description: Force strip off if tiny drops off the network for 2 minutes.
+  triggers:
+  - trigger: state
+    entity_id: binary_sensor.tiny_pingable
+    to: 'off'
+    for: '00:02:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.tiny_online
+    state: 'on'
+  actions:
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.tiny_online
+  - action: mqtt.publish
+    data:
+      topic: zigbee2mqtt/Living Room Monitor Light/set
+      payload: '{"state":"OFF","transition":0.5}'
+  mode: single
+- id: monitor_cube
+  alias: Monitor Cube - controller
+  description: Cube gestures control Monitor Light color and brightness. Gated on tiny_online.
+  triggers:
+  - trigger: mqtt
+    topic: zigbee2mqtt/Cube
+  variables:
+    action: "{{ trigger.payload_json.action | default('', true) }}"
+    side: "{{ trigger.payload_json.side | int(0) }}"
+    angle: "{{ trigger.payload_json.action_angle | float(0) }}"
+  conditions:
+  - condition: state
+    entity_id: input_boolean.tiny_online
+    state: 'on'
+  actions:
+  - choose:
+    - conditions: "{{ action in ['flip90','flip180'] and side == 1 }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"color_temp":345,"brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.3,"state":"ON"}
+    - conditions: "{{ action in ['flip90','flip180'] and side == 2 }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"color":{"x":0.69,"y":0.31},"brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.3,"state":"ON"}
+    - conditions: "{{ action in ['flip90','flip180'] and side == 3 }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"color":{"x":0.58,"y":0.40},"brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.3,"state":"ON"}
+    - conditions: "{{ action in ['flip90','flip180'] and side == 4 }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"color":{"x":0.17,"y":0.70},"brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.3,"state":"ON"}
+    - conditions: "{{ action in ['flip90','flip180'] and side == 5 }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"color":{"x":0.14,"y":0.08},"brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.3,"state":"ON"}
+    - conditions: "{{ action in ['flip90','flip180'] and side == 6 }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"color":{"x":0.28,"y":0.13},"brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.3,"state":"ON"}
+    - conditions: "{{ action == 'rotate_right' }}"
+      sequence:
+      - variables:
+          step: "{{ [ [ (angle | abs * 6 / 13) | round(0, 'ceiling') | int, 1 ] | max, 64 ] | min }}"
+          is_off: "{{ states('light.living_room_monitor_light') != 'on' }}"
+          cur: "{{ states('input_number.monitor_light_brightness') | int }}"
+          nxt: "{{ step if is_off else [ cur + step, 254 ] | min }}"
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.monitor_light_brightness
+        data:
+          value: "{{ nxt }}"
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"state":"ON","brightness":{{ nxt }},"transition":0.3}
+    - conditions: "{{ action == 'rotate_left' }}"
+      sequence:
+      - variables:
+          step: "{{ [ [ (angle | abs * 6 / 13) | round(0, 'ceiling') | int, 1 ] | max, 64 ] | min }}"
+          cur: "{{ states('input_number.monitor_light_brightness') | int }}"
+          nxt: "{{ [ cur - step, 0 ] | max }}"
+      - choose:
+        - conditions: "{{ nxt <= 2 }}"
+          sequence:
+          - action: mqtt.publish
+            data:
+              topic: zigbee2mqtt/Living Room Monitor Light/set
+              payload: '{"state":"OFF","transition":0.5}'
+        default:
+        - action: input_number.set_value
+          target:
+            entity_id: input_number.monitor_light_brightness
+          data:
+            value: "{{ nxt }}"
+        - action: mqtt.publish
+          data:
+            topic: zigbee2mqtt/Living Room Monitor Light/set
+            payload: >-
+              {"brightness":{{ nxt }},"transition":0.3}
+    - conditions: "{{ action == 'shake' and states('light.living_room_monitor_light') == 'on' }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: '{"state":"OFF","transition":0.5}'
+    - conditions: "{{ action == 'shake' }}"
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Monitor Light/set
+          payload: >-
+            {"state":"ON","brightness":{{ states('input_number.monitor_light_brightness') | int }},"transition":0.5}
+  mode: queued
+  max: 20

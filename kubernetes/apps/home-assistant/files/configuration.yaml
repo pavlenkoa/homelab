@@ -23,6 +23,23 @@ input_number:
     step: 1
     initial: 254
     mode: slider
+  monitor_light_brightness:
+    name: Monitor Light Brightness
+    min: 0
+    max: 255
+    step: 1
+    initial: 200
+    mode: slider
+input_boolean:
+  tiny_online:
+    name: tiny session active
+command_line:
+  - binary_sensor:
+      name: tiny_pingable
+      command: "ping -c 3 -W 1 192.168.88.5 > /dev/null && echo ON || echo OFF"
+      payload_on: "ON"
+      payload_off: "OFF"
+      scan_interval: 30
 automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml

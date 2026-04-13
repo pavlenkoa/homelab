@@ -17,7 +17,7 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 |----------|-----------|------|-------|
 | Living Room Lamp | light.living_room_lamp | Living room | Living Room Lights |
 | Kitchen Table Light | light.kitchen_table_light | Living room (kitchen area) | Living Room Lights |
-| Living Room Monitor Light | light.living_room_monitor_light | Living room | Living Room Lights |
+| Living Room Monitor Light | light.living_room_monitor_light | Living room | — (standalone, PC-gated + Cube) |
 | Bedroom Light 1 | light.bedroom_light_1 | Bedroom | Bedroom Lights |
 | Bedroom Light 2 | light.bedroom_light_2 | Bedroom | Bedroom Lights |
 | Bathroom Light 1 | light.bathroom_light_1 | Bathroom | Bathroom Lights |
@@ -30,10 +30,10 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 
 | Group Name | ID | Members | MQTT Topic |
 |------------|-----|---------|------------|
-| All Lights | 1 | Living Room Lamp, Kitchen Table Light, Living Room Monitor Light, Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/All Lights/set |
+| All Lights | 1 | Living Room Lamp, Kitchen Table Light, Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/All Lights/set |
 | Bedroom Lights | 2 | Bedroom Light 1, Bedroom Light 2 | zigbee2mqtt/Bedroom Lights/set |
 | Bathroom Lights | 3 | Bathroom Light 1, Bathroom Light 2 | zigbee2mqtt/Bathroom Lights/set |
-| Living Room Lights | 4 | Living Room Lamp, Kitchen Table Light, Living Room Monitor Light | zigbee2mqtt/Living Room Lights/set |
+| Living Room Lights | 4 | Living Room Lamp, Kitchen Table Light | zigbee2mqtt/Living Room Lights/set |
 | Hallway Lights | 5 | Hallway Light 1, Hallway Light 2, Hallway Light 3 | zigbee2mqtt/Hallway Lights/set |
 
 **Note:** All Lights excludes bathroom and hallway (both are fully sensor-controlled). Knobs are NOT members of any group — they are controlled through HA automations only.
@@ -188,6 +188,15 @@ Same as living room but:
 | 22:00 hits | if presence ON | scene_recall 4 (red_transition, 30s) |
 | 06:00 hits | if presence ON | scene_recall 3 (reading_transition, 30s) |
 | Presence OFF | any | `{"state": "OFF", "transition": 3}` via group topic (3s fade) |
+
+### Monitor Light + Cube
+
+Monitor Light (Aqara LED Strip T1 behind the desk monitor) is controlled as a standalone bias light:
+- Power gated by the workstation `tiny` (ping watchdog + PC agent webhook)
+- Color/brightness controlled by the `Cube` (Aqara Cube T1 Pro) — 6 sides = 6 colors, rotate for brightness, shake to toggle
+- Removed from `Living Room Lights` and `All Lights` groups so room automations don't touch it
+
+See [`monitor-light-cube.md`](./monitor-light-cube.md) for the full design.
 
 ### Presence-based (Hallway)
 **ID:** `hallway_presence`
