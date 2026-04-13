@@ -80,9 +80,12 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 | 4 | red_transition | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
 | 5 | reading_toggle | 2890K (color_temp: 345) | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
 | 6 | red_toggle | xy 0.69/0.31 | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
+| 7 | red_dim_presence | xy 0.69/0.31 | 102 | 1.5s | Dim red (40%) for presence in late-night windows (hallway 00-06, bathroom 02-06) |
+| 8 | red_dim_transition | xy 0.69/0.31 | 102 | 30s | Time-based transition to dim red (hallway 00:00, bathroom 02:00) |
 
 - Scenes 1–4 exist on all four room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4, Hallway Lights group 5).
 - Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom and hallway have no knob).
+- Scenes 7–8 exist on Bathroom Lights and Hallway Lights only (late-night dim, no equivalent in bedroom/living since they already have their own late-night handling).
 - No group-0 (individual-bulb) scenes exist.
 - Hue bulbs support ~16 scene slots per group.
 
@@ -184,8 +187,10 @@ Same as living room but:
 | Trigger | Time | Action |
 |---------|------|--------|
 | Presence ON | 06:00–22:00 | scene_recall 1 (reading_presence, 1.5s) via group topic |
-| Presence ON | 22:00–06:00 | scene_recall 2 (red_presence, 1.5s) via group topic |
+| Presence ON | 22:00–02:00 | scene_recall 2 (red_presence, 1.5s) |
+| Presence ON | 02:00–06:00 | scene_recall 7 (red_dim_presence, 40% brightness, 1.5s) |
 | 22:00 hits | if presence ON | scene_recall 4 (red_transition, 30s) |
+| 02:00 hits | if presence ON | scene_recall 8 (red_dim_transition, 40%, 30s) |
 | 06:00 hits | if presence ON | scene_recall 3 (reading_transition, 30s) |
 | Presence OFF | any | `{"state": "OFF", "transition": 3}` via group topic (3s fade) |
 
@@ -201,7 +206,17 @@ See [`monitor-light-cube.md`](./monitor-light-cube.md) for the full design.
 ### Presence-based (Hallway)
 **ID:** `hallway_presence`
 
-Identical to `bathroom_presence` but uses Hallway Sensor and Hallway Lights group topic.
+Same schedule as bathroom but the dim window starts at 00:00 (not 02:00):
+
+| Trigger | Time | Action |
+|---------|------|--------|
+| Presence ON | 06:00–22:00 | scene_recall 1 |
+| Presence ON | 22:00–00:00 | scene_recall 2 |
+| Presence ON | 00:00–06:00 | scene_recall 7 (dim 40%) |
+| 22:00 hits | if presence ON | scene_recall 4 |
+| 00:00 hits | if presence ON | scene_recall 8 (dim 40%) |
+| 06:00 hits | if presence ON | scene_recall 3 |
+| Presence OFF | any | `{"state": "OFF", "transition": 3}` |
 
 ### Presence-based (Bedroom)
 **ID:** `bedroom_presence`

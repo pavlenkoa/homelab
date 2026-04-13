@@ -469,8 +469,8 @@
   mode: restart
 - id: bathroom_presence
   alias: Bathroom - Presence
-  description: 'Bathroom lights via Zigbee scenes. Scene 1/2: 1.5s fade. Scene 3/4:
-    30s fade for time transitions.'
+  description: 'Bathroom lights via Zigbee scenes. 06-22 reading, 22-02 red, 02-06
+    red dim 40%. Scenes 1/2/7: 1.5s fade. Scenes 3/4/8: 30s for time transitions.'
   triggers:
   - trigger: state
     entity_id: binary_sensor.bathroom_sensor_presence
@@ -483,6 +483,9 @@
   - trigger: time
     at: '22:00:00'
     id: time_22
+  - trigger: time
+    at: '02:00:00'
+    id: time_02
   - trigger: time
     at: 06:00:00
     id: time_06
@@ -502,6 +505,17 @@
     - conditions:
       - condition: trigger
         id: presence_on
+      - condition: time
+        after: '02:00:00'
+        before: 06:00:00
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"scene_recall": 7}'
+    - conditions:
+      - condition: trigger
+        id: presence_on
       sequence:
       - action: mqtt.publish
         data:
@@ -518,6 +532,17 @@
         data:
           topic: zigbee2mqtt/Bathroom Lights/set
           payload: '{"scene_recall": 4}'
+    - conditions:
+      - condition: trigger
+        id: time_02
+      - condition: state
+        entity_id: binary_sensor.bathroom_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Bathroom Lights/set
+          payload: '{"scene_recall": 8}'
     - conditions:
       - condition: trigger
         id: time_06
@@ -540,8 +565,8 @@
   mode: single
 - id: hallway_presence
   alias: Hallway - Presence
-  description: 'Hallway lights via Zigbee scenes. Scene 1/2: 1.5s fade. Scene 3/4:
-    30s fade for time transitions.'
+  description: 'Hallway lights via Zigbee scenes. 06-22 reading, 22-00 red, 00-06
+    red dim 40%. Scenes 1/2/7: 1.5s fade. Scenes 3/4/8: 30s for time transitions.'
   triggers:
   - trigger: state
     entity_id: binary_sensor.hallway_sensor_presence
@@ -554,6 +579,9 @@
   - trigger: time
     at: '22:00:00'
     id: time_22
+  - trigger: time
+    at: '00:00:00'
+    id: time_00
   - trigger: time
     at: 06:00:00
     id: time_06
@@ -573,6 +601,17 @@
     - conditions:
       - condition: trigger
         id: presence_on
+      - condition: time
+        after: '00:00:00'
+        before: 06:00:00
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"scene_recall": 7}'
+    - conditions:
+      - condition: trigger
+        id: presence_on
       sequence:
       - action: mqtt.publish
         data:
@@ -589,6 +628,17 @@
         data:
           topic: zigbee2mqtt/Hallway Lights/set
           payload: '{"scene_recall": 4}'
+    - conditions:
+      - condition: trigger
+        id: time_00
+      - condition: state
+        entity_id: binary_sensor.hallway_sensor_presence
+        state: 'on'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Hallway Lights/set
+          payload: '{"scene_recall": 8}'
     - conditions:
       - condition: trigger
         id: time_06
