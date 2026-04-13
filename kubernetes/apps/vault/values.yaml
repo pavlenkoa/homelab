@@ -17,4 +17,4 @@ autoUnseal:
     serviceAccountName: "vault-auto-unseal"
   
   # One-time initialization job (helm hook)
-  image: "hashicorp/vault:1.15.2"
+  image: "hashicorp/vault:1.15.2@sha256:6b4e5dadf082cb3587930ced09b52851c5ae9f8d1c7df31ed39f0085a3029f63"
