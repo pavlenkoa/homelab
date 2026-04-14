@@ -86,6 +86,7 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 - Scenes 1–4 exist on all four room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4, Hallway Lights group 5).
 - Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom and hallway have no knob).
 - Scenes 7–8 exist on Bathroom Lights and Hallway Lights only (late-night dim, no equivalent in bedroom/living since they already have their own late-night handling).
+- **Hallway Lights override:** scenes 1–4 stored on hallway bulbs use brightness 178 (~70%) instead of 254. The hallway is a transit space — full brightness is unnecessary. Color/transition match the table.
 - No group-0 (individual-bulb) scenes exist.
 - Hue bulbs support ~16 scene slots per group.
 
