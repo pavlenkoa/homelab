@@ -78,15 +78,20 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 | 2 | red_presence | xy 0.69/0.31 | 254 | 1.5s | Presence sensor on |
 | 3 | reading_transition | 2890K (color_temp: 345) | 254 | 30s | Time-based transition (sunset, 06:00/09:00) |
 | 4 | red_transition | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
-| 5 | reading_toggle | 2890K (color_temp: 345) | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
-| 6 | red_toggle | xy 0.69/0.31 | 1 | 0s | Knob/button toggle on (instant color, minimal brightness) |
+| 5 | reading_toggle | 2890K (color_temp: 345) | 1 | 0s | Knob/button toggle on — daytime (sun elevation ≥ 3°) |
+| 6 | red_toggle | xy 0.69/0.31 | 1 | 0s | Knob/button toggle on (night) |
 | 7 | red_dim_presence | xy 0.69/0.31 | 102 | 1.5s | Dim red (40%) for presence in late-night windows (hallway 00-06, bathroom 02-06) |
 | 8 | red_dim_transition | xy 0.69/0.31 | 102 | 30s | Time-based transition to dim red (hallway 00:00, bathroom 02:00) |
+| 9 | evening_reading_presence | 2700K (color_temp: 370) | 254 (hallway 152) | 1.5s | Evening reading — used when sun elevation < 3° in the reading window |
+| 10 | evening_reading_transition | 2700K (color_temp: 370) | 254 (hallway 152) | 30s | Evening reading at sunset and time-boundary transitions when sun elevation < 3° |
+| 11 | evening_reading_toggle | 2700K (color_temp: 370) | 1 | 0s | Knob/button toggle on — evening (sun elevation < 3°) |
 
 - Scenes 1–4 exist on all four room groups (Bedroom Lights group 2, Bathroom Lights group 3, Living Room Lights group 4, Hallway Lights group 5).
 - Scenes 5–6 exist on Living Room Lights and Bedroom Lights only (bathroom and hallway have no knob).
 - Scenes 7–8 exist on Bathroom Lights and Hallway Lights only (late-night dim, no equivalent in bedroom/living since they already have their own late-night handling).
-- **Hallway Lights override:** scenes 1–4 stored on hallway bulbs use brightness 152 (~60%) instead of 254. Three stacked bulbs deliver enough light at 60% for a transit space; full brightness is unnecessary. Color/transition match the table.
+- Scenes 9–10 exist on all four room groups. Scene 11 exists on Living Room Lights and Bedroom Lights only (toggle scenes — bathroom and hallway have no knob).
+- **Hallway Lights override:** scenes 1/3/9/10 stored on hallway bulbs use brightness 152 (~60%) instead of 254. Three stacked bulbs deliver enough light at 60% for a transit space. Color/transition match the table.
+- **Daytime vs evening split:** automations select between scenes 1/3/5 (day, 2898K) and 9/10/11 (evening, 2700K) based on sun elevation — threshold `sun.sun` elevation ≥ 3°. Templates in the automation payload pick the scene id at fire time. Arrival and sunset are already evening-only, so they use the fixed evening scene. Red scenes (2/4/6/7/8) are unaffected.
 - No group-0 (individual-bulb) scenes exist.
 - Hue bulbs support ~16 scene slots per group.
 

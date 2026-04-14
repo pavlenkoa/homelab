@@ -1,7 +1,6 @@
 - id: living_room_sunset_reading
   alias: Living Room - Sunset Reading Mode
-  description: Turn on or transition living lights to reading at sunset via Zigbee scene,
-    only if iPhone is home.
+  description: Transition living lights to evening reading (2700K) at sunset, only if iPhone is home.
   triggers:
   - platform: sun
     event: sunset
@@ -13,7 +12,7 @@
   - action: mqtt.publish
     data:
       topic: zigbee2mqtt/Living Room Lights/set
-      payload: '{"scene_recall": 3}'
+      payload: '{"scene_recall": 10}'
   mode: single
 - id: living_room_arrival
   alias: Living Room - Arrival Lights
@@ -38,7 +37,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Living Room Lights/set
-          payload: '{"scene_recall": 1}'
+          payload: '{"scene_recall": 9}'
     - conditions:
       - condition: time
         after: '22:00:00'
@@ -155,7 +154,7 @@
   - action: mqtt.publish
     data:
       topic: zigbee2mqtt/Living Room Lights/set
-      payload: '{"scene_recall": 3}'
+      payload: '{"scene_recall": {{ 3 if state_attr("sun.sun","elevation") | float(0) >= 3 else 10 }}}'
   mode: single
 - id: living_room_knob
   alias: Living Room - Knob Controller
@@ -198,7 +197,7 @@
           - action: mqtt.publish
             data:
               topic: zigbee2mqtt/Living Room Lights/set
-              payload: '{"scene_recall": 5}'
+              payload: '{"scene_recall": {{ 5 if state_attr("sun.sun","elevation") | float(0) >= 3 else 11 }}}'
         default:
         - action: mqtt.publish
           data:
@@ -235,7 +234,7 @@
           - action: mqtt.publish
             data:
               topic: zigbee2mqtt/Living Room Lights/set
-              payload: '{"scene_recall": 5}'
+              payload: '{"scene_recall": {{ 5 if state_attr("sun.sun","elevation") | float(0) >= 3 else 11 }}}'
         default:
         - action: mqtt.publish
           data:
@@ -353,7 +352,7 @@
           - action: mqtt.publish
             data:
               topic: zigbee2mqtt/Bedroom Lights/set
-              payload: '{"scene_recall": 5}'
+              payload: '{"scene_recall": {{ 5 if state_attr("sun.sun","elevation") | float(0) >= 3 else 11 }}}'
         default:
         - action: mqtt.publish
           data:
@@ -390,7 +389,7 @@
           - action: mqtt.publish
             data:
               topic: zigbee2mqtt/Bedroom Lights/set
-              payload: '{"scene_recall": 5}'
+              payload: '{"scene_recall": {{ 5 if state_attr("sun.sun","elevation") | float(0) >= 3 else 11 }}}'
         default:
         - action: mqtt.publish
           data:
@@ -501,7 +500,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Bathroom Lights/set
-          payload: '{"scene_recall": 1}'
+          payload: '{"scene_recall": {{ 1 if state_attr("sun.sun","elevation") | float(0) >= 3 else 9 }}}'
     - conditions:
       - condition: trigger
         id: presence_on
@@ -553,7 +552,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Bathroom Lights/set
-          payload: '{"scene_recall": 3}'
+          payload: '{"scene_recall": {{ 3 if state_attr("sun.sun","elevation") | float(0) >= 3 else 10 }}}'
     - conditions:
       - condition: trigger
         id: presence_off
@@ -597,7 +596,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Hallway Lights/set
-          payload: '{"scene_recall": 1}'
+          payload: '{"scene_recall": {{ 1 if state_attr("sun.sun","elevation") | float(0) >= 3 else 9 }}}'
     - conditions:
       - condition: trigger
         id: presence_on
@@ -649,7 +648,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Hallway Lights/set
-          payload: '{"scene_recall": 3}'
+          payload: '{"scene_recall": {{ 3 if state_attr("sun.sun","elevation") | float(0) >= 3 else 10 }}}'
     - conditions:
       - condition: trigger
         id: presence_off
@@ -694,7 +693,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Bedroom Lights/set
-          payload: '{"scene_recall": 1}'
+          payload: '{"scene_recall": {{ 1 if state_attr("sun.sun","elevation") | float(0) >= 3 else 9 }}}'
     - conditions:
       - condition: trigger
         id: presence_on
@@ -724,7 +723,7 @@
       - action: mqtt.publish
         data:
           topic: zigbee2mqtt/Bedroom Lights/set
-          payload: '{"scene_recall": 3}'
+          payload: '{"scene_recall": {{ 3 if state_attr("sun.sun","elevation") | float(0) >= 3 else 10 }}}'
     - conditions:
       - condition: trigger
         id: presence_off
