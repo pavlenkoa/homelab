@@ -124,7 +124,7 @@ Webhook payload is a simple JSON object; the automation reads `{{ trigger.json.s
 
 ### Automation: `monitor_cube`
 
-All branches gated on `states('input_boolean.tiny_online') == 'on'`. When PC is offline, cube actions are no-ops.
+Cube works regardless of `input_boolean.tiny_online` — you can turn the strip on with the cube while the PC is off. PC transitions (login/lock/sleep/wake) still drive auto-on/off via the agent, but they don't gate cube input.
 
 ### Cube event shape
 
