@@ -15,20 +15,33 @@ kubernetes/
 │   │   └── children.yaml           # Child Applications + parent AppProject
 │   └── values.yaml                 # All apps defined here (enabled: true/false)
 └── apps/                           # All applications (Helm wrapper charts + raw manifests)
-    ├── alloy/
     ├── argocd/
     ├── authelia/
+    ├── blackbox-exporter/
     ├── cert-manager/
     ├── cilium/
-    ├── cilium-lb/
+    ├── claude-code/                # Raw manifests
     ├── external-secrets/
-    ├── external-services/
-    ├── ingress-nginx/
-    ├── n8n/
+    ├── external-services/          # Local custom chart
+    ├── fluent-bit/
+    ├── gamja/                      # Raw manifests (IRC web client)
+    ├── grafana/
+    ├── home-assistant/
+    ├── hubble-ui/                  # Raw manifests
+    ├── kgateway/
+    ├── kube-state-metrics/
+    ├── loki/
+    ├── mikrotik-exporter/          # Raw manifests
+    ├── mosquitto/                  # Raw manifests
+    ├── node-exporter/
+    ├── soju/                       # Raw manifests (IRC bouncer)
+    ├── tailscale/
     ├── transmission/               # Raw manifests (not a chart)
     ├── vault/
     ├── vault-secrets-generator/    # External chart - values only
-    └── victoriametrics/
+    ├── victoriametrics/
+    ├── vmagent/
+    └── zigbee2mqtt/
 ```
 
 ## Architecture
@@ -41,29 +54,51 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 ├── system (Application, renderParent=system)
 │   ├── system (AppProject)
 │   ├── cilium
-│   ├── ingress-nginx
-│   └── cert-manager
+│   ├── kgateway
+│   ├── cert-manager
+│   └── hubble-ui
 ├── platform (Application, renderParent=platform)
 │   ├── platform (AppProject)
 │   ├── vault
 │   ├── external-secrets
 │   ├── argocd
-│   ├── alloy
-│   ├── n8n
+│   ├── vault-secrets-generator
+│   ├── tailscale
 │   └── authelia
-└── applications (Application, renderParent=applications)
-    ├── applications (AppProject)
-    ├── external-services
-    └── transmission
+├── monitoring (Application, renderParent=monitoring)
+│   ├── monitoring (AppProject)
+│   ├── victoriametrics
+│   ├── vmagent
+│   ├── loki
+│   ├── grafana
+│   ├── fluent-bit
+│   ├── kube-state-metrics
+│   ├── node-exporter
+│   ├── blackbox-exporter
+│   └── mikrotik-exporter
+├── applications (Application, renderParent=applications)
+│   ├── applications (AppProject)
+│   ├── external-services
+│   ├── transmission
+│   ├── claude-code
+│   ├── soju
+│   └── gamja
+└── smarthome (Application, renderParent=smarthome)
+    ├── smarthome (AppProject)
+    ├── mosquitto
+    ├── zigbee2mqtt
+    └── home-assistant
 ```
 
 ## Parents
 
 | Parent | Wave | Description |
 |--------|------|-------------|
-| system | -1 | Core cluster components (CNI, ingress, certificates) |
-| platform | 0 | Platform services and DevOps tools |
+| system | -1 | Core cluster components (CNI, gateway, certificates) |
+| platform | 0 | Platform services (secrets, auth, GitOps, VPN) |
+| monitoring | 1 | Observability stack (metrics, logs, dashboards) |
 | applications | 1 | End-user applications and services |
+| smarthome | 2 | Smart home automation stack |
 
 ## Sync Wave Order
 
@@ -71,12 +106,13 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 |------|----------|---------|
 | -10 | AppProjects | Project definitions |
 | -3 | cilium | CNI networking |
-| -2 | ingress-nginx | External traffic routing |
-| 0 | cert-manager, vault, external-secrets | TLS certificates, secret management |
+| -2 | kgateway | External traffic routing (Envoy on hostNetwork) |
+| 0 | cert-manager, hubble-ui, vault, external-secrets | TLS, secret management |
 | 1 | argocd | GitOps platform |
-| 2 | alloy, vault-secrets-generator, victoriametrics | Monitoring, secret generation |
-| 3 | n8n, authelia | Platform services |
-| 4 | external-services, transmission | End-user services |
+| 2 | tailscale, vault-secrets-generator, monitoring stack | VPN, secret generation, observability |
+| 3 | authelia, mosquitto | SSO, MQTT broker |
+| 4 | external-services, transmission, claude-code, soju, gamja, zigbee2mqtt | End-user services |
+| 5 | home-assistant | Depends on mosquitto + zigbee2mqtt |
 
 ## Adding New Applications
 
@@ -85,7 +121,7 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 3. Add entry to appropriate parent in `app-of-apps/values.yaml`:
    ```yaml
    parents:
-     platform:  # or system/applications
+     platform:  # or system/monitoring/applications/smarthome
        children:
          - name: my-app
            namespace: my-namespace
@@ -176,7 +212,7 @@ spec:
 ## Traffic Flow
 
 ```
-Internet → Cloudflare → Kyiv Router → WireGuard → OrbStack LB → ingress-nginx → Services
+Internet → Cloudflare → Kyiv Router → WireGuard → kgateway Envoy (hostNetwork DaemonSet) → Services
 ```
 
 TLS automated via cert-manager + Let's Encrypt + Cloudflare DNS-01.

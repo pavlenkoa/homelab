@@ -15,11 +15,11 @@ Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4
 
 ## What Runs Where
 
-**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Traefik, n8n
+**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Grafana, Loki, VictoriaMetrics, Home Assistant, Zigbee2MQTT, Mosquitto, Tailscale operator, Hubble UI
 
-**raspberrypi (tainted):** Transmission (with Gluetun VPN sidecar) - requires toleration to schedule
+**raspberrypi (tainted):** Transmission (with Gluetun VPN sidecar) — requires toleration to schedule
 
-**Both nodes:** fluent-bit DaemonSet (log collection)
+**Both nodes (DaemonSets):** fluent-bit (logs), node-exporter, kgateway Envoy proxy (hostNetwork)
 
 **macmini only:** vmagent Deployment (metrics scraping)
 
@@ -40,10 +40,6 @@ Metrics and logs ship to local VictoriaMetrics and Loki.
 
 **Secrets:** Vault path `grafana` contains Grafana Cloud credentials
 
-## TODO
-
-- [ ] Install fluent-bit on macOS (Homebrew) for Emby log collection
-
 ## Project Structure
 
 ```
@@ -54,37 +50,28 @@ homelab/
 │   ├── CODEOWNERS
 │   ├── renovate.json5
 │   └── workflows/
-├── images/
+├── images/                    # Custom Docker images
+│   ├── claude-code/
+│   ├── gamja/
 │   ├── gluetun-transmission-cli/
+│   ├── soju/
 │   ├── transmission-exporter/
 │   └── vault-tools/
 ├── docs/
-│   └── setup/
-│       ├── k3s-cluster.md
-│       ├── mikrotik-wireguard.md
-│       └── orbstack-networking.md
+│   ├── setup/                 # k3s, MikroTik WireGuard, OrbStack networking
+│   └── smarthome/             # Smart home design & lighting notes
 └── kubernetes/
-    ├── app-of-apps/
-    │   ├── Chart.yaml
-    │   ├── templates/
-    │   └── values.yaml
-    └── apps/                   # All applications (Helm wrapper charts + raw manifests)
-        ├── fluent-bit/
-        ├── vmagent/
-        ├── argocd/
-        ├── authelia/
-        ├── cert-manager/
-        ├── cilium/
-        ├── cilium-lb/
-        ├── external-secrets/
-        ├── external-services/  # Local custom
-        ├── ingress-nginx/
-        ├── n8n/
-        ├── transmission/       # Raw manifests (not a chart)
-        ├── vault/
-        ├── vault-secrets-generator/  # Local custom
-        └── victoriametrics/
+    ├── app-of-apps/           # ArgoCD app-of-apps (parents: system, platform, monitoring, applications, smarthome)
+    └── apps/                  # All applications (Helm wrapper charts + raw manifests)
+        ├── system/            # cilium, kgateway, cert-manager, hubble-ui
+        ├── platform/          # vault, external-secrets, argocd, authelia, tailscale, vault-secrets-generator
+        ├── monitoring/        # victoriametrics, vmagent, loki, grafana, fluent-bit,
+        │                      # kube-state-metrics, node-exporter, blackbox-exporter, mikrotik-exporter
+        ├── applications/      # external-services, transmission, claude-code, soju, gamja
+        └── smarthome/         # mosquitto, zigbee2mqtt, home-assistant
 ```
+
+Note: the subdirectory grouping above is conceptual — all app folders live directly under `kubernetes/apps/`. Parent assignment lives in `app-of-apps/values.yaml`.
 
 ## Helm Charts
 

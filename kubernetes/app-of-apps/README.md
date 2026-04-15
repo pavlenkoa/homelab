@@ -9,17 +9,22 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 ├── parents (AppProject)
 ├── system (Application) ← in parents project
 │   ├── system (AppProject)
-│   ├── cilium
-│   ├── ingress-nginx
-│   └── cert-manager
+│   ├── cilium, kgateway, cert-manager, hubble-ui
 ├── platform (Application) ← in parents project
 │   ├── platform (AppProject)
-│   ├── vault
-│   ├── argocd
-│   └── ...
-└── applications (Application) ← in parents project
-    ├── applications (AppProject)
-    └── external-services
+│   ├── vault, external-secrets, argocd,
+│   │   vault-secrets-generator, tailscale, authelia
+├── monitoring (Application) ← in parents project
+│   ├── monitoring (AppProject)
+│   ├── victoriametrics, vmagent, loki, grafana,
+│   │   fluent-bit, kube-state-metrics, node-exporter,
+│   │   blackbox-exporter, mikrotik-exporter
+├── applications (Application) ← in parents project
+│   ├── applications (AppProject)
+│   ├── external-services, transmission, claude-code, soju, gamja
+└── smarthome (Application) ← in parents project
+    ├── smarthome (AppProject)
+    └── mosquitto, zigbee2mqtt, home-assistant
 ```
 
 ## How It Works
@@ -32,10 +37,12 @@ Both environment and parent levels use the same pattern:
 
 | Level | Creates | Children |
 |-------|---------|----------|
-| `app-of-apps` | parents AppProject | system, platform, applications |
-| `system` | system AppProject | cilium, ingress-nginx, cert-manager |
-| `platform` | platform AppProject | vault, argocd, n8n, authelia... |
-| `applications` | applications AppProject | external-services, transmission |
+| `app-of-apps` | parents AppProject | system, platform, monitoring, applications, smarthome |
+| `system` | system AppProject | cilium, kgateway, cert-manager, hubble-ui |
+| `platform` | platform AppProject | vault, external-secrets, argocd, vault-secrets-generator, tailscale, authelia |
+| `monitoring` | monitoring AppProject | victoriametrics, vmagent, loki, grafana, fluent-bit, exporters |
+| `applications` | applications AppProject | external-services, transmission, claude-code, soju, gamja |
+| `smarthome` | smarthome AppProject | mosquitto, zigbee2mqtt, home-assistant |
 
 ### Template Files
 
@@ -50,10 +57,12 @@ Both environment and parent levels use the same pattern:
 
 | Value | Template Used | Output |
 |-------|---------------|--------|
-| (empty) | parents.yaml | parents AppProject + system/platform/applications |
-| `system` | children.yaml | system AppProject + cilium/ingress-nginx/cert-manager |
-| `platform` | children.yaml | platform AppProject + vault/argocd/... |
-| `applications` | children.yaml | applications AppProject + external-services/transmission |
+| (empty) | parents.yaml | parents AppProject + the five parent Applications |
+| `system` | children.yaml | system AppProject + its children |
+| `platform` | children.yaml | platform AppProject + its children |
+| `monitoring` | children.yaml | monitoring AppProject + its children |
+| `applications` | children.yaml | applications AppProject + its children |
+| `smarthome` | children.yaml | smarthome AppProject + its children |
 
 ## Bootstrap
 
@@ -116,10 +125,12 @@ parents:
 | Project | Contains | Filter in UI |
 |---------|----------|--------------|
 | `default` | app-of-apps | Root application |
-| `parents` | system, platform, applications | Parent apps |
-| `system` | cilium, ingress-nginx, cert-manager | System components |
-| `platform` | vault, argocd, n8n, authelia... | Platform services |
-| `applications` | external-services, transmission | End-user applications |
+| `parents` | system, platform, monitoring, applications, smarthome | Parent apps |
+| `system` | cilium, kgateway, cert-manager, hubble-ui | System components |
+| `platform` | vault, external-secrets, argocd, vault-secrets-generator, tailscale, authelia | Platform services |
+| `monitoring` | victoriametrics, vmagent, loki, grafana, fluent-bit, exporters | Observability stack |
+| `applications` | external-services, transmission, claude-code, soju, gamja | End-user applications |
+| `smarthome` | mosquitto, zigbee2mqtt, home-assistant | Smart home stack |
 
 ## Sync Order
 
@@ -128,5 +139,7 @@ Controlled by sync-waves:
 2. Parent apps by their configured waves:
    - system: wave -1
    - platform: wave 0
+   - monitoring: wave 1
    - applications: wave 1
+   - smarthome: wave 2
 3. Child apps within parents by their waves

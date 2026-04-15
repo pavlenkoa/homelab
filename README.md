@@ -22,11 +22,11 @@ Internet → Cloudflare → Kyiv Router → WireGuard → Wrocław → Services
 homelab/
 ├── kubernetes/
 │   ├── app-of-apps/         # ArgoCD app-of-apps pattern
-│   ├── charts/              # Helm charts (argocd, vault, authelia, etc.)
-│   └── manifests/           # Raw manifests (transmission)
-├── docker-compose/          # Legacy (migrated to k8s)
+│   └── apps/                # Helm wrapper charts + raw manifests for every app
 ├── images/                  # Custom Docker images
-└── docs/setup/              # Setup guides
+└── docs/
+    ├── setup/               # Cluster, router, and networking setup guides
+    └── smarthome/           # Smart home design & lighting notes
 ```
 
 ## Setup
