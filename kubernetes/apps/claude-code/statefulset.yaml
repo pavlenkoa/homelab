@@ -97,71 +97,18 @@ spec:
               }
               SEOF
 
-              # Auto-install/update telegram plugin from marketplace
-              MARKETPLACE=/home/claude/.claude/plugins/marketplaces/claude-plugins-official
-              PLUGIN_SRC=$MARKETPLACE/external_plugins/telegram
-              CACHE=/home/claude/.claude/plugins/cache/claude-plugins-official/telegram
-
-              MARKETPLACE_URL=https://github.com/anthropics/claude-plugins-official
-              if [ -d "$MARKETPLACE/.git" ]; then
-                # Repoint origin if the existing clone tracks a different remote
-                # (e.g. an old fork). git pull alone would keep fetching the old URL.
-                if [ "$(git -C "$MARKETPLACE" remote get-url origin 2>/dev/null)" != "$MARKETPLACE_URL" ]; then
-                  git -C "$MARKETPLACE" remote set-url origin "$MARKETPLACE_URL"
-                  git -C "$MARKETPLACE" fetch origin --prune
-                  git -C "$MARKETPLACE" reset --hard origin/main
-                fi
-                git -C "$MARKETPLACE" pull --ff-only 2>/dev/null || true
-              else
-                git clone "$MARKETPLACE_URL" "$MARKETPLACE"
-              fi
-
-              LATEST_VER=$(cat "$PLUGIN_SRC/.claude-plugin/plugin.json" | grep '"version"' | head -1 | sed 's/.*"version".*"\([^"]*\)".*/\1/')
-              LATEST_SHA=$(git -C "$MARKETPLACE" rev-parse HEAD:external_plugins/telegram)
-              INSTALLED_SHA=""
-              if [ -f /home/claude/.claude/plugins/installed_plugins.json ]; then
-                INSTALLED_SHA=$(grep '"gitCommitSha"' /home/claude/.claude/plugins/installed_plugins.json | head -1 | sed 's/.*"\([a-f0-9]\{40\}\)".*/\1/')
-              fi
-
-              if [ "$LATEST_SHA" != "$INSTALLED_SHA" ] || [ ! -d "$CACHE/$LATEST_VER/node_modules" ]; then
-                echo "Installing telegram plugin v$LATEST_VER (tree $LATEST_SHA, was: ${INSTALLED_SHA:-none})"
-                mkdir -p "$CACHE/$LATEST_VER"
-                cp -r "$PLUGIN_SRC"/* "$CACHE/$LATEST_VER/"
-                cp -r "$PLUGIN_SRC/.claude-plugin" "$CACHE/$LATEST_VER/"
-                cp "$PLUGIN_SRC/.mcp.json" "$CACHE/$LATEST_VER/" 2>/dev/null || true
-                (cd "$CACHE/$LATEST_VER" && npm install --production)
-                NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
-                cat > /home/claude/.claude/plugins/installed_plugins.json << PEOF
-              {
-                "version": 2,
-                "plugins": {
-                  "telegram@claude-plugins-official": [{
-                    "scope": "user",
-                    "installPath": "$CACHE/$LATEST_VER",
-                    "version": "$LATEST_VER",
-                    "installedAt": "$NOW",
-                    "lastUpdated": "$NOW",
-                    "gitCommitSha": "$LATEST_SHA"
-                  }]
-                }
-              }
-              PEOF
-                cat > /home/claude/.claude/plugins/known_marketplaces.json << MEOF
-              {
-                "claude-plugins-official": {
-                  "source": {"source": "github", "repo": "anthropics/claude-plugins-official"},
-                  "installLocation": "$MARKETPLACE",
-                  "lastUpdated": "$NOW"
-                }
-              }
-              MEOF
-              fi
-
               # Wait for auth (one-time: kubectl exec -it -n claude-code claude-code-0 -- claude)
               while [ ! -f /home/claude/.claude/.credentials.json ]; do
                 echo "Not authenticated. Run: kubectl exec -it -n claude-code claude-code-0 -- claude"
                 sleep 30
               done
+
+              # Ensure the telegram plugin is installed from the official marketplace.
+              # claude-plugins-official is auto-registered and auto-updated by Claude Code,
+              # so we only need to declare the install — no manual marketplace clone or
+              # npm install. Idempotent: a no-op once installed.
+              # https://code.claude.com/docs/en/discover-plugins
+              claude plugin install telegram@claude-plugins-official 2>&1 | tail -5 || true
 
               # Start claude in a detached screen session
               # Attach: kubectl exec -it -n claude-code claude-code-0 -- screen -Ur claude
