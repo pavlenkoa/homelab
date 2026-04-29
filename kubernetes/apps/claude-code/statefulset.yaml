@@ -102,10 +102,18 @@ spec:
               PLUGIN_SRC=$MARKETPLACE/external_plugins/telegram
               CACHE=/home/claude/.claude/plugins/cache/claude-plugins-official/telegram
 
+              MARKETPLACE_URL=https://github.com/anthropics/claude-plugins-official
               if [ -d "$MARKETPLACE/.git" ]; then
+                # Repoint origin if the existing clone tracks a different remote
+                # (e.g. an old fork). git pull alone would keep fetching the old URL.
+                if [ "$(git -C "$MARKETPLACE" remote get-url origin 2>/dev/null)" != "$MARKETPLACE_URL" ]; then
+                  git -C "$MARKETPLACE" remote set-url origin "$MARKETPLACE_URL"
+                  git -C "$MARKETPLACE" fetch origin --prune
+                  git -C "$MARKETPLACE" reset --hard origin/main
+                fi
                 git -C "$MARKETPLACE" pull --ff-only 2>/dev/null || true
               else
-                git clone https://github.com/pavlenkoa/claude-plugins-official "$MARKETPLACE"
+                git clone "$MARKETPLACE_URL" "$MARKETPLACE"
               fi
 
               LATEST_VER=$(cat "$PLUGIN_SRC/.claude-plugin/plugin.json" | grep '"version"' | head -1 | sed 's/.*"version".*"\([^"]*\)".*/\1/')
