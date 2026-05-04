@@ -36,7 +36,7 @@ spec:
             value: "1"
       containers:
         - name: gluetun
-          image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest@sha256:54b23be02297c7ddfe2813d3e30fd9771bb1b38febd5acd2a593afa120e5eef1
+          image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest@sha256:13492610f99c962b9502564e93623e607861c339087e01ab068ad20612cae6ab
           securityContext:
             capabilities:
               add:
