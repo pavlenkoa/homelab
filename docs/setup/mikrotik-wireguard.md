@@ -237,6 +237,8 @@ This setup allows services behind CGNAT to be accessible while maintaining prope
 
 The homelab extends to Oracle Cloud with additional WireGuard tunnels for centralized monitoring.
 
+> For using Oracle as an L4 reverse proxy to expose services from Wrocław behind CGNAT (iptables DNAT, OCI Security List, narrow firewall rules, security model), see [`oracle-reverse-proxy.md`](./oracle-reverse-proxy.md).
+
 ### Additional Tunnel Networks
 
 ```bash
