@@ -1,7 +1,7 @@
-# syntax=docker/dockerfile:1@sha256:2780b5c3bab67f1f76c781860de469442999ed1a0d7992a5efdf2cffc0e3d769
+# syntax=docker/dockerfile:1@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89
 
 # Builder
-FROM node:24-alpine@sha256:d1b3b4da11eefd5941e7f0b9cf17783fc99d9c6fc34884a665f40a06dbdfc94f AS builder
+FROM node:24-alpine@sha256:2bdb65ed1dab192432bc31c95f94155ca5ad7fc1392fb7eb7526ab682fa5bf14 AS builder
 
 # renovate: datasource=git-refs depName=gamja packageName=https://codeberg.org/emersion/gamja
 ARG GAMJA_VERSION=master
@@ -13,6 +13,6 @@ WORKDIR /src
 RUN npm install && npm run build
 
 # Runtime
-FROM nginxinc/nginx-unprivileged:alpine@sha256:4c18337659c90a01627f2e152b7c89524521c82dcedb255dc83d3689642b0803
+FROM nginxinc/nginx-unprivileged:alpine@sha256:3707417e3304492667a63c90ac0103465330437f9cdfaa38f8cd19f9975cbeed
 
 COPY --from=builder /src/dist /usr/share/nginx/html
