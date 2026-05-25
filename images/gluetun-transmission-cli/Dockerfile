@@ -1,4 +1,4 @@
-FROM qmcgaw/gluetun:latest@sha256:bd84f4f090ca61170c8329a72d4f451255b01f6489486a621bfcb89749fb80ab
+FROM qmcgaw/gluetun:latest@sha256:eb84287679350bd1360f8c01b09535f779cac1fde43934c2bc37b06eeb9856a7
 
 # Switch to root to install packages
 USER root
