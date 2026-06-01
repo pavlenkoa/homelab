@@ -13,6 +13,6 @@ WORKDIR /src
 RUN npm install && npm run build
 
 # Runtime
-FROM nginxinc/nginx-unprivileged:alpine@sha256:3707417e3304492667a63c90ac0103465330437f9cdfaa38f8cd19f9975cbeed
+FROM nginxinc/nginx-unprivileged:alpine@sha256:02c985e54bee40c14c6de677226f394d96c661944185d407e77ca73602f15e1b
 
 COPY --from=builder /src/dist /usr/share/nginx/html
