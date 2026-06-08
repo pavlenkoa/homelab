@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: mktxp
-          image: ghcr.io/akpw/mktxp:main@sha256:b59611420d92ee928a9edc85ebe204caa1a87cf159673b78cce515f39b9eb079
+          image: ghcr.io/akpw/mktxp:main@sha256:fb65313985da294c847ce964c7f002309b77066f34e2d8178f4fd31f51694ea9
           ports:
             - containerPort: 49090
               name: metrics
