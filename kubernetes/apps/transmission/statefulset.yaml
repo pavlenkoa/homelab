@@ -105,7 +105,7 @@ spec:
             timeoutSeconds: 10
 
         - name: transmission-exporter
-          image: ghcr.io/pavlenkoa/transmission-exporter:latest@sha256:6b9fc25b20c9e78baa8b2e73a2f33f4393e86b8a05b97e69e6a2c8a3df38db06
+          image: ghcr.io/pavlenkoa/transmission-exporter:latest@sha256:beabbbd3dcfe1b4e2f76ea74d1d13f2efa05f6d5de113699c9c952b5fb420444
           env:
             - name: TRANSMISSION_ADDR
               value: "http://localhost:9091"
