@@ -187,6 +187,8 @@ Same as living room but:
 
 **ID:** `living_room_morning_reading` — At 06:00, if living lights on → scene_recall 3 (reading_transition) via group topic. Transitions already-on lights from red to reading.
 
+**ID:** `living_room_mom_arrival` — When mom's iPhone arrives home (device_tracker.moms_iphone → home), Andrii's iPhone is not_home, and sun elevation < 3° → same scene logic as `living_room_arrival` (scene 9 before 22:00, scene 2 after 22:00, scene 2 + dim to 115 default). Tracked via HA's MikroTik integration (router-based, by MAC); the entity is disabled by default when newly discovered and was manually enabled/renamed to `device_tracker.moms_iphone`.
+
 ### Presence-based (Bathroom)
 **ID:** `bathroom_presence`
 

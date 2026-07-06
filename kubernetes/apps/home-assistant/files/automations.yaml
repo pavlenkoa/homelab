@@ -57,6 +57,52 @@
         topic: zigbee2mqtt/Living Room Lights/set
         payload: '{"brightness": 115, "transition": 1.5}'
   mode: single
+- id: living_room_mom_arrival
+  alias: Living Room - Mom Arrival Lights
+  description: Turn on living room lights when mom's iPhone arrives home while
+    Andrii is not home and sun elevation is below 3°.
+  triggers:
+  - trigger: state
+    entity_id: device_tracker.moms_iphone
+    to: home
+  conditions:
+  - condition: state
+    entity_id: device_tracker.andriis_iphone
+    state: not_home
+  - condition: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 3
+  actions:
+  - choose:
+    - conditions:
+      - condition: time
+        after: '06:00:00'
+        before: '22:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"scene_recall": 9}'
+    - conditions:
+      - condition: time
+        after: '22:00:00'
+        before: '00:00:00'
+      sequence:
+      - action: mqtt.publish
+        data:
+          topic: zigbee2mqtt/Living Room Lights/set
+          payload: '{"scene_recall": 2}'
+    default:
+    - action: mqtt.publish
+      data:
+        topic: zigbee2mqtt/Living Room Lights/set
+        payload: '{"scene_recall": 2}'
+    - action: mqtt.publish
+      data:
+        topic: zigbee2mqtt/Living Room Lights/set
+        payload: '{"brightness": 115, "transition": 1.5}'
+  mode: single
 - id: living_room_departure
   alias: Living Room - Departure
   description: Turn off living room lights after iPhone has been away 5 minutes.
