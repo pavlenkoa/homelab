@@ -1,5 +1,5 @@
 # Builder
-FROM arm64v8/golang@sha256:fab61ab761e623523019f2c625589b95bf46a82cbaf6246b0cf7e272c2700062 as builder
+FROM arm64v8/golang@sha256:76c2eaefb6f6b83203526736da201a32bbbdbca0abb0f8a21dd323d36272eed5 as builder
 
 ENV TRANSMISSION_VERSION "master"
 
@@ -12,7 +12,7 @@ WORKDIR /go/src/github.com/metalmatze/transmission-exporter
 RUN make build
 
 # Image for usage
-FROM arm64v8/debian@sha256:86ae726ebdb11cd3e64f4f6ede3fb1b238e3b185844e64118419bf3eb8b3f210
+FROM arm64v8/debian@sha256:e59f74ea50767b0962a8030295d323f28cbc1297cc90860ced5594003b3d39a2
 
 RUN apt-get update && apt-get install ca-certificates -y && apt-get clean autoclean && rm -rf /var/lib/apt/lists/*
 
