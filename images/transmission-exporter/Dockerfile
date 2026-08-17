@@ -1,5 +1,5 @@
 # Builder
-FROM arm64v8/golang@sha256:76c2eaefb6f6b83203526736da201a32bbbdbca0abb0f8a21dd323d36272eed5 as builder
+FROM arm64v8/golang@sha256:2a503edfac998ad47da164952b9c2ca5333717a512d27fcd2701211bbfe68d2b as builder
 
 ENV TRANSMISSION_VERSION "master"
 
