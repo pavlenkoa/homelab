@@ -166,6 +166,9 @@ parents:
     scopeDestinations: true
     annotations:
       argocd.argoproj.io/sync-wave: "1"
+    sourceRepos:
+      - "https://github.com/pavlenkoa/homelab.git"
+      - "https://github.com/pavlenkoa/pan-agent.git"
     children:
       - name: external-services
         helm:
@@ -178,6 +181,15 @@ parents:
           argocd.argoproj.io/sync-wave: "4"
       - name: claude-code
         directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+      - name: pan-agent
+        enabled: true
+        namespace: pan-agent
+        path: helm/pan-agent
+        repository:
+          url: "https://github.com/pavlenkoa/pan-agent.git"
+          targetRevision: "HEAD"
         annotations:
           argocd.argoproj.io/sync-wave: "4"
       - name: soju

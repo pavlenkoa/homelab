@@ -1,0 +1,31 @@
+# pan-agent — this homelab's deployment values.
+# Chart defaults + docs: https://github.com/pavlenkoa/pan-agent/tree/main/helm/pan-agent
+
+image:
+  # TODO: pin to a digest after the pan-agent repo's first successful CI
+  # build (ghcr.io/pavlenkoa/pan-agent) — Renovate takes over from there.
+  tag: latest
+
+nodeName: macmini
+
+defaultTz: Europe/Warsaw
+
+nfs:
+  server: "192.168.88.3"
+  rootPath: /media/pan-agent
+  mountPath: /mnt/pan-agent-nfs
+
+media:
+  nfsPath: /media
+  capacity: 1Ti
+
+network:
+  transmissionNamespace: transmission
+  embyCidrs:
+    - 198.19.0.0/16 # OrbStack host.internal range
+    - 192.168.88.2/32 # macmini itself
+  kubeApiCidr: 192.168.88.2/32
+  excludeCidrs:
+    - 192.168.88.1/32 # Wroclaw MikroTik router
+    - 192.168.1.0/24 # Kyiv LAN (including router .1)
+    - 10.77.88.0/30 # WireGuard tunnel
