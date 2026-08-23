@@ -20,7 +20,6 @@ kubernetes/
     ├── blackbox-exporter/
     ├── cert-manager/
     ├── cilium/
-    ├── claude-code/                # Raw manifests
     ├── external-secrets/
     ├── external-services/          # Local custom chart
     ├── fluent-bit/
@@ -80,7 +79,7 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 │   ├── applications (AppProject)
 │   ├── external-services
 │   ├── transmission
-│   ├── claude-code
+│   ├── pan-agent
 │   ├── soju
 │   └── gamja
 └── smarthome (Application, renderParent=smarthome)
@@ -111,7 +110,7 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 | 1 | argocd | GitOps platform |
 | 2 | tailscale, vault-secrets-generator, monitoring stack | VPN, secret generation, observability |
 | 3 | authelia, mosquitto | SSO, MQTT broker |
-| 4 | external-services, transmission, claude-code, soju, gamja, zigbee2mqtt | End-user services |
+| 4 | external-services, transmission, pan-agent, soju, gamja, zigbee2mqtt | End-user services |
 | 5 | home-assistant | Depends on mosquitto + zigbee2mqtt |
 
 ## Adding New Applications

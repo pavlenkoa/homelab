@@ -179,10 +179,6 @@ parents:
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "4"
-      - name: claude-code
-        directory: {}
-        annotations:
-          argocd.argoproj.io/sync-wave: "4"
       - name: pan-agent
         enabled: true
         namespace: pan-agent

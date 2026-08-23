@@ -51,7 +51,6 @@ homelab/
 │   ├── renovate.json5
 │   └── workflows/
 ├── images/                    # Custom Docker images
-│   ├── claude-code/
 │   ├── gamja/
 │   ├── gluetun-transmission-cli/
 │   ├── soju/
@@ -67,7 +66,7 @@ homelab/
         ├── platform/          # vault, external-secrets, argocd, authelia, tailscale, vault-secrets-generator
         ├── monitoring/        # victoriametrics, vmagent, loki, grafana, fluent-bit,
         │                      # kube-state-metrics, node-exporter, blackbox-exporter, mikrotik-exporter
-        ├── applications/      # external-services, transmission, claude-code, soju, gamja
+        ├── applications/      # external-services, transmission, pan-agent, soju, gamja
         └── smarthome/         # mosquitto, zigbee2mqtt, home-assistant
 ```
 
