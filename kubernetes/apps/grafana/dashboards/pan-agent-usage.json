@@ -21,13 +21,14 @@
         "current": { "text": "All", "value": "$__all" },
         "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
         "includeAll": true,
-        "label": "Person",
+        "label": "Chat",
         "multi": true,
-        "name": "Person",
+        "name": "Chat",
         "options": [],
         "query": "label_values({namespace=\"pan-agent\"}, pod)",
         "refresh": 2,
-        "regex": "/^person-.*/",
+        "regex": "/^(?<value>person-(?<text>.+))$/",
+        "regexApplyTo": "value",
         "sort": 1,
         "type": "query"
       }
@@ -57,7 +58,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "gridPos": { "h": 5, "w": 3, "x": 0, "y": 0 },
       "id": 1,
       "options": {
         "colorMode": "value",
@@ -74,7 +75,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" [$__range]))",
+          "expr": "sum(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" [$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -84,7 +85,7 @@
     },
     {
       "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "description": "= sum of the \"Cost & Turns by Person\" table below, for this same time range. If these two numbers don't match, something's wrong with the query, not the math.",
+      "description": "= sum of the \"Cost & Turns by Chat\" table (top right), for this same time range. If these two numbers don't match, something's wrong with the query, not the math.",
       "fieldConfig": {
         "defaults": {
           "decimals": 2,
@@ -94,7 +95,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "gridPos": { "h": 5, "w": 3, "x": 3, "y": 0 },
       "id": 2,
       "options": {
         "colorMode": "value",
@@ -111,7 +112,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__range]))",
+          "expr": "sum(sum_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__range]))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -129,7 +130,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "gridPos": { "h": 5, "w": 3, "x": 6, "y": 0 },
       "id": 3,
       "options": {
         "colorMode": "value",
@@ -146,7 +147,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count(count by(person) (label_replace(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\")))",
+          "expr": "count(count by(person) (label_replace(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\")))",
           "queryType": "instant",
           "refId": "A"
         }
@@ -167,7 +168,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "gridPos": { "h": 5, "w": 3, "x": 9, "y": 0 },
       "id": 4,
       "options": {
         "colorMode": "value",
@@ -184,7 +185,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | ok=\"true\" [$__range])) / sum(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" [$__range])) * 100",
+          "expr": "sum(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | ok=\"true\" [$__range])) / sum(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" [$__range])) * 100",
           "queryType": "instant",
           "refId": "A"
         }
@@ -196,38 +197,113 @@
       "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto",
-            "barAlignment": 0, "barWidthFactor": 0.6, "drawStyle": "bars", "fillOpacity": 60, "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "insertNulls": false, "lineInterpolation": "linear",
-            "lineWidth": 1, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "showValues": false,
-            "spanNulls": false, "stacking": { "group": "A", "mode": "normal" }, "thresholdsStyle": { "mode": "off" }
-          },
           "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "red", "value": 80 }] },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] },
           "unit": "short"
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
-      "id": 5,
+      "gridPos": { "h": 7, "w": 6, "x": 12, "y": 0 },
+      "id": 8,
       "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
       "pluginVersion": "12.4.2",
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum by (person) (label_replace(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" [$__interval]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
-          "legendFormat": "{{person}}",
-          "queryType": "range",
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "sum(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | turn=~\"^tg:.*\" [$__range]))",
+          "legendFormat": "chat",
+          "queryType": "instant",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "sum(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | turn=~\"^task:.*\" [$__range]))",
+          "legendFormat": "cron",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "sum(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | turn=~\"^ctl:.*\" [$__range]))",
+          "legendFormat": "control",
+          "queryType": "instant",
+          "refId": "C"
         }
       ],
-      "title": "Turns Over Time, by Person",
-      "type": "timeseries"
+      "title": "Chat vs Cron vs Control",
+      "transformations": [
+        { "id": "organize", "options": { "renameByName": { "Value #A": "chat", "Value #B": "cron", "Value #C": "control" } } }
+      ],
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+      "description": "One row per chat, sortable — replaces the two bar-gauge panels this used to be, which made it hard to tell which bar belonged to whom at a glance. andrii's one-off test-account usage (different Telegram account, self-denied within a minute on 2026-08-23) is folded into andrii-pavlenko via label_replace since it's the same person.",
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Turns" }, "properties": [{ "id": "unit", "value": "short" }, { "id": "decimals", "value": 0 }] },
+          { "matcher": { "id": "byName", "options": "Cost ($)" }, "properties": [{ "id": "unit", "value": "currencyUSD" }, { "id": "decimals", "value": 4 }] },
+          { "matcher": { "id": "byName", "options": "Avg Cost/Turn ($)" }, "properties": [{ "id": "unit", "value": "currencyUSD" }, { "id": "decimals", "value": 4 }] }
+        ]
+      },
+      "gridPos": { "h": 7, "w": 6, "x": 18, "y": 0 },
+      "id": 12,
+      "options": {
+        "cellHeight": "sm",
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Cost ($)" }]
+      },
+      "pluginVersion": "12.4.2",
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum by(person) (label_replace(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
+          "legendFormat": "Turns",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum by(person) (label_replace(sum_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
+          "legendFormat": "Cost ($)",
+          "queryType": "instant",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+          "expr": "sum by(person) (label_replace(sum_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\")) / sum by(person) (label_replace(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
+          "legendFormat": "Avg Cost/Turn ($)",
+          "queryType": "instant",
+          "refId": "C"
+        }
+      ],
+      "title": "Cost & Turns by Chat (selected range)",
+      "transformations": [
+        { "id": "joinByField", "options": { "byField": "person", "mode": "outer" } },
+        { "id": "organize", "options": { "excludeByName": { "Time": true, "Time 1": true, "Time 2": true }, "renameByName": { "Value #A": "Turns", "Value #B": "Cost ($)", "Value #C": "Avg Cost/Turn ($)", "person": "Chat" } } }
+      ],
+      "type": "table"
     },
     {
       "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
@@ -247,7 +323,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "gridPos": { "h": 12, "w": 12, "x": 0, "y": 5 },
       "id": 6,
       "options": {
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
@@ -257,64 +333,13 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum by (person) (label_replace(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__interval]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
+          "expr": "sum by (person) (label_replace(sum_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__interval]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
           "legendFormat": "{{person}}",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Cost Over Time, by Person",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto",
-            "barAlignment": 0, "barWidthFactor": 0.6, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none",
-            "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "insertNulls": false, "lineInterpolation": "linear",
-            "lineWidth": 1, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "auto", "showValues": false,
-            "spanNulls": false, "stacking": { "group": "A", "mode": "normal" }, "thresholdsStyle": { "mode": "off" }
-          },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "red", "value": 80 }] },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
-      "id": 7,
-      "options": {
-        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
-        "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap inputTokens [$__interval]))",
-          "legendFormat": "Input",
-          "queryType": "range",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap outputTokens [$__interval]))",
-          "legendFormat": "Output",
-          "queryType": "range",
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap cacheReadTokens [$__interval]))",
-          "legendFormat": "Cache Read",
-          "queryType": "range",
-          "refId": "C"
-        }
-      ],
-      "title": "Token Usage Over Time",
+      "title": "Cost Over Time, by Chat",
       "type": "timeseries"
     },
     {
@@ -335,8 +360,8 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
-      "id": 8,
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 7 },
+      "id": 5,
       "options": {
         "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
         "tooltip": { "hideZeros": false, "mode": "multi", "sort": "none" }
@@ -345,86 +370,19 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | turn=~\"^tg:.*\" [$__interval]))",
-          "legendFormat": "user_chat",
+          "expr": "sum by (person) (label_replace(count_over_time({namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=\"turn_end\" [$__interval]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
+          "legendFormat": "{{person}}",
           "queryType": "range",
           "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | turn=~\"^task:.*\" [$__interval]))",
-          "legendFormat": "cron_task",
-          "queryType": "range",
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | turn=~\"^ctl:.*\" [$__interval]))",
-          "legendFormat": "control_cmd",
-          "queryType": "range",
-          "refId": "C"
         }
       ],
-      "title": "Chat vs Cron vs Control",
+      "title": "Turns Over Time, by Chat",
       "type": "timeseries"
     },
     {
       "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "description": "One row per person, sortable — replaces the two bar-gauge panels this used to be, which made it hard to tell which bar belonged to whom at a glance. andrii's one-off test-account usage (different Telegram account, self-denied within a minute on 2026-08-23) is folded into andrii-pavlenko via label_replace since it's the same person.",
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "footer": { "reducers": [] }, "inspect": false },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] }
-        },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "Turns" }, "properties": [{ "id": "unit", "value": "short" }, { "id": "decimals", "value": 0 }] },
-          { "matcher": { "id": "byName", "options": "Cost ($)" }, "properties": [{ "id": "unit", "value": "currencyUSD" }, { "id": "decimals", "value": 4 }] },
-          { "matcher": { "id": "byName", "options": "Avg Cost/Turn ($)" }, "properties": [{ "id": "unit", "value": "currencyUSD" }, { "id": "decimals", "value": 4 }] }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 20 },
-      "id": 12,
-      "options": {
-        "cellHeight": "sm",
-        "showHeader": true,
-        "sortBy": [{ "desc": true, "displayName": "Cost ($)" }]
-      },
-      "pluginVersion": "12.4.2",
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum by(person) (label_replace(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
-          "legendFormat": "Turns",
-          "queryType": "instant",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum by(person) (label_replace(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
-          "legendFormat": "Cost ($)",
-          "queryType": "instant",
-          "refId": "B"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum by(person) (label_replace(sum_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" | unwrap cost_usd [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\")) / sum by(person) (label_replace(count_over_time({namespace=\"pan-agent\"} | json | evt=\"turn_end\" [$__range]), \"person\", \"andrii-pavlenko\", \"person\", \"^andrii$\"))",
-          "legendFormat": "Avg Cost/Turn ($)",
-          "queryType": "instant",
-          "refId": "C"
-        }
-      ],
-      "title": "Cost & Turns by Person (selected range)",
-      "transformations": [
-        { "id": "joinByField", "options": { "byField": "person", "mode": "outer" } },
-        { "id": "organize", "options": { "excludeByName": { "Time": true, "Time 1": true, "Time 2": true }, "renameByName": { "person": "Person" } } }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "description": "Best-effort grouping done purely in Grafana (no pan-agent code change): chronological, one row per step, prefixed with person + a short id (first 8 chars of the trigger-scoped part of `turn`) so same-turn rows stay identifiable even when other people's turns interleave — or use the $Person filter above to isolate one person entirely. » = incoming request (chat/cron), tree rows = tool calls (skill/bash/...) and assistant text, └ = turn finished (ok/fail · steps · duration · cost). `reply` currently shows for every assistant text block, not just the truly final one — line_format has no visibility into sibling lines, so there's no way to know from Grafana alone which assistant-text line was actually the last one sent to Telegram. A real reply/note split (and correctly flagging NO_UPDATE-suppressed turns) needs pan-agent itself to log what it actually decided to send — not yet done.",
-      "gridPos": { "h": 35, "w": 24, "x": 0, "y": 28 },
+      "description": "Best-effort grouping done purely in Grafana (no pan-agent code change): chronological, one row per step, prefixed with chat + a short id (first 8 chars of the trigger-scoped part of `turn`) so same-turn rows stay identifiable even when other chats' turns interleave — or use the $Chat filter above to isolate one chat entirely. » = incoming request (chat/cron), tree rows = tool calls (skill/bash/...) and assistant text, └ = turn finished (ok/fail · steps · duration · cost). `reply` currently shows for every assistant text block, not just the truly final one — line_format has no visibility into sibling lines, so there's no way to know from Grafana alone which assistant-text line was actually the last one sent to Telegram. A real reply/note split (and correctly flagging NO_UPDATE-suppressed turns) needs pan-agent itself to log what it actually decided to send — not yet done.",
+      "gridPos": { "h": 35, "w": 24, "x": 0, "y": 17 },
       "id": 11,
       "options": {
         "dedupStrategy": "none",
@@ -440,12 +398,14 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "{namespace=\"pan-agent\", pod=~\"$Person\"} | json | evt=~\"user|assistant|tool_use|turn_end\" | line_format `{{ $mode := \"chat\" }}{{ if hasPrefix \"task:\" .turn }}{{ $mode = \"cron\" }}{{ end }}{{ $rid := regexReplaceAll \"^[a-z]+:([^:-]+).*\" .turn \"${1}\" | trunc 8 }}{{ $pfx := printf \"%-17s%-9s\" .person $rid }}{{ if eq .evt \"user\" }}{{ $t := regexReplaceAll \"^@\\\\S+:\\\\s*\" .text \"\" }}{{ $t = regexReplaceAll \"^\\\\[Scheduled task [^\\\\]]*\\\\]\\\\s*\" $t \"\" }}{{ $pfx }}» ┌ {{ printf \"%-5s\" $mode }} {{ regexReplaceAll \"\\\\s+\" $t \" \" | trunc 160 }}{{ else if eq .evt \"assistant\" }}{{ if .text | contains \"NO_UPDATE\" }}{{ $pfx }}  │ mute  (no message sent){{ else }}{{ $pfx }}« │ reply {{ regexReplaceAll \"\\\\s+\" .text \" \" | trunc 120 }}{{ end }}{{ else if eq .evt \"tool_use\" }}{{ $in := .input }}{{ if hasPrefix \"{\\\"command\\\"\" $in }}{{ $in = (fromJson $in).command }}{{ else if hasPrefix \"{\\\"skill\\\"\" $in }}{{ $in = (fromJson $in).skill }}{{ end }}{{ $pfx }}  │ {{ printf \"%-5s\" (.tool | lower) }} {{ regexReplaceAll \"\\\\s+\" $in \" \" | trunc 100 }}{{ else if eq .evt \"turn_end\" }}{{ $pfx }}  └ {{ if eq .ok \"true\" }}✓ ok{{ else }}✗ fail{{ end }} · {{ .turns }} steps · {{ .dur_ms }}ms · ${{ .cost_usd }}{{ else }}{{ $pfx }}  │ {{ .evt }}  {{ .text }}{{ end }}`",
+          "direction": "backward",
+          "editorMode": "code",
+          "expr": "{namespace=\"pan-agent\", pod=~\"$Chat\"} | json | evt=~\"user|assistant|tool_use|turn_end\" | line_format `{{ $mode := \"message\" }}{{ if hasPrefix \"task:\" .turn }}{{ $mode = \"cron\" }}{{ end }}{{ $rid := regexReplaceAll \"^[a-z]+:([^:-]+).*\" .turn \"${1}\" | trunc 8 }}{{ $pfx := printf \"%-17s%-9s\" .person $rid }}{{ if eq .evt \"user\" }}{{ $t := regexReplaceAll \"^@\\\\S+:\\\\s*\" .text \"\" }}{{ $t = regexReplaceAll \"^\\\\[Scheduled task [^\\\\]]*\\\\]\\\\s*\" $t \"\" }}{{ $pfx }}» ┌ {{ printf \"%-5s\" $mode }} {{ regexReplaceAll \"\\\\s+\" $t \" \" | trunc 160 }}{{ else if eq .evt \"assistant\" }}{{ if .text | contains \"NO_UPDATE\" }}{{ $pfx }}  │ mute  (no message sent){{ else }}{{ $pfx }}« │ reply {{ regexReplaceAll \"\\\\s+\" .text \" \" | trunc 120 }}{{ end }}{{ else if eq .evt \"tool_use\" }}{{ $in := .input }}{{ if hasPrefix \"{\\\"command\\\"\" $in }}{{ $in = (fromJson $in).command }}{{ else if hasPrefix \"{\\\"skill\\\"\" $in }}{{ $in = (fromJson $in).skill }}{{ end }}{{ $pfx }}  │ {{ printf \"%-5s\" (.tool | lower) }} {{ regexReplaceAll \"\\\\s+\" $in \" \" | trunc 100 }}{{ else if eq .evt \"turn_end\" }}{{ $pfx }}  └ {{ if eq .ok \"true\" }}✓ ok{{ else }}✗ fail{{ end }} · {{ .turns }} steps · ${{ .cost_usd }} · {{ add (int .inputTokens) (int .outputTokens) }} tok · {{ printf \"%.1fs\" (divf (float64 .dur_ms) 1000) }}{{ else }}{{ $pfx }}  │ {{ .evt }}  {{ .text }}{{ end }}`",
           "queryType": "range",
           "refId": "A"
         }
       ],
-      "title": "Recent Turns",
+      "title": "Logs",
       "type": "logs"
     }
   ]
