@@ -35,7 +35,7 @@ kubernetes/
     ├── node-exporter/
     ├── soju/                       # Raw manifests (IRC bouncer)
     ├── tailscale/
-    ├── transmission/               # Raw manifests (not a chart)
+    ├── qbittorrent/                # Raw manifests (not a chart)
     ├── vault/
     ├── vault-secrets-generator/    # External chart - values only
     ├── victoriametrics/
@@ -78,7 +78,7 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 ├── applications (Application, renderParent=applications)
 │   ├── applications (AppProject)
 │   ├── external-services
-│   ├── transmission
+│   ├── qbittorrent
 │   ├── pan-agent
 │   ├── soju
 │   └── gamja
@@ -110,7 +110,7 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 | 1 | argocd | GitOps platform |
 | 2 | tailscale, vault-secrets-generator, monitoring stack | VPN, secret generation, observability |
 | 3 | authelia, mosquitto | SSO, MQTT broker |
-| 4 | external-services, transmission, pan-agent, soju, gamja, zigbee2mqtt | End-user services |
+| 4 | external-services, qbittorrent, pan-agent, soju, gamja, zigbee2mqtt | End-user services |
 | 5 | home-assistant | Depends on mosquitto + zigbee2mqtt |
 
 ## Adding New Applications

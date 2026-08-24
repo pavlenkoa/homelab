@@ -21,7 +21,7 @@ app-of-apps (Application) ← bootstrap with argocd CLI
 │   │   blackbox-exporter, mikrotik-exporter
 ├── applications (Application) ← in parents project
 │   ├── applications (AppProject)
-│   ├── external-services, transmission, pan-agent, soju, gamja
+│   ├── external-services, qbittorrent, pan-agent, soju, gamja
 └── smarthome (Application) ← in parents project
     ├── smarthome (AppProject)
     └── mosquitto, zigbee2mqtt, home-assistant
@@ -41,7 +41,7 @@ Both environment and parent levels use the same pattern:
 | `system` | system AppProject | cilium, kgateway, cert-manager, hubble-ui |
 | `platform` | platform AppProject | vault, external-secrets, argocd, vault-secrets-generator, tailscale, authelia |
 | `monitoring` | monitoring AppProject | victoriametrics, vmagent, loki, grafana, fluent-bit, exporters |
-| `applications` | applications AppProject | external-services, transmission, pan-agent, soju, gamja |
+| `applications` | applications AppProject | external-services, qbittorrent, pan-agent, soju, gamja |
 | `smarthome` | smarthome AppProject | mosquitto, zigbee2mqtt, home-assistant |
 
 ### Template Files
@@ -129,7 +129,7 @@ parents:
 | `system` | cilium, kgateway, cert-manager, hubble-ui | System components |
 | `platform` | vault, external-secrets, argocd, vault-secrets-generator, tailscale, authelia | Platform services |
 | `monitoring` | victoriametrics, vmagent, loki, grafana, fluent-bit, exporters | Observability stack |
-| `applications` | external-services, transmission, pan-agent, soju, gamja | End-user applications |
+| `applications` | external-services, qbittorrent, pan-agent, soju, gamja | End-user applications |
 | `smarthome` | mosquitto, zigbee2mqtt, home-assistant | Smart home stack |
 
 ## Sync Order

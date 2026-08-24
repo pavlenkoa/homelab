@@ -15,9 +15,9 @@ Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4
 
 ## What Runs Where
 
-**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Grafana, Loki, VictoriaMetrics, Home Assistant, Zigbee2MQTT, Mosquitto, Tailscale operator, Hubble UI
+**macmini (default):** ArgoCD, Vault, Authelia, cert-manager, external-secrets, Grafana, Loki, VictoriaMetrics, Home Assistant, Zigbee2MQTT, Mosquitto, Tailscale operator, Hubble UI, qui, qbittorrent-exporter
 
-**raspberrypi (tainted):** Transmission (with Gluetun VPN sidecar) — requires toleration to schedule
+**raspberrypi (tainted):** qBittorrent (with Gluetun VPN sidecar) — requires toleration to schedule
 
 **Both nodes (DaemonSets):** fluent-bit (logs), node-exporter, kgateway Envoy proxy (hostNetwork)
 
@@ -52,9 +52,7 @@ homelab/
 │   └── workflows/
 ├── images/                    # Custom Docker images
 │   ├── gamja/
-│   ├── gluetun-transmission-cli/
 │   ├── soju/
-│   ├── transmission-exporter/
 │   └── vault-tools/
 ├── docs/
 │   ├── setup/                 # k3s, MikroTik WireGuard, OrbStack networking
@@ -66,7 +64,7 @@ homelab/
         ├── platform/          # vault, external-secrets, argocd, authelia, tailscale, vault-secrets-generator
         ├── monitoring/        # victoriametrics, vmagent, loki, grafana, fluent-bit,
         │                      # kube-state-metrics, node-exporter, blackbox-exporter, mikrotik-exporter
-        ├── applications/      # external-services, transmission, pan-agent, soju, gamja
+        ├── applications/      # external-services, qbittorrent, pan-agent, soju, gamja
         └── smarthome/         # mosquitto, zigbee2mqtt, home-assistant
 ```
 

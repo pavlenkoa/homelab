@@ -175,7 +175,7 @@ parents:
           valueFiles: []
         annotations:
           argocd.argoproj.io/sync-wave: "4"
-      - name: transmission
+      - name: qbittorrent
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "4"

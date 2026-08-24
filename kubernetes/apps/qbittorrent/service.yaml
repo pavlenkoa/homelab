@@ -1,16 +1,13 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: transmission
-  namespace: transmission
+  name: qbittorrent
+  namespace: qbittorrent
 spec:
   type: ClusterIP
   selector:
-    app: transmission
+    app: qbittorrent
   ports:
     - port: 9091
       targetPort: 9091
       name: web
-    - port: 19091
-      targetPort: 19091
-      name: metrics

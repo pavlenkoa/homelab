@@ -1,8 +1,8 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: transmission
-  namespace: transmission
+  name: qui
+  namespace: qbittorrent
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
@@ -11,7 +11,7 @@ spec:
       namespace: kgateway-system
       sectionName: https
   hostnames:
-    - transmission.pavlenko.io
+    - qbit.pavlenko.io
   rules:
     - matches:
         - path:
@@ -20,20 +20,20 @@ spec:
       backendRefs:
         - group: ""
           kind: Service
-          name: transmission
-          port: 9091
+          name: qui
+          port: 7476
           weight: 1
 ---
 apiVersion: gateway.kgateway.dev/v1alpha1
 kind: TrafficPolicy
 metadata:
-  name: transmission-auth
-  namespace: transmission
+  name: qui-auth
+  namespace: qbittorrent
 spec:
   targetRefs:
     - group: gateway.networking.k8s.io
       kind: HTTPRoute
-      name: transmission
+      name: qui
   extAuth:
     extensionRef:
       name: authelia

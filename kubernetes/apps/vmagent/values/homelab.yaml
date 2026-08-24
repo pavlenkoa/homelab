@@ -62,11 +62,11 @@ victoria-metrics-agent:
           - source_labels: [instance]
             target_label: node
 
-      # Transmission exporter metrics
-      - job_name: transmission
+      # qBittorrent exporter metrics
+      - job_name: qbittorrent
         static_configs:
           - targets:
-              - transmission.transmission:19091
+              - qbittorrent-exporter.qbittorrent:19091
 
       # macOS host metrics (node_exporter via OrbStack host.internal)
       # Uses macos-node internally, relabeled to job=node in storage
@@ -191,7 +191,7 @@ victoria-metrics-agent:
               - https://ha.pavlenko.io
               - https://hubble.pavlenko.io
               - https://loki.pavlenko.io
-              - https://transmission.pavlenko.io
+              - https://qbit.pavlenko.io
               - https://vault.pavlenko.io
               - https://victoriametrics.pavlenko.io
               - https://z2m.pavlenko.io

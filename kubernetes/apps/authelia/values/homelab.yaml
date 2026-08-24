@@ -97,7 +97,7 @@ authelia:
     access_control:
       default_policy: 'deny'
       rules:
-        - domain: 'transmission.pavlenko.io'
+        - domain: 'qbit.pavlenko.io'
           policy: 'two_factor'
         - domain: 'hubble.pavlenko.io'
           policy: 'two_factor'
