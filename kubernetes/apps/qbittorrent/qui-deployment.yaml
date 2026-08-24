@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: qui
   namespace: qbittorrent
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   replicas: 1
   selector:
@@ -19,6 +21,22 @@ spec:
       containers:
         - name: qui
           image: ghcr.io/autobrr/qui:v1.26.0@sha256:9969375e7375194b89eebc490bd16586b6ff4ff403042f6c4f0585eb0e775eaf
+          env:
+            - name: QUI__OIDC_ENABLED
+              value: "true"
+            - name: QUI__OIDC_ISSUER
+              value: "https://auth.pavlenko.io"
+            - name: QUI__OIDC_CLIENT_ID
+              value: "qui"
+            - name: QUI__OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: qui-oidc
+                  key: QUI__OIDC_CLIENT_SECRET
+            - name: QUI__OIDC_REDIRECT_URL
+              value: "https://qbit.pavlenko.io/api/auth/oidc/callback"
+            - name: QUI__OIDC_DISABLE_BUILT_IN_LOGIN
+              value: "true"
           ports:
             - containerPort: 7476
               name: web

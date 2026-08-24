@@ -3,6 +3,8 @@ kind: StatefulSet
 metadata:
   name: qbittorrent
   namespace: qbittorrent
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   serviceName: qbittorrent
   replicas: 1
