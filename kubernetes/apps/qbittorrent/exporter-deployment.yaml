@@ -24,14 +24,16 @@ spec:
       # matching Transmission's unauthenticated RPC today.
       containers:
         - name: qbittorrent-exporter
-          image: ghcr.io/esanchezm/prometheus-qbittorrent-exporter:v1.7.0@sha256:02dbf86bd2850dcb94e7df5684159b954386e978e20f6b473f92efa62335f552
+          image: ghcr.io/martabal/qbittorrent-exporter:v2.0.2@sha256:0e818e0240cc968fffdeba5f43a5f1452d72095a4324cea0cc18871e54805902
           env:
-            - name: QBITTORRENT_HOST
-              value: "qbittorrent.qbittorrent.svc.cluster.local"
-            - name: QBITTORRENT_PORT
-              value: "9091"
+            - name: QBITTORRENT_BASE_URL
+              value: "http://qbittorrent.qbittorrent.svc.cluster.local:9091"
             - name: EXPORTER_PORT
               value: "19091"
+            # Adds the torrent hash to qbittorrent_torrent_* labels so two torrents
+            # with the same display name don't collide into one Prometheus series.
+            - name: ENABLE_LABEL_WITH_HASH
+              value: "true"
           ports:
             - containerPort: 19091
               name: metrics
