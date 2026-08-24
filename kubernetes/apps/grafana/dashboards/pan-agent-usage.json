@@ -14,7 +14,25 @@
   "weekStart": "",
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": { "text": "All", "value": "$__all" },
+        "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
+        "includeAll": true,
+        "label": "Person",
+        "multi": true,
+        "name": "Person",
+        "options": [],
+        "query": "label_values({namespace=\"pan-agent\"}, pod)",
+        "refresh": 2,
+        "regex": "/^person-.*/",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "annotations": {
     "list": [
       {
@@ -405,7 +423,7 @@
     },
     {
       "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "description": "Best-effort grouping done purely in Grafana (no pan-agent code change): chronological, one row per step. » = incoming request, « = assistant text, ⚙ = tool call (input truncated to 150 chars for display), ✓/✗ = turn finished (cost · steps · duration). No turn-id tag — a single person's turns never interleave with each other (single-flight session), so the person name plus chronological order is enough to follow a conversation; different people's turns do interleave with each other. `NO_UPDATE` (a scheduled-task sentinel meaning nothing was sent to Telegram) is rendered as a plain note instead of literal text. Still one row per step, not one block per turn — a true single-block view would need pan-agent itself to log a consolidated transcript.",
+      "description": "Best-effort grouping done purely in Grafana (no pan-agent code change): chronological, one row per step, prefixed with person + a short id (first 8 chars of the trigger-scoped part of `turn`) so same-turn rows stay identifiable even when other people's turns interleave — or use the $Person filter above to isolate one person entirely. » = incoming request (chat/cron), tree rows = tool calls (skill/bash/...) and assistant text, └ = turn finished (ok/fail · steps · duration · cost). `reply` currently shows for every assistant text block, not just the truly final one — line_format has no visibility into sibling lines, so there's no way to know from Grafana alone which assistant-text line was actually the last one sent to Telegram. A real reply/note split (and correctly flagging NO_UPDATE-suppressed turns) needs pan-agent itself to log what it actually decided to send — not yet done.",
       "gridPos": { "h": 35, "w": 24, "x": 0, "y": 28 },
       "id": 11,
       "options": {
@@ -422,7 +440,7 @@
       "targets": [
         {
           "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "{namespace=\"pan-agent\"} | json | evt=~\"user|assistant|tool_use|turn_end\" | line_format `{{ if eq .evt \"user\" }}» {{ .person }}: {{ .text }}{{ else if eq .evt \"assistant\" }}{{ if eq .text \"NO_UPDATE\" }}« {{ .person }}: (nothing to report — no message sent){{ else }}« {{ .person }}: {{ .text }}{{ end }}{{ else if eq .evt \"tool_use\" }}   ⚙ {{ .tool }}: {{ .input | trunc 150 }}{{ else if eq .evt \"turn_end\" }}{{ if eq .ok \"true\" }}   ✓{{ else }}   ✗{{ end }} ${{ .cost_usd }} · {{ .turns }} step(s) · {{ .dur_ms }}ms{{ else }}{{ .person }}({{ .evt }}){{ end }}`",
+          "expr": "{namespace=\"pan-agent\", pod=~\"$Person\"} | json | evt=~\"user|assistant|tool_use|turn_end\" | line_format `{{ $mode := \"chat\" }}{{ if hasPrefix \"task:\" .turn }}{{ $mode = \"cron\" }}{{ end }}{{ $rid := regexReplaceAll \"^[a-z]+:([^:-]+).*\" .turn \"${1}\" | trunc 8 }}{{ $pfx := printf \"%-17s%-9s\" .person $rid }}{{ if eq .evt \"user\" }}{{ $t := regexReplaceAll \"^@\\\\S+:\\\\s*\" .text \"\" }}{{ $t = regexReplaceAll \"^\\\\[Scheduled task [^\\\\]]*\\\\]\\\\s*\" $t \"\" }}{{ $pfx }}» ┌ {{ printf \"%-5s\" $mode }} {{ regexReplaceAll \"\\\\s+\" $t \" \" | trunc 160 }}{{ else if eq .evt \"assistant\" }}{{ if .text | contains \"NO_UPDATE\" }}{{ $pfx }}  │ mute  (no message sent){{ else }}{{ $pfx }}« │ reply {{ regexReplaceAll \"\\\\s+\" .text \" \" | trunc 120 }}{{ end }}{{ else if eq .evt \"tool_use\" }}{{ $in := .input }}{{ if hasPrefix \"{\\\"command\\\"\" $in }}{{ $in = (fromJson $in).command }}{{ else if hasPrefix \"{\\\"skill\\\"\" $in }}{{ $in = (fromJson $in).skill }}{{ end }}{{ $pfx }}  │ {{ printf \"%-5s\" (.tool | lower) }} {{ regexReplaceAll \"\\\\s+\" $in \" \" | trunc 100 }}{{ else if eq .evt \"turn_end\" }}{{ $pfx }}  └ {{ if eq .ok \"true\" }}✓ ok{{ else }}✗ fail{{ end }} · {{ .turns }} steps · {{ .dur_ms }}ms · ${{ .cost_usd }}{{ else }}{{ $pfx }}  │ {{ .evt }}  {{ .text }}{{ end }}`",
           "queryType": "range",
           "refId": "A"
         }
