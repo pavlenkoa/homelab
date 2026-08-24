@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent-exporter
+  namespace: qbittorrent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent-exporter
+  template:
+    metadata:
+      labels:
+        app: qbittorrent-exporter
+    spec:
+      # No nodeSelector/toleration — raspberrypi's "dedicated=media" taint keeps this
+      # off the Pi automatically, so it lands on macmini. Reaches qBittorrent over its
+      # ClusterIP Service rather than localhost, since it no longer shares gluetun's pod.
+      # No credentials needed: qBittorrent's WebUI > Advanced > "Bypass authentication
+      # for clients in whitelisted IP subnets" is set to the cluster pod CIDR (see
+      # statefulset.yaml), so in-cluster callers like this one authenticate for free —
+      # matching Transmission's unauthenticated RPC today.
+      containers:
+        - name: qbittorrent-exporter
+          image: ghcr.io/esanchezm/prometheus-qbittorrent-exporter:v1.7.0@sha256:02dbf86bd2850dcb94e7df5684159b954386e978e20f6b473f92efa62335f552
+          env:
+            - name: QBITTORRENT_HOST
+              value: "qbittorrent.qbittorrent.svc.cluster.local"
+            - name: QBITTORRENT_PORT
+              value: "9091"
+            - name: EXPORTER_PORT
+              value: "19091"
+          ports:
+            - containerPort: 19091
+              name: metrics

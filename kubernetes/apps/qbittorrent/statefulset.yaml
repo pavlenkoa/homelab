@@ -1,18 +1,18 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: transmission
-  namespace: transmission
+  name: qbittorrent
+  namespace: qbittorrent
 spec:
-  serviceName: transmission
+  serviceName: qbittorrent
   replicas: 1
   selector:
     matchLabels:
-      app: transmission
+      app: qbittorrent
   template:
     metadata:
       labels:
-        app: transmission
+        app: qbittorrent
     spec:
       nodeSelector:
         kubernetes.io/hostname: raspberrypi
@@ -36,7 +36,7 @@ spec:
             value: "1"
       containers:
         - name: gluetun
-          image: ghcr.io/pavlenkoa/gluetun-transmission-cli:latest@sha256:32a6da7db8e4231c15ef46110fb2391c8bd49a225223d672f88cbef25895702b
+          image: qmcgaw/gluetun:latest@sha256:e3272b29a4bc177b389fbdcb54cf9716ccbfc30f04d8b7a35b0a5be9cdb58461
           securityContext:
             capabilities:
               add:
@@ -68,12 +68,19 @@ spec:
               value: "on"
             - name: VPN_PORT_FORWARDING_PROVIDER
               value: "protonvpn"
+            # Pushes the forwarded port into qBittorrent via its WebUI API using the
+            # stock image's bundled wget (no curl in qmcgaw/gluetun, no custom image
+            # needed). Relies on WebUI > Advanced > "Bypass authentication for clients
+            # in whitelisted IP subnets" being set to "127.0.0.1/32,10.0.0.0/16" (loopback
+            # for this call, plus the Cilium pod CIDR so qui/qbittorrent-exporter also
+            # authenticate for free — set manually once, see migration runbook), since
+            # this call carries no login credentials.
             - name: VPN_PORT_FORWARDING_UP_COMMAND
-              value: "/bin/sh -c \"until transmission-remote 127.0.0.1:9091 -p {{PORTS}} 2>/dev/null; do echo 'Waiting for Transmission to be ready...'; sleep 5; done && echo 'Port {{PORTS}} set successfully'\""
+              value: "/bin/sh -c \"until wget -q -O /dev/null --post-data='json={\\\"listen_port\\\":{{PORTS}}}' http://127.0.0.1:9091/api/v2/app/setPreferences 2>/dev/null; do echo 'Waiting for qBittorrent to be ready...'; sleep 5; done && echo 'Port {{PORTS}} set successfully'\""
             - name: FIREWALL
               value: "on"
             - name: FIREWALL_INPUT_PORTS
-              value: "9091,19091"
+              value: "9091"
             # Use embedded Unbound with caching — cache hits avoid upstream queries
             # under high-frequency hostname lookup patterns.
             - name: DNS_UPSTREAM_RESOLVER_TYPE
@@ -104,19 +111,8 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 10
 
-        - name: transmission-exporter
-          image: ghcr.io/pavlenkoa/transmission-exporter:latest@sha256:beabbbd3dcfe1b4e2f76ea74d1d13f2efa05f6d5de113699c9c952b5fb420444
-          env:
-            - name: TRANSMISSION_ADDR
-              value: "http://localhost:9091"
-            - name: WEB_ADDR
-              value: ":19091"
-          ports:
-            - containerPort: 19091
-              name: metrics
-
-        - name: transmission
-          image: lscr.io/linuxserver/transmission:4.1.1@sha256:cc1b5ba5b79ff201cb9a8c3cb5d94f1fb2b22baea87ad476a5bde087ec26c4be
+        - name: qbittorrent
+          image: lscr.io/linuxserver/qbittorrent:5.2.3@sha256:304b19cf94bf4fda534e0b086cab9c5f1a9e139a8180c05c0ad7d2ba1526fa99
           env:
             - name: PUID
               value: "1000"
@@ -124,6 +120,8 @@ spec:
               value: "1000"
             - name: TZ
               value: "Europe/Kyiv"
+            - name: WEBUI_PORT
+              value: "9091"
           volumeMounts:
             - name: config
               mountPath: /config
@@ -155,7 +153,7 @@ spec:
           emptyDir: {}
         - name: config
           hostPath:
-            path: /home/andrii/transmission-config
+            path: /home/andrii/qbittorrent-config
             type: DirectoryOrCreate
         - name: watch
           hostPath:

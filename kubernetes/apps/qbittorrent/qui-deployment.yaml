@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qui
+  namespace: qbittorrent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qui
+  template:
+    metadata:
+      labels:
+        app: qui
+    spec:
+      # No nodeSelector/toleration — raspberrypi's "dedicated=media" taint keeps this
+      # off the Pi automatically, so it lands on macmini. qui only needs network access
+      # to qBittorrent's WebUI API, not the media disk.
+      containers:
+        - name: qui
+          image: ghcr.io/autobrr/qui:v1.26.0@sha256:9969375e7375194b89eebc490bd16586b6ff4ff403042f6c4f0585eb0e775eaf
+          ports:
+            - containerPort: 7476
+              name: web
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          hostPath:
+            path: /home/andrii/qui-config
+            type: DirectoryOrCreate
