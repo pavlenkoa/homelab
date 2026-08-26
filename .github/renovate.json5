@@ -46,11 +46,12 @@
   // Package Rules
   "packageRules": [
     {
-      "description": "Group Helm chart updates",
+      "description": "Group Helm chart updates and prioritize them so the weekly flood of individual Docker digest PRs doesn't starve them out of the prHourlyLimit/prConcurrentLimit budget",
       "matchManagers": ["helmv3"],
       "matchFileNames": ["kubernetes/apps/**"],
       "groupName": "Helm charts",
-      "commitMessagePrefix": "chore(helm):"
+      "commitMessagePrefix": "chore(helm):",
+      "prPriority": 5
     },
     {
       "description": "Group GitHub Actions updates",
