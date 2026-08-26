@@ -209,28 +209,30 @@ authelia:
       filesystem:
         enabled: true
         filename: '/config/notification.txt'
-  
-  # Redis subchart configuration
-  redis:
-    enabled: true
-    image:
-      tag: latest  # Override stale tag from bundled chart
-    auth:
-      enabled: false
-    master:
-      persistence:
-        enabled: true
-        size: 1Gi
-      resources:
-        requests:
-          memory: 64Mi
-          cpu: 50m
-        limits:
-          memory: 128Mi
-          cpu: 100m
-  
-  # Disable other database subcharts
-  postgresql:
+
+# Redis for Authelia's session store.
+# The authelia chart bundled this as a subchart through v0.10.x; upstream removed
+# it in v0.11.0 (Bitnami stopped publishing versioned public images), so it's now
+# our own dependency instead. Same chart, same version, same values as before -
+# produces identical resource names (authelia-redis-master, etc).
+redis:
+  enabled: true
+  # The authelia chart defaulted its bundled redis to standalone; the bitnami
+  # chart's own default is "replication" (adds a 3-pod replica StatefulSet we
+  # don't want), so this must be set explicitly now that we own the dependency.
+  architecture: standalone
+  image:
+    tag: latest  # Override stale tag from bundled chart
+  auth:
     enabled: false
-  mariadb:
-    enabled: false
+  master:
+    persistence:
+      enabled: true
+      size: 1Gi
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+      limits:
+        memory: 128Mi
+        cpu: 100m

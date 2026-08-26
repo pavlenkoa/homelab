@@ -2,13 +2,16 @@ apiVersion: v2
 name: authelia
 version: 1.0.0
 description: "Wrapper chart for Authelia with homelab secret management"
-appVersion: "4.39.13"
+appVersion: "4.39.20"
 
 dependencies:
 - name: authelia
-  version: "0.10.50"
+  version: "0.11.6"
   repository: "https://charts.authelia.com"
   condition: upstream.enabled
+- name: redis
+  version: "19.6.4"
+  repository: "https://charts.bitnami.com/bitnami"
 - name: common
   version: "0.1.0"
   repository: "file://../common"
