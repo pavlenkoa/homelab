@@ -5,5 +5,5 @@ description: "Wrapper chart for external-secrets"
 
 dependencies:
   - name: external-secrets
-    version: "2.2.0"
+    version: "2.9.0"
     repository: "https://charts.external-secrets.io"

@@ -5,7 +5,7 @@ description: "Wrapper chart for Grafana"
 
 dependencies:
   - name: grafana
-    version: "12.11.1"
+    version: "12.11.2"
     repository: "https://grafana-community.github.io/helm-charts"
   - name: common
     version: "0.1.0"
