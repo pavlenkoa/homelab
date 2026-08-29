@@ -188,6 +188,11 @@ parents:
           targetRevision: "HEAD"
         annotations:
           argocd.argoproj.io/sync-wave: "4"
+      - name: pan-agent-oauth-route
+        namespace: pan-agent
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
       - name: soju
         namespace: irc
         directory: {}

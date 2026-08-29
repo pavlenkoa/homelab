@@ -1,0 +1,41 @@
+# Public callback for pan-agent's self-service eSputnik MCP OAuth
+# (/esputnik_connect) — a person's own phone browser must reach this
+# unauthenticated mid-OAuth-flow, so it is deliberately NOT paired with a
+# gateway.kgateway.dev/v1alpha1 TrafficPolicy/Authelia extAuth gate the way
+# every other homelab HTTPRoute is (qui, gamja, hubble-ui). See pan-agent's
+# CLAUDE.md eSputnik OAuth design note for the full rationale.
+#
+# Scoped to this one path, not the whole api.pavlenko.io host — that
+# hostname is meant as this homelab's general public-API surface, not
+# claimed wholesale by this one route.
+#
+# A separate ArgoCD app (not folded into pan-agent's own Application) since
+# pan-agent's chart is pulled directly from its own external repo
+# (kubernetes/app-of-apps/values.yaml's `pan-agent` child), with no local
+# wrapper chart in this repo to hang extra manifests off of — unlike
+# qbittorrent/soju/gamja, which already are `directory: {}` apps here.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: pan-agent-oauth-callback
+  namespace: pan-agent
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab
+      namespace: kgateway-system
+      sectionName: https
+  hostnames:
+    - api.pavlenko.io
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /oauth/esputnik/callback
+      backendRefs:
+        - group: ""
+          kind: Service
+          name: pan-agent-operator
+          port: 8082
+          weight: 1
