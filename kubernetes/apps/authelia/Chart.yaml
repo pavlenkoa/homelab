@@ -10,7 +10,7 @@ dependencies:
   repository: "https://charts.authelia.com"
   condition: upstream.enabled
 - name: redis
-  version: "19.6.4"
+  version: "28.0.12"
   repository: "https://charts.bitnami.com/bitnami"
 - name: common
   version: "0.1.0"
