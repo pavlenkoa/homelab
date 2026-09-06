@@ -15,6 +15,14 @@ nfs:
   rootPath: /media/pan-agent
   mountPath: /mnt/pan-agent-nfs
 
+operator:
+  contextLimits:
+    default: 400000
+    high: 700000
+    highSlugs:
+      - andrii-pavlenko
+      - tania
+
 media:
   nfsPath: /media
   capacity: 1Ti
