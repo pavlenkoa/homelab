@@ -46,6 +46,13 @@ vault:
 
   # Server configuration
   server:
+    # Pin server image explicitly (chart 0.32.0's default has drifted upstream
+    # over time from 1.19.0 to 2.0.4 without a chart version bump — pinning here
+    # prevents silent version drift on future syncs)
+    image:
+      repository: "hashicorp/vault"
+      tag: "2.0.4@sha256:5be49781ecf78bfe775c5309c6a4d9f4e9e040b6c885c99eb2b12fb69855e1a2"
+
     # Disable development mode for production setup with auto-unseal
     dev:
       enabled: false
