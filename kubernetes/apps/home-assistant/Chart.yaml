@@ -5,7 +5,7 @@ description: "Wrapper chart for Home Assistant"
 
 dependencies:
   - name: home-assistant
-    version: "0.3.80"
+    version: "0.3.81"
     repository: "http://pajikos.github.io/home-assistant-helm-chart/"
   - name: common
     version: "0.1.0"
