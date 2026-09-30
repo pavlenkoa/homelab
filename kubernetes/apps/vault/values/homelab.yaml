@@ -118,13 +118,37 @@ vault:
           - sh
           - -c
           - |
+            # Fail the init container on any error so kubelet retries it (after a
+            # reboot DNS/network may not be ready yet) instead of starting Vault
+            # without kubectl, which leaves it sealed forever.
+            set -eu
             echo "→ Preparing auto-unseal script..."
-            
-            # Install kubectl for secret access  
-            apk add --no-cache wget > /dev/null 2>&1
-            KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
-            wget -q -O /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+
+            # Install kubectl for secret access (pinned; matches node architecture)
+            KUBECTL_VERSION=v1.31.0
+            case "$(uname -m)" in
+              x86_64) BIN_ARCH=amd64 ;;
+              aarch64) BIN_ARCH=arm64 ;;
+              *) echo "✗ Unsupported architecture: $(uname -m)"; exit 1 ;;
+            esac
+
+            # alpine base has no curl; installing it needs the network too, so retry
+            i=0
+            until apk add --no-cache curl > /dev/null 2>&1; do
+              i=$((i + 1))
+              if [ "$i" -ge 60 ]; then
+                echo "✗ Failed to install curl"
+                exit 1
+              fi
+              echo "Waiting for network... ($i/60)"
+              sleep 5
+            done
+
+            # Retry on any error incl. DNS failures (~5 min max)
+            curl -fsSL --connect-timeout 10 --retry 60 --retry-delay 5 --retry-all-errors \
+              -o /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${BIN_ARCH}/kubectl"
             chmod +x /tmp/kubectl
+            /tmp/kubectl version --client > /dev/null
 
             # Copy kubectl to scripts directory for use by unseal script
             cp /tmp/kubectl /vault/scripts/kubectl

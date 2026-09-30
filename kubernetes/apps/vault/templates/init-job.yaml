@@ -30,10 +30,22 @@ spec:
             - sh
             - -c
             - |
-              apk add --no-cache wget jq > /dev/null 2>&1
-              # Download kubectl
-              KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
-              wget -q -O /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+              set -eu
+              i=0
+              until apk add --no-cache curl jq > /dev/null 2>&1; do
+                i=$((i + 1))
+                [ "$i" -ge 60 ] && { echo "✗ Failed to install curl"; exit 1; }
+                sleep 5
+              done
+              # Download kubectl (pinned, matches node architecture)
+              KUBECTL_VERSION=v1.31.0
+              case "$(uname -m)" in
+                x86_64) BIN_ARCH=amd64 ;;
+                aarch64) BIN_ARCH=arm64 ;;
+                *) echo "✗ Unsupported architecture: $(uname -m)"; exit 1 ;;
+              esac
+              curl -fsSL --connect-timeout 10 --retry 60 --retry-delay 5 --retry-all-errors \
+                -o /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${BIN_ARCH}/kubectl"
               chmod +x /tmp/kubectl
               cp /tmp/kubectl /shared/kubectl
               echo "✓ Tools installed successfully"
