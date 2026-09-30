@@ -25,17 +25,13 @@ spec:
       restartPolicy: OnFailure
       initContainers:
         - name: install-tools
-          image: alpine:latest@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
+          image: bitnami/kubectl:latest@sha256:ab90e1058e5a658cc94b4e7eb6d48e5758cfd6d77b5dd1869513aec3a3054673
           command:
             - sh
             - -c
             - |
-              apk add --no-cache wget > /dev/null 2>&1
-              # Download kubectl
-              KUBECTL_VERSION=$(wget -qO- https://dl.k8s.io/release/stable.txt)
-              wget -q -O /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-              chmod +x /tmp/kubectl
-              cp /tmp/kubectl /shared/kubectl
+              set -eu
+              cp /opt/bitnami/kubectl/bin/kubectl /shared/kubectl
               echo "✓ Tools installed successfully"
           volumeMounts:
             - name: shared-tools

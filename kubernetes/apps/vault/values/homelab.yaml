@@ -108,7 +108,7 @@ vault:
     # Init container for auto-unseal script preparation
     extraInitContainers:
       - name: vault-unseal-prep
-        image: alpine:latest
+        image: bitnami/kubectl:latest@sha256:ab90e1058e5a658cc94b4e7eb6d48e5758cfd6d77b5dd1869513aec3a3054673
         env:
           - name: VAULT_NAMESPACE
             valueFrom:
@@ -118,40 +118,12 @@ vault:
           - sh
           - -c
           - |
-            # Fail the init container on any error so kubelet retries it (after a
-            # reboot DNS/network may not be ready yet) instead of starting Vault
-            # without kubectl, which leaves it sealed forever.
             set -eu
             echo "→ Preparing auto-unseal script..."
 
-            # Install kubectl for secret access (pinned; matches node architecture)
-            KUBECTL_VERSION=v1.31.0
-            case "$(uname -m)" in
-              x86_64) BIN_ARCH=amd64 ;;
-              aarch64) BIN_ARCH=arm64 ;;
-              *) echo "✗ Unsupported architecture: $(uname -m)"; exit 1 ;;
-            esac
-
-            # alpine base has no curl; installing it needs the network too, so retry
-            i=0
-            until apk add --no-cache curl > /dev/null 2>&1; do
-              i=$((i + 1))
-              if [ "$i" -ge 60 ]; then
-                echo "✗ Failed to install curl"
-                exit 1
-              fi
-              echo "Waiting for network... ($i/60)"
-              sleep 5
-            done
-
-            # Retry on any error incl. DNS failures (~5 min max)
-            curl -fsSL --connect-timeout 10 --retry 60 --retry-delay 5 --retry-all-errors \
-              -o /tmp/kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${BIN_ARCH}/kubectl"
-            chmod +x /tmp/kubectl
-            /tmp/kubectl version --client > /dev/null
-
-            # Copy kubectl to scripts directory for use by unseal script
-            cp /tmp/kubectl /vault/scripts/kubectl
+            # kubectl ships in this image, so nothing is downloaded at pod start
+            # (DNS/network may not be ready yet after a reboot)
+            cp /opt/bitnami/kubectl/bin/kubectl /vault/scripts/kubectl
             
             # Create smart auto-unseal script with improved logic and performance
             cat > /vault/scripts/unseal.sh << 'EOF'
