@@ -134,8 +134,6 @@ vault:
             echo "→ Checking current Vault status..."
             if vault status > /dev/null 2>&1 && vault status | grep -q "Sealed.*false"; then
               echo "✓ Vault is already unsealed, nothing to do"
-              rm -f /vault/scripts/unseal.sh /vault/scripts/kubectl
-              echo "✓ Cleaned up script and kubectl"
               exit 0
             fi
             
@@ -199,8 +197,6 @@ vault:
               # Exit codes: 0=unsealed, 1=error, 2=sealed but responding
               if [ $VAULT_STATUS_CODE -eq 0 ]; then
                 echo "✓ Vault is already unsealed (race condition avoided)"
-                rm -f /vault/scripts/unseal.sh /vault/scripts/kubectl
-                echo "✓ Cleaned up script and kubectl"
                 exit 0
               elif [ $VAULT_STATUS_CODE -eq 2 ]; then
                 echo "✓ Vault is responding and sealed, ready to unseal"
@@ -230,9 +226,8 @@ vault:
               exit 1
             fi
             
-            # STEP 8: Clean up sensitive data and tools
-            rm -f /vault/scripts/unseal.sh /vault/scripts/kubectl
-            echo "✓ Cleaned up unseal script and kubectl"
+            # Script and kubectl are intentionally kept: the emptyDir survives
+            # container restarts, and Vault starts sealed after every restart.
             echo "✓ Auto-unseal process completed successfully!"
             EOF
 
