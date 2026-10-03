@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbit-throttle
+  namespace: qbittorrent
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbit-throttle
+  template:
+    metadata:
+      labels:
+        app: qbit-throttle
+    spec:
+      # No toleration: the Pi's "dedicated=media" taint keeps this on macmini, same as
+      # the exporter. Reaches qBittorrent over its ClusterIP Service; auth is bypassed
+      # for the pod CIDR (see statefulset.yaml), so no qBittorrent credentials are needed.
+      # Caps qBittorrent's alternative speed limits while Emby has an active, un-paused
+      # session. Limits are in KiB/s and are written into qBittorrent's preferences.
+      containers:
+        - name: qbit-throttle
+          image: ghcr.io/pavlenkoa/qbit-throttle:latest
+          env:
+            - name: EMBY_URL
+              value: "http://emby.external-services.svc.cluster.local:8096"
+            - name: QBIT_URL
+              value: "http://qbittorrent.qbittorrent.svc.cluster.local:9091"
+            - name: DOWN_LIMIT_KIB
+              value: "2048"
+            - name: UP_LIMIT_KIB
+              value: "100"
+            - name: POLL_INTERVAL
+              value: "2s"
+            - name: RELEASE_DELAY
+              value: "45s"
+          envFrom:
+            - secretRef:
+                name: qbit-throttle-emby
+          ports:
+            - containerPort: 8080
+              name: metrics
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: metrics
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 5m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]

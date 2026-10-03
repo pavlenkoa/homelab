@@ -68,6 +68,12 @@ victoria-metrics-agent:
           - targets:
               - qbittorrent-exporter.qbittorrent:19091
 
+      # qbit-throttle (Emby-aware qBittorrent speed cap)
+      - job_name: qbit-throttle
+        static_configs:
+          - targets:
+              - qbit-throttle.qbittorrent:8080
+
       # macOS host metrics (node_exporter via OrbStack host.internal)
       # Uses macos-node internally, relabeled to job=node in storage
       # so k8s dashboards don't confuse macOS host with macmini k8s node
