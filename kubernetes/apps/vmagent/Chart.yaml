@@ -5,5 +5,5 @@ description: "Wrapper chart for victoria-metrics-agent"
 
 dependencies:
   - name: victoria-metrics-agent
-    version: "0.48.0"
+    version: "0.49.0"
     repository: "https://victoriametrics.github.io/helm-charts"
