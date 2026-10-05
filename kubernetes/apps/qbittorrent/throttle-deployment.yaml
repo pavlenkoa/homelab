@@ -22,7 +22,7 @@ spec:
       # session. Limits are in KiB/s and are written into qBittorrent's preferences.
       containers:
         - name: qbit-throttle
-          image: ghcr.io/pavlenkoa/qbit-throttle:latest
+          image: ghcr.io/pavlenkoa/qbit-throttle:latest@sha256:587a27da10ab79656c41816b19920e54f2ef1e1ea79439e5098149ce0dc6601c
           env:
             - name: EMBY_URL
               value: "http://emby.external-services.svc.cluster.local:8096"
