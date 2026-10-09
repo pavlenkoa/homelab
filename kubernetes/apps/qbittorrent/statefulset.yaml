@@ -120,7 +120,7 @@ spec:
             failureThreshold: 8
 
         - name: qbittorrent
-          image: lscr.io/linuxserver/qbittorrent:5.2.3@sha256:304b19cf94bf4fda534e0b086cab9c5f1a9e139a8180c05c0ad7d2ba1526fa99
+          image: lscr.io/linuxserver/qbittorrent:5.2.3@sha256:caab2ebce30799ab342c374ea268fef4ec063a8ec3733a4e5d4a8e856ee32ce8
           env:
             - name: PUID
               value: "1000"
