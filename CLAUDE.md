@@ -23,7 +23,7 @@ Single Kubernetes cluster (k3s + Cilium) spanning Mac Mini M4 and Raspberry Pi 4
 
 **macmini only:** vmagent Deployment (metrics scraping)
 
-**Native macOS:** Emby, node_exporter, fluent-bit (Emby logs)
+**Native macOS:** Emby, node_exporter, fluent-bit (Emby logs), mdns-reflector (bridges Bonjour from the OrbStack VM to the LAN for HomeKit, see `docs/setup/homekit-mdns.md`)
 
 ## Monitoring
 
@@ -50,6 +50,7 @@ homelab/
 │   ├── CODEOWNERS
 │   ├── renovate.json5
 │   └── workflows/
+├── host/macmini/              # Native macOS services outside GitOps (mdns-reflector)
 ├── images/                    # Custom Docker images
 │   ├── gamja/
 │   ├── soju/

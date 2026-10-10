@@ -24,6 +24,12 @@ home-assistant:
     type: ClusterIP
     port: 8123
 
+  # hostNetwork so zeroconf advertises on the VM's vmnet interface; the Mac-side
+  # mdns-reflector (host/macmini/mdns-reflector) carries it to the LAN and OrbStack
+  # forwards the HomeKit TCP port (bound on 0.0.0.0) to the Mac's LAN IP.
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+
   persistence:
     enabled: true
     size: 10Gi
@@ -44,6 +50,17 @@ home-assistant:
           {{- range .Values.configuration.trusted_proxies }}
           - {{ . }}
           {{- end }}
+
+      zeroconf:
+        default_interface: true
+
+      homekit:
+        - name: Home Assistant
+          port: 21063
+          advertise_ip: 192.168.88.2
+          filter:
+            include_domains:
+              - light
 
       mqtt:
 

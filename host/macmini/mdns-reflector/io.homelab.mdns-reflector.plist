@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.homelab.mdns-reflector</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/python3</string>
+    <string>/Users/andrii/.local/bin/mdns-reflector.py</string>
+    <string>192.168.88.2</string>
+    <string>192.168.139.3</string>
+    <string>192.168.88.0/24</string>
+    <string>192.168.138.0/23</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/opt/homebrew/var/log/mdns-reflector.log</string>
+  <key>StandardErrorPath</key>
+  <string>/opt/homebrew/var/log/mdns-reflector.log</string>
+</dict>
+</plist>
