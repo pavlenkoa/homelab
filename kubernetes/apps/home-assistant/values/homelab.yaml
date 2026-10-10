@@ -51,9 +51,6 @@ home-assistant:
           - {{ . }}
           {{- end }}
 
-      zeroconf:
-        default_interface: true
-
       homekit:
         - name: Home Assistant
           port: 21063

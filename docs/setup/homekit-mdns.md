@@ -55,5 +55,4 @@ HA (Settings -> Notifications, "HomeKit Pairing").
 - An Apple TV / HomePod home hub is needed for remote access and Apple-side automations.
 - If a killed bridge leaves a stale `_hap._tcp` name cached on the network, HA may rename
   itself ("... #2"); it clears after the record TTL.
-- Rollback: unload the launchd job, set `hostNetwork: false` and remove the `homekit:` /
-  `zeroconf:` blocks.
+- Rollback: unload the launchd job, set `hostNetwork: false` and remove the `homekit:` block.
