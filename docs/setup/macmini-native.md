@@ -9,6 +9,7 @@ committed.
 | node_exporter | Host metrics on `:9100`, scraped by vmagent via `host.internal` | `brew services` | `Brewfile`, `node_exporter/node_exporter.args` |
 | fluent-bit | Tails Emby's log and pushes it to Loki (`job=emby`) | LaunchAgent `io.homelab.fluent-bit` | `fluent-bit/*` |
 | mdns-reflector | Bonjour bridge VM <-> LAN for HomeKit, see `homekit-mdns.md` | LaunchAgent `io.homelab.mdns-reflector` | `mdns-reflector/*` |
+| whisperkit-server | Speech-to-text for pan-agent voice messages (OpenAI-compatible API on `127.0.0.1:50060`, Whisper large-v3-turbo on the Neural Engine) | LaunchAgent `io.homelab.whisperkit-server` | `whisperkit-server/*` |
 | NFS mount | Mounts the Pi's `192.168.88.3:/` at `/Users/Shared/kyiv_storage` | LaunchDaemon `com.kyiv.nfsmount` | `launchd/com.kyiv.nfsmount.plist` |
 
 ## Packages
@@ -49,6 +50,40 @@ launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/io.homelab.fluent-bit.pl
   `ffmpeg-transcode-*` logs are ignored.
 - Query in Grafana: `{job="emby"}`.
 - Log: `/opt/homebrew/var/log/fluent-bit.log`.
+
+## whisperkit-server (speech-to-text)
+
+[Argmax's WhisperKit](https://github.com/argmaxinc/argmax-oss-swift) ships an OpenAI-compatible
+local server (`POST /v1/audio/transcriptions`). Core ML puts the model on the Neural Engine, so
+it stays fast and small in memory (a 10 s voice note takes about a second). pan-agent's person
+pods call it to turn Telegram voice messages into text.
+
+Build once (pin the commit; building needs Xcode command-line tools, ~4 min), then install:
+
+```bash
+git clone https://github.com/argmaxinc/argmax-oss-swift.git && cd argmax-oss-swift
+git checkout 9f99b5c
+BUILD_ALL=1 swift build -c release --product argmax-cli
+mkdir -p ~/.local/opt/whisperkit-server
+cp .build/release/argmax-cli ~/.local/opt/whisperkit-server/
+cp -R .build/release/*.bundle ~/.local/opt/whisperkit-server/   # resource bundles must sit next to the binary
+cd - && cp host/macmini/whisperkit-server/io.homelab.whisperkit-server.plist ~/Library/LaunchAgents/
+launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/io.homelab.whisperkit-server.plist
+```
+
+- The first start downloads the model (about 1.5 GB, to `~/Documents/huggingface`) and compiles it
+  for the Neural Engine, which takes a minute or two; later starts reuse the cache. Until it is
+  up, clients get connection refused and pan-agent tells the person the voice note couldn't be
+  transcribed.
+- The model is chosen by `--model` in the plist (the server ignores the `model` field of requests).
+  Other WhisperKit builds, e.g. the smaller `large-v3-v20240930_626MB`, work the same way.
+- **Bound to loopback only.** OrbStack forwards `host.internal` (`0.250.250.254` inside pods) to the
+  Mac's loopback, so pods reach it while LAN devices are refused; there is no authentication on the
+  server itself, so do not change `--host` to `0.0.0.0`. pan-agent's egress policy allows only that
+  address and port (`network.transcribeCidrs` / `transcribePort` in
+  `kubernetes/apps/pan-agent/values/homelab.yaml`).
+- Smoke test: `curl -F file=@voice.ogg -F model=x http://127.0.0.1:50060/v1/audio/transcriptions`
+  (the field must be non-empty). Log: `/opt/homebrew/var/log/whisperkit-server.log`.
 
 ## NFS mount (root daemon)
 

@@ -16,6 +16,10 @@ nfs:
   mountPath: /mnt/pan-agent-nfs
 
 operator:
+  # Voice messages are transcribed by the WhisperKit server on the Mac host
+  # (host/macmini/whisperkit-server, docs/setup/macmini-native.md).
+  transcribe:
+    url: http://host.internal:50060
   contextLimits:
     default: 400000
     high: 700000
@@ -29,6 +33,8 @@ media:
 
 network:
   qbittorrentNamespace: qbittorrent
+  transcribeCidrs:
+    - 0.250.250.254/32 # OrbStack host.internal as seen from pods
   embyCidrs:
     - 198.19.0.0/16 # OrbStack host.internal range
     - 192.168.88.2/32 # macmini itself
