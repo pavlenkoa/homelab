@@ -201,6 +201,9 @@ victoria-metrics-agent:
               - https://vault.pavlenko.io
               - https://victoriametrics.pavlenko.io
               - https://z2m.pavlenko.io
+              # WhisperKit speech-to-text server on the Mac host (host/macmini/whisperkit-server);
+              # loopback-only, reached via OrbStack's host.internal. Down = voice notes fail.
+              - http://host.internal:50060
         relabel_configs:
           - source_labels: [__address__]
             target_label: __param_target
