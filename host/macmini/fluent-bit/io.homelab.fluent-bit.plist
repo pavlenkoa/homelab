@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>io.homelab.fluent-bit</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/andrii/.config/fluent-bit/run.sh</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>WorkingDirectory</key>
+  <string>/opt/homebrew/var</string>
+  <key>StandardOutPath</key>
+  <string>/opt/homebrew/var/log/fluent-bit.log</string>
+  <key>StandardErrorPath</key>
+  <string>/opt/homebrew/var/log/fluent-bit.log</string>
+</dict>
+</plist>

@@ -1,0 +1,28 @@
+<!-- /Library/LaunchDaemons/com.kyiv.nfsmount.plist -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" 
+        "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.kyiv.nfsmount</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/sbin/mount_nfs</string>
+        <string>-o</string>
+        <string>rw,vers=4,tcp,hard,bg,intr,resvport,rsize=65536,wsize=65536</string>
+        <string>192.168.88.3:/</string>
+        <string>/Users/Shared/kyiv_storage</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <dict>
+        <key>NetworkState</key>
+        <true/>
+    </dict>
+</dict>
+</plist>

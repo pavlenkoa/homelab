@@ -1,0 +1,3 @@
+# Native macOS services on the Mac Mini (outside GitOps). See docs/setup/macmini-native.md
+brew "fluent-bit"
+brew "node_exporter"
