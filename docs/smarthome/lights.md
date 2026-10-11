@@ -141,6 +141,26 @@ Sunset ──── Reading mode continues ────────────�
 
 ## Automations
 
+### Applying automation changes
+
+`kubernetes/apps/home-assistant/files/automations.yaml` is **not** deployed by the chart or
+ArgoCD — only `configuration.yaml` is (via `forceInit`). The live file sits on the HA PVC, so a
+change merged to git does nothing until it is copied in by hand:
+
+```bash
+# back up the live file, then replace it with the repo version
+kubectl -n smarthome exec home-assistant-0 -c home-assistant -- \
+  cp /config/automations.yaml /config/automations.yaml.$(date +%Y%m%d).bak
+kubectl -n smarthome cp kubernetes/apps/home-assistant/files/automations.yaml \
+  home-assistant-0:/config/automations.yaml -c home-assistant
+```
+
+Then reload without restarting: HA UI → Developer tools → YAML → **Automations** → Reload
+(the `pan-agent` HA user is non-admin, so the reload service can't be called with its token).
+Diff the live file against git first (`kubectl ... cat /config/automations.yaml | diff - files/automations.yaml`)
+— edits made in the HA UI land in the live file only and would be overwritten.
+
+
 ### Living Room - Knob Controller
 **ID:** `living_room_knob`
 
