@@ -80,7 +80,7 @@ Scenes are stored on each bulb's firmware, indexed by `(group_id, scene_id)`. Th
 | 4 | red_transition | xy 0.69/0.31 | 254 | 30s | Time-based transition (22:00) |
 | 5 | reading_toggle | 2890K (color_temp: 345) | 1 | 0s | Knob/button toggle on — daytime (sun elevation ≥ 3°) |
 | 6 | red_toggle | xy 0.69/0.31 | 1 | 0s | Knob/button toggle on (night) |
-| 7 | red_dim_presence | xy 0.69/0.31 | 102 | 1.5s | Dim red (40%) for presence in late-night windows (hallway 00-06, bathroom 02-06) |
+| 7 | red_dim_presence | xy 0.69/0.31 | 102 | 1.5s | Dim red (40%) for presence in late-night windows (hallway 00-07, bathroom 02-07) |
 | 8 | red_dim_transition | xy 0.69/0.31 | 102 | 30s | Time-based transition to dim red (hallway 00:00, bathroom 02:00) |
 | 9 | evening_reading_presence | 2700K (color_temp: 370) | 254 (hallway 152) | 1.5s | Evening reading — used when sun elevation < 3° in the reading window |
 | 10 | evening_reading_transition | 2700K (color_temp: 370) | 254 (hallway 152) | 30s | Evening reading at sunset and time-boundary transitions when sun elevation < 3° |

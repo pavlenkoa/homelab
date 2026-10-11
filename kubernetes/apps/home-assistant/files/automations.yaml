@@ -514,7 +514,7 @@
   mode: restart
 - id: bathroom_presence
   alias: Bathroom - Presence
-  description: 'Bathroom lights via Zigbee scenes. 06-22 reading, 22-02 red, 02-06
+  description: 'Bathroom lights via Zigbee scenes. 07-22 reading, 22-02 red, 02-07
     red dim 40%. Scenes 1/2/7: 1.5s fade. Scenes 3/4/8: 30s for time transitions.'
   triggers:
   - trigger: state
@@ -532,15 +532,15 @@
     at: '02:00:00'
     id: time_02
   - trigger: time
-    at: 06:00:00
-    id: time_06
+    at: 07:00:00
+    id: time_07
   actions:
   - choose:
     - conditions:
       - condition: trigger
         id: presence_on
       - condition: time
-        after: 06:00:00
+        after: 07:00:00
         before: '22:00:00'
       sequence:
       - action: mqtt.publish
@@ -552,7 +552,7 @@
         id: presence_on
       - condition: time
         after: '02:00:00'
-        before: 06:00:00
+        before: 07:00:00
       sequence:
       - action: mqtt.publish
         data:
@@ -590,7 +590,7 @@
           payload: '{"scene_recall": 8}'
     - conditions:
       - condition: trigger
-        id: time_06
+        id: time_07
       - condition: state
         entity_id: binary_sensor.bathroom_sensor_presence
         state: 'on'
@@ -610,7 +610,7 @@
   mode: single
 - id: hallway_presence
   alias: Hallway - Presence
-  description: 'Hallway lights via Zigbee scenes. 06-22 reading, 22-00 red, 00-06
+  description: 'Hallway lights via Zigbee scenes. 07-22 reading, 22-00 red, 00-07
     red dim 40%. Scenes 1/2/7: 1.5s fade. Scenes 3/4/8: 30s for time transitions.'
   triggers:
   - trigger: state
@@ -628,15 +628,15 @@
     at: '00:00:00'
     id: time_00
   - trigger: time
-    at: 06:00:00
-    id: time_06
+    at: 07:00:00
+    id: time_07
   actions:
   - choose:
     - conditions:
       - condition: trigger
         id: presence_on
       - condition: time
-        after: 06:00:00
+        after: 07:00:00
         before: '22:00:00'
       sequence:
       - action: mqtt.publish
@@ -648,7 +648,7 @@
         id: presence_on
       - condition: time
         after: '00:00:00'
-        before: 06:00:00
+        before: 07:00:00
       sequence:
       - action: mqtt.publish
         data:
@@ -686,7 +686,7 @@
           payload: '{"scene_recall": 8}'
     - conditions:
       - condition: trigger
-        id: time_06
+        id: time_07
       - condition: state
         entity_id: binary_sensor.hallway_sensor_presence
         state: 'on'
