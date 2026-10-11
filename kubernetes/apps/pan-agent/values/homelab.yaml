@@ -20,6 +20,15 @@ operator:
   # (host/macmini/whisperkit-server, docs/setup/macmini-native.md).
   transcribe:
     url: http://host.internal:50060
+  # Smart-home control via HA's MCP server; only these people get the token.
+  homeAssistant:
+    url: http://home-assistant.smarthome.svc:8123
+    slugs:
+      - andrii-pavlenko
+      - tania
+    vault:
+      key: homeassistant # existing Vault secret, field `token`
+      property: token
   contextLimits:
     default: 400000
     high: 700000
@@ -33,6 +42,8 @@ media:
 
 network:
   qbittorrentNamespace: qbittorrent
+  homeAssistant:
+    viaHost: true # HA runs hostNetwork on this node
   transcribeCidrs:
     - 0.250.250.254/32 # OrbStack host.internal as seen from pods
   embyCidrs:
