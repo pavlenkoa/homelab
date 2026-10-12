@@ -204,13 +204,16 @@
   mode: single
 - id: living_room_knob
   alias: Living Room - Knob Controller
-  description: Handles all knob actions for living room. Knob is removed from z2m group,
+  description: Handles all knob actions for living room. Knobs are removed from z2m group,
     all commands go through HA to group MQTT topic. Toggle recalls correct scene for
     time of day or turns off with fade. Rotation controls brightness. Long press toggles
-    color.
+    color. Two physical knobs share this automation.
   triggers:
   - trigger: mqtt
     topic: zigbee2mqtt/Living Room Knob
+    id: knob_action
+  - trigger: mqtt
+    topic: zigbee2mqtt/Living Room Knob 2
     id: knob_action
   conditions:
   - condition: template
@@ -359,13 +362,16 @@
   mode: restart
 - id: bedroom_knob
   alias: Bedroom - Knob Controller
-  description: Handles all knob actions for bedroom. Knob is removed from z2m group,
+  description: Handles all knob actions for bedroom. Knobs are removed from z2m group,
     all commands go through HA to group MQTT topic. Toggle recalls correct scene for
     time of day or turns off with fade. Rotation controls brightness. Long press toggles
-    color.
+    color. Two physical knobs share this automation.
   triggers:
   - trigger: mqtt
     topic: zigbee2mqtt/Bedroom Knob
+    id: knob_action
+  - trigger: mqtt
+    topic: zigbee2mqtt/Bedroom Knob 2
     id: knob_action
   conditions:
   - condition: template
