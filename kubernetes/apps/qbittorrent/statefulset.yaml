@@ -143,6 +143,8 @@ spec:
               mountPath: /downloads/tvanimation
             - name: downloads-animation
               mountPath: /downloads/animation
+            - name: incomplete
+              mountPath: /downloads/incomplete
 
       volumes:
         - name: tun-device
@@ -182,4 +184,11 @@ spec:
         - name: downloads-animation
           hostPath:
             path: /media/emby/animation
+            type: Directory
+        # Incomplete downloads land on the Pi's SSD and move to the HDD
+        # (/media) when a torrent completes. Directory, not DirectoryOrCreate:
+        # a missing path must fail the pod, not silently create it on the wrong disk.
+        - name: incomplete
+          hostPath:
+            path: /var/lib/qbittorrent-incomplete
             type: Directory
