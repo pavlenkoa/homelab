@@ -52,9 +52,12 @@ spec:
             - name: data
               mountPath: /data
           resources:
+            # Idle with no commissioned nodes: ~2m CPU, ~130Mi memory (Node.js baseline).
+            # Memory grows with node count and during commissioning/OTA checks, so the limit
+            # keeps ~3x headroom.
             requests:
-              memory: 128Mi
-              cpu: 50m
+              memory: 160Mi
+              cpu: 10m
             limits:
               memory: 384Mi
       volumes:
