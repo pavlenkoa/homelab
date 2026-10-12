@@ -262,6 +262,11 @@ parents:
         namespace: smarthome
         annotations:
           argocd.argoproj.io/sync-wave: "4"
+      - name: matter-server
+        namespace: smarthome
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
       - name: home-assistant
         namespace: smarthome
         annotations:
