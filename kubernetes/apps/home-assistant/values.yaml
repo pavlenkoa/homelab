@@ -12,7 +12,7 @@ authPolicy:
 home-assistant:
   resources:
     requests:
-      memory: 365Mi
+      memory: 530Mi
       cpu: 100m
     limits:
       memory: 1Gi

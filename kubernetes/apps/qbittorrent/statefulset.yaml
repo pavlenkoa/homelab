@@ -145,6 +145,12 @@ spec:
               mountPath: /downloads/animation
             - name: incomplete
               mountPath: /downloads/incomplete
+          # Request = idle process memory (RSS median ~690Mi). No limit: the working set
+          # is mostly reclaimable page cache from disk reads (median ~2Gi), and a limit
+          # would throttle torrent rechecks.
+          resources:
+            requests:
+              memory: 700Mi
 
       volumes:
         - name: tun-device
