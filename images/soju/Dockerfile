@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
 # Builder
-FROM golang:1.27-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS builder
+FROM golang:1.27-alpine@sha256:d200d2dd76b03a99b52651fd1325aff7dcd35422c35c01bac56571b0507f3deb AS builder
 
 # renovate: datasource=git-refs depName=soju packageName=https://codeberg.org/emersion/soju
 ARG SOJU_VERSION=v0.10.1
@@ -18,7 +18,7 @@ RUN go build -o /out/soju ./cmd/soju \
  && go build -o /out/sojudb ./cmd/sojudb
 
 # Runtime
-FROM alpine:3.24@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+FROM alpine:3.24@sha256:be2656061b536c1883c4034790e21d0a09c5aaaf51968b89368a3c0371ea2c9a
 
 RUN apk add --no-cache ca-certificates sqlite tzdata \
  && addgroup -g 1000 soju \
