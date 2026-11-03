@@ -143,6 +143,8 @@ spec:
               mountPath: /downloads/tvanimation
             - name: downloads-animation
               mountPath: /downloads/animation
+            - name: downloads-misc
+              mountPath: /downloads/misc
             - name: incomplete
               mountPath: /downloads/incomplete
           # Request = idle process memory (RSS median ~690Mi). No limit: the working set
@@ -190,6 +192,10 @@ spec:
         - name: downloads-animation
           hostPath:
             path: /media/emby/animation
+            type: Directory
+        - name: downloads-misc
+          hostPath:
+            path: /media/emby/misc
             type: Directory
         # Incomplete downloads land on the Pi's SSD and move to the HDD
         # (/media) when a torrent completes. Directory, not DirectoryOrCreate:
