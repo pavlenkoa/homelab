@@ -199,17 +199,25 @@ Same as living room but:
 - Checks `light.bedroom_light_1` for state
 - Uses `input_number.bedroom_brightness` helper for brightness tracking
 
-### Living Room - Time-based
-**ID:** `living_room_sunset_reading` — At sunset, if iPhone is home → scene_recall 3 (reading_transition) via group topic.
+### Living Room - Home presence logic
+All living room presence rules use `binary_sensor.anyone_home` (template sensor in `configuration.yaml`): `on` when any of `device_tracker.andriis_iphone`, `device_tracker.tanias_iphone`, `device_tracker.moms_iphone` is `home`. The lights follow the household, not one person: stay on while at least one person is home, off only when everyone has left.
+
+| Situation | Result |
+|-----------|--------|
+| Someone leaves, someone else still home | Lights stay on |
+| Everyone away for 5 minutes | Lights off (3s fade) |
+| Sunset, anyone home | Evening reading transition, even if Andrii is out |
+| Anyone arrives home, lights off, sun elevation < 3° | Arrival scene |
+
+**ID:** `living_room_sunset_reading` — At sunset, if `anyone_home` → scene_recall 10 (evening_reading_transition) via group topic.
+
+**ID:** `living_room_arrival` — When any tracker (Andrii, Tania, mom) changes to home, living lights are off and sun elevation < 3° → scene_recall 9 (evening reading) 06:00–22:00, scene_recall 2 (red_presence) 22:00–00:00, scene_recall 2 + dim to 115 otherwise. Elevation threshold (vs fixed sunset offset) adapts to season automatically. Trackers are router-based (MikroTik integration, by MAC); the entities are disabled by default when newly discovered and must be enabled/renamed manually.
+
+**ID:** `living_room_departure` — When `anyone_home` has been `off` for 5 minutes and living lights are on → OFF with 3s fade. The 5-min debounce is the sole safeguard against quick walks (the router flips a tracker to not_home within seconds of Wi-Fi loss).
 
 **ID:** `living_room_red_mode` — At 22:00, if living lights on → scene_recall 4 (red_transition) via group topic.
 
-### Living Room - Arrival
-**ID:** `living_room_arrival` — When iPhone arrives home (device_tracker.andriis_iphone → home) and sun elevation < 3° → scene_recall 1 (reading_presence, 1.5s) before 22:00, scene_recall 2 (red_presence, 1.5s) after 22:00. Presence scenes for quick fade-in on arrival. Elevation threshold (vs fixed sunset offset) adapts to season automatically.
-
 **ID:** `living_room_morning_reading` — At 06:00, if living lights on → scene_recall 3 (reading_transition) via group topic. Transitions already-on lights from red to reading.
-
-**ID:** `living_room_mom_arrival` — When mom's iPhone arrives home (device_tracker.moms_iphone → home), Andrii's iPhone is not_home, and sun elevation < 3° → same scene logic as `living_room_arrival` (scene 9 before 22:00, scene 2 after 22:00, scene 2 + dim to 115 default). Tracked via HA's MikroTik integration (router-based, by MAC); the entity is disabled by default when newly discovered and was manually enabled/renamed to `device_tracker.moms_iphone`.
 
 ### Presence-based (Bathroom)
 **ID:** `bathroom_presence`
@@ -362,7 +370,7 @@ Scene keys in metadata are formatted `<sceneID>_<groupID>` (e.g. `1_2` = scene 1
 ## Configuration Files
 
 Source of truth for HA config is stored in git at `kubernetes/apps/home-assistant/files/`:
-- `configuration.yaml` — HA config (input_number helpers, integrations)
+- `configuration.yaml` — HA config (input_number helpers, `binary_sensor.anyone_home` template, integrations)
 - `automations.yaml` — all automations
 
 **Update workflow:**
