@@ -49,9 +49,11 @@ Home Assistant (ha.pavlenko.io) handles automations. MQTT is the communication l
 | Hallway Sensor | binary_sensor.hallway_sensor_presence | Hallway | Battery powered, mmWave + PIR |
 
 **Sensor settings:**
-- Bathroom Sensor: motion_sensitivity=medium, ai_adaptive=on, absence_delay=10s
-- Bedroom Sensor: motion_sensitivity=high, ai_adaptive=off (disabled to fix detection issues), absence_delay=10s, spatial_learning triggered 2026-04-01
-- Hallway Sensor: motion_sensitivity=medium, ai_adaptive=on, absence_delay=10s
+As read from the devices on 2026-10-24 (all: presence_detection_options=both, pir_detection_interval=30s, detection_range=full 6 m, ai_adaptive=off):
+- Bathroom Sensor: motion_sensitivity=medium, absence_delay=10s (re-paired 2026-10-24, firmware date code 20260515; was 45s before the re-pair and not yet reapplied)
+- Bedroom Sensor: motion_sensitivity=high, absence_delay=45s, led_disabled_night=on, spatial_learning triggered 2026-04-01
+- Hallway Sensor: motion_sensitivity=medium, absence_delay=45s
+- Bedroom and Hallway sensors are on firmware 0.0.0_5841 (date code 20260105); do not OTA them to 6542, see "Sensor parent router matters" below.
 
 ### Smart Knobs (Tuya ERS-10TZBVK-AA)
 
@@ -303,6 +305,41 @@ During the blackout window (00:00–09:00), the `bedroom_knob` automation handle
 **Problem:** `lights_off_2am` used `light.turn_off` on `light.all_lights` (HA group entity). The z2m state for individual room groups didn't always update, causing `light.living_room_lights` to appear "on" even after bulbs were off. This cascaded: `morning_reading_mode` falsely triggered at 06:00.
 
 **Solution:** Changed `lights_off_2am` to publish `{"state": "OFF", "transition": 10}` directly to each room's group MQTT topic. This ensures z2m updates the state for each group properly.
+
+### Group membership drift: knobs missing from groups yet "already exist" (OPEN, observed 2026-10-24)
+**Problem:** Devices silently vanished from Z2M groups. Re-adding them in the UI failed with "device already exists" although they were not listed as members. Group commands (knob brightness) were unreliable, some lights did not react, and sensors "sometimes" did not react.
+
+**Findings (root cause unconfirmed):**
+- Z2M has three membership records: `groups.yaml` (no `devices:` lists at all here), the herdsman `database.db` (this is what the UI and `zigbee2mqtt/bridge/groups` show; the two agreed), and the group table stored on each end device itself.
+- Re-adding the original knobs returned `Failed to add to group (Status 'DUPLICATE_EXISTS')`: the device already holds the group in its own table while the database does not list it. So membership was removed from the database but never cleared on the (sleepy) knob.
+- Consequence: the original knobs still send group-addressed commands directly (`action_group: 4` / `2` appears in their MQTT payloads), in addition to the HA knob automation. That reintroduces the double-command path described under "Knob race condition".
+- `Bedroom Knob 2` and `Living Room Knob 2` are actual members of groups 2 and 4 in the database, which contradicts the "knobs are not group members" rule above.
+- Bulb membership in all five groups matches the table in "Z2M Groups".
+- `Publish 'set' ... to '<group>' failed ... status=BUSY` (38 in the log window, mostly Living Room Lights during knob rotation) and `ROUTE_ERROR_NO_ROUTE_AVAILABLE` for 0x464B (Living Room Knob 2). Three battery devices (Bedroom Sensor, Living Room Knob, Living Room Knob 2) are parented by the Aqara strip (Living Room Monitor Light, 0xAA50).
+
+**Status:** Diagnosis only, nothing changed. Fix plan: remove the Knob 2 units from groups 2/4, clear the group on the original knobs, then re-verify with a membership snapshot.
+
+### Sensor parent router matters (observed 2026-10-24)
+**Problem:** The Bathroom Sensor (FP300) kept missing entries (`pir_detection: true` but `presence: false`), then held `presence: true` for minutes to half an hour after the room was empty, and went silent for minutes at a time. Resets, battery pulls, spatial learning, sensitivity and absence-delay changes only helped briefly.
+
+**What changed it:** Its parent router. Sensors are end devices: they talk only to one parent, chosen when they join. After a re-pair with "Permit join (All)" it picked the Aqara strip (Living Room Monitor Light, 0xAA50) as parent at link quality 127. After removing it and re-pairing it through **Bathroom Light 2 only** (Permit join dropdown, pick the bulb), the parent was Bathroom Light 2 at link quality 212 and it turned the lights on when someone walked in. While it was on the strip it did not work at all.
+
+**Caveat:** Two things changed together (firmware moved to date code 20260515 at the first re-pair, and the parent changed at the second), so the parent is the best explanation, not a proven sole cause. The Hallway Sensor also missed a walk-through once while on a strong parent (Kitchen Table Light, 188).
+
+**Rules:**
+- Pair every battery device via a specific router (Z2M: arrow next to "Permit join" -> pick the nearest Hue bulb), not "All". The Z2M docs call out Aqara as awkward in router selection.
+- Prefer Hue (Signify) bulbs as parents. The Aqara strip is the only non-Hue router. It currently parents Bedroom Sensor (178), Living Room Knob (195) and Living Room Knob 2 (191). They work, so leave them, but if one misbehaves, re-pair it through the nearest bulb (Bedroom Sensor: Bedroom Light 1).
+- A link quality of about 150+ to the parent is good, below about 130 is suspect.
+
+**Mesh notes (network map 2026-10-24):**
+- It is not a chain. Every router has a direct link to the coordinator (126 to 244), so no bulb needs swapping. Kitchen Table Light (244 to coordinator) and Living Room Lamp (242) are the best-connected routers: do not move them.
+- Weak spot: Bedroom Light 1/2 hear Hallway and Bathroom bulbs poorly (0 to 40). Bedroom Light 2 and Hallway Light 1 show the most route errors. If it matters, add a mains-powered router (Hue or IKEA plug/bulb) between bedroom and hallway.
+- Bedroom Knob is parented by Bedroom Light 2 at 95, the weakest child link.
+
+**FP300 notes:**
+- Do not update Bedroom/Hallway sensors to firmware 6542 (reports in the Aqara, Homey and Home Assistant forums of presence/PIR latching or no autonomous reports). The Bathroom Sensor is on the newer firmware.
+- The Z2M converter (26.115.1) sets `presence` from the 0x00F7 struct read in `fp300BatteryPoll`; Z2M issue #13371 / PR #13372 (2026-10-03) says this can flip `presence` to false right after someone walks in on 6542. Re-check after a Z2M update.
+- Z2M's records show presence/PIR reporting (min 0, max 3600, change 1) and the coordinator bind configured on all three sensors, so Reconfigure is not needed unless a sensor goes silent.
 
 ### Knob-initiated off transition
 Knob turn-off (toggle or dim-to-off) uses `{"state": "OFF", "transition": 0.5}` via the group MQTT topic (handled by HA automation). Presence sensor turn-off uses 3s fade. The `lights_off_2am` safety net uses 10s fade.
