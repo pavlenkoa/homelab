@@ -58,6 +58,8 @@ home-assistant:
           filter:
             include_domains:
               - light
+            include_entities:
+              - switch.living_room_tp_link_camera_privacy
 
       mqtt:
 
