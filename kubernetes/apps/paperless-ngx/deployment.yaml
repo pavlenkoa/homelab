@@ -68,6 +68,9 @@ spec:
               value: eng+ukr+pol
             - name: PAPERLESS_OCR_LANGUAGES
               value: ukr pol
+            # v3 allows duplicates by default; reject them so a re-dropped file is ignored
+            - name: PAPERLESS_CONSUMER_DELETE_DUPLICATES
+              value: "true"
             # Native fs notifications don't work on the iCloud/virtiofs mount -> poll (v3 name)
             - name: PAPERLESS_CONSUMER_POLLING_INTERVAL
               value: "30"
