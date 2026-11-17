@@ -203,6 +203,11 @@ parents:
         directory: {}
         annotations:
           argocd.argoproj.io/sync-wave: "4"
+      - name: paperless-ngx
+        namespace: paperless
+        directory: {}
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
 
   monitoring:
     description: "Observability stack"

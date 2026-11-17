@@ -1,0 +1,75 @@
+# Daily full backup: Paperless's own exporter writes one zip (database content + all
+# original documents + metadata) to iCloud Drive/Backups/Paperless. Restorable on a
+# fresh instance with `document_importer`. Keeps the 7 newest zips.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: paperless-backup
+  namespace: paperless
+spec:
+  schedule: "0 3 * * *"
+  timeZone: Europe/Warsaw
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            kubernetes.io/hostname: macmini
+          containers:
+            - name: backup
+              image: ghcr.io/paperless-ngx/paperless-ngx:2.20.0
+              command:
+                - sh
+                - -c
+                - |
+                  set -e
+                  document_exporter ../export --zip --zip-name "paperless-$(date +%F)" --no-progress-bar
+                  ls -1t /usr/src/paperless/export/paperless-*.zip | tail -n +8 | xargs -r rm -v
+              env:
+                - name: PAPERLESS_REDIS
+                  value: redis://paperless-redis:6379
+                - name: PAPERLESS_DBHOST
+                  value: paperless-postgres
+                - name: PAPERLESS_DBNAME
+                  value: paperless
+                - name: PAPERLESS_DBUSER
+                  value: paperless
+                - name: PAPERLESS_DBPASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: paperless
+                      key: db_password
+                - name: PAPERLESS_SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: paperless
+                      key: secret_key
+              volumeMounts:
+                - name: data
+                  mountPath: /usr/src/paperless/data
+                - name: media
+                  mountPath: /usr/src/paperless/media
+                - name: export
+                  mountPath: /usr/src/paperless/export
+              resources:
+                requests:
+                  memory: 256Mi
+                  cpu: 50m
+                limits:
+                  memory: 1Gi
+          volumes:
+            - name: data
+              persistentVolumeClaim:
+                claimName: paperless-data
+            - name: media
+              persistentVolumeClaim:
+                claimName: paperless-media
+            - name: export
+              hostPath:
+                path: /Users/andrii/Library/Mobile Documents/com~apple~CloudDocs/Backups/Paperless
+                type: Directory

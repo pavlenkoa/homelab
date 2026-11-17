@@ -135,6 +135,17 @@ config:
       }
     }
 
+    # Paperless-ngx secrets
+    secret "paperless" {
+      path = "paperless"
+
+      content {
+        secret_key     = generate({length = 64, symbols = 0})
+        db_password    = generate({length = 32, symbols = 0})
+        admin_password = generate({length = 32, symbols = 0})
+      }
+    }
+
     # Authelia secrets
     secret "authelia" {
       path  = "authelia"
