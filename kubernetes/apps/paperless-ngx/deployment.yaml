@@ -51,6 +51,12 @@ spec:
                   key: admin_password
             - name: PAPERLESS_URL
               value: https://paperless.pavlenko.io
+            # The iCloud consume folder is owned by the Mac user (uid/gid 501 in the VM);
+            # Paperless must run as that user to delete files after ingesting them.
+            - name: USERMAP_UID
+              value: "501"
+            - name: USERMAP_GID
+              value: "501"
             - name: PAPERLESS_TIME_ZONE
               value: Europe/Warsaw
             - name: PAPERLESS_OCR_LANGUAGE
