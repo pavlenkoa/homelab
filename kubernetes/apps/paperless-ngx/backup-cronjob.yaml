@@ -18,6 +18,7 @@ spec:
       template:
         spec:
           restartPolicy: Never
+          enableServiceLinks: false
           nodeSelector:
             kubernetes.io/hostname: macmini
           containers:

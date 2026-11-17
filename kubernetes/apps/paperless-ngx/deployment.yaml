@@ -15,6 +15,9 @@ spec:
       labels:
         app: paperless
     spec:
+      # The Service is named "paperless", so k8s would inject PAPERLESS_PORT=tcp://...
+      # which collides with Paperless's own PAPERLESS_PORT setting and crashes it.
+      enableServiceLinks: false
       nodeSelector:
         kubernetes.io/hostname: macmini
       containers:
