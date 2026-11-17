@@ -22,13 +22,15 @@ spec:
         kubernetes.io/hostname: macmini
       containers:
         - name: paperless
-          image: ghcr.io/paperless-ngx/paperless-ngx:2.20.0
+          image: ghcr.io/paperless-ngx/paperless-ngx:3.5.0
           ports:
             - containerPort: 8000
               name: http
           env:
             - name: PAPERLESS_REDIS
               value: redis://paperless-redis:6379
+            - name: PAPERLESS_DBENGINE   # required since v3 (no longer inferred from DBHOST)
+              value: postgresql
             - name: PAPERLESS_DBHOST
               value: paperless-postgres
             - name: PAPERLESS_DBNAME
@@ -46,7 +48,7 @@ spec:
                   name: paperless
                   key: secret_key
             - name: PAPERLESS_ADMIN_USER
-              value: admin
+              value: andrii
             - name: PAPERLESS_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -66,12 +68,18 @@ spec:
               value: eng+ukr+pol
             - name: PAPERLESS_OCR_LANGUAGES
               value: ukr pol
-            - name: PAPERLESS_CONSUMER_POLLING
+            # Native fs notifications don't work on the iCloud/virtiofs mount -> poll (v3 name)
+            - name: PAPERLESS_CONSUMER_POLLING_INTERVAL
               value: "30"
           readinessProbe:
             httpGet:
               path: /
               port: http
+              # With PAPERLESS_URL set, v3 only accepts that host + localhost; the
+              # kubelet would otherwise probe with the pod IP as Host and get a 400.
+              httpHeaders:
+                - name: Host
+                  value: localhost
             initialDelaySeconds: 30
             periodSeconds: 15
           volumeMounts:
