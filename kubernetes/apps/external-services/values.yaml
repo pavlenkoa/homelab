@@ -20,3 +20,20 @@ services:
 
     ingress:
       host: "emby.pavlenko.io"
+
+  # llama.cpp local LLM server - proxy to Linux desktop (RTX 4070 Ti)
+  # Auth is the server's own API key (bearer token), same model as Emby's
+  # own login - deliberately no Authelia TrafficPolicy, since that gates on
+  # a browser session cookie and would break programmatic API clients
+  # (coding agents hitting /v1/chat/completions with a bearer token).
+  llm:
+    endpoint:
+      host: "192.168.88.5"
+      port: 8080
+      protocol: http
+
+    service:
+      port: 8080
+
+    ingress:
+      host: "llm.pavlenko.io"
