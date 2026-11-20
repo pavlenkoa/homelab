@@ -5,5 +5,5 @@ description: "Wrapper chart for prometheus-node-exporter"
 
 dependencies:
   - name: prometheus-node-exporter
-    version: "4.60.1"
+    version: "5.1.0"
     repository: "https://prometheus-community.github.io/helm-charts"
