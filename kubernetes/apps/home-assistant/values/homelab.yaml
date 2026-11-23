@@ -61,7 +61,9 @@ home-assistant:
             include_entities:
               - switch.living_room_tp_link_camera_tp_link_c125_privacy
               - switch.camera_night_vision
+              - input_boolean.apple_home_presence
             exclude_entities:
+              - light.living_room_tp_link_camera_floodlight_timed
               - light.living_room_tp_link_camera_tp_link_c125_floodlight_timed
 
       mqtt:

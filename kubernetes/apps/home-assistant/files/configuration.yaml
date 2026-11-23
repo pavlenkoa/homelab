@@ -14,7 +14,9 @@ homekit:
       include_entities:
         - switch.living_room_tp_link_camera_tp_link_c125_privacy
         - switch.camera_night_vision
+        - input_boolean.apple_home_presence
       exclude_entities:
+        - light.living_room_tp_link_camera_floodlight_timed
         - light.living_room_tp_link_camera_tp_link_c125_floodlight_timed
 mqtt:
 prometheus:
@@ -45,6 +47,9 @@ input_number:
 input_boolean:
   tiny_online:
     name: tiny session active
+  apple_home_presence:
+    name: Apple Home Presence
+    icon: mdi:home-account
 template:
   - binary_sensor:
       - name: Anyone Home
