@@ -12,10 +12,10 @@ homekit:
       include_domains:
         - light
       include_entities:
-        - switch.living_room_tp_link_camera_privacy
+        - switch.living_room_tp_link_camera_tp_link_c125_privacy
         - switch.camera_night_vision
       exclude_entities:
-        - light.living_room_tp_link_camera_floodlight_timed
+        - light.living_room_tp_link_camera_tp_link_c125_floodlight_timed
 mqtt:
 prometheus:
 frontend:
@@ -57,17 +57,17 @@ template:
   - switch:
       - name: Camera Night Vision
         unique_id: camera_night_vision
-        state: "{{ is_state('select.living_room_tp_link_camera_night_vision_switching', 'on') }}"
+        state: "{{ is_state('select.living_room_tp_link_camera_tp_link_c125_night_vision_switching', 'on') }}"
         turn_on:
           action: select.select_option
           target:
-            entity_id: select.living_room_tp_link_camera_night_vision_switching
+            entity_id: select.living_room_tp_link_camera_tp_link_c125_night_vision_switching
           data:
             option: "on"
         turn_off:
           action: select.select_option
           target:
-            entity_id: select.living_room_tp_link_camera_night_vision_switching
+            entity_id: select.living_room_tp_link_camera_tp_link_c125_night_vision_switching
           data:
             option: auto
 command_line:

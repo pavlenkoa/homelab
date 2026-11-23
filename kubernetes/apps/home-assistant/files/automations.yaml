@@ -17,16 +17,16 @@
   mode: single
 - id: living_room_arrival
   alias: Living Room - Arrival Lights
-  description: Turn on living room lights when anyone's iPhone (Andrii, Tania, mom)
-    arrives home, the lights are off and sun elevation is below 3° (adaptive
-    threshold that works year-round).
+  description: Turn on living room lights when the house goes from empty to
+    occupied (first iPhone of Andrii, Tania, mom arrives), the lights are off and
+    sun elevation is below 3° (adaptive threshold that works year-round). Triggers
+    on anyone_home, not on individual trackers, so a Wi-Fi flap of one phone
+    while someone else is home does not turn the lights on.
   triggers:
   - trigger: state
-    entity_id:
-    - device_tracker.andriis_iphone
-    - device_tracker.tanias_iphone
-    - device_tracker.moms_iphone
-    to: home
+    entity_id: binary_sensor.anyone_home
+    from: 'off'
+    to: 'on'
   conditions:
   - condition: state
     entity_id: light.living_room_lights
